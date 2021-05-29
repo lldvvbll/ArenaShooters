@@ -17,5 +17,8 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	
 	bInAir = ASChar->GetCharacterMovement()->IsFalling();
-	CurrentSpeed = ASChar->GetVelocity().Size();
+
+	FVector CharVelocity = ASChar->GetVelocity();
+	CurrentSpeed = CharVelocity.Size();
+	Direction = CalculateDirection(CharVelocity, ASChar->GetActorRotation());
 }
