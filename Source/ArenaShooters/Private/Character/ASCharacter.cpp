@@ -21,7 +21,8 @@ AASCharacter::AASCharacter()
 
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-	SideStepSpeedRate = 0.5f;
+	SideStepSpeedRate = 1.0f;
+	BackStepSpeedRate = 1.0f;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
@@ -54,6 +55,12 @@ void AASCharacter::MoveForward(float Value)
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		if (Value < 0.0f)
+		{
+			Value *= BackStepSpeedRate;
+		}
+
 		AddMovementInput(Direction, Value);
 	}
 }
