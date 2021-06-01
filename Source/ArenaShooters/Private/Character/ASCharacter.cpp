@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Character/ASActionComponent.h"
 
 AASCharacter::AASCharacter()
 {
@@ -19,19 +20,20 @@ AASCharacter::AASCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
+	ASAction = CreateDefaultSubobject<UASActionComponent>(TEXT("ASAction"));
+
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-	SideStepSpeedRate = 1.0f;
-	BackStepSpeedRate = 1.0f;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-	GetCharacterMovement()->JumpZVelocity = 600.f;
-	GetCharacterMovement()->AirControl = 0.0f;
+	UCharacterMovementComponent* CharMoveComp = GetCharacterMovement();
+	CharMoveComp->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+	CharMoveComp->JumpZVelocity = 600.f;
+	CharMoveComp->AirControl = 0.0f;
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -48,6 +50,30 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AASCharacter::LookUpAtRate);
 }
 
+void AASCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
+{
+	if (ASAction == nullptr)
+		return;
+
+	EMovementMode CurMode = GetCharacterMovement()->MovementMode.GetValue();
+	switch (CurMode)
+	{
+	case EMovementMode::MOVE_Walking:		// fallthough
+	case EMovementMode::MOVE_NavWalking:
+		{
+			ASAction->SetMovementState(EMovementState::Grounded);
+		}		
+		break;
+	case EMovementMode::MOVE_Falling:
+		{
+			ASAction->SetMovementState(EMovementState::InAir);
+		}		
+		break;
+	default:
+		break;
+	}
+}
+
 void AASCharacter::MoveForward(float Value)
 {
 	if ((Controller != nullptr) && (Value != 0.0f))
@@ -55,11 +81,6 @@ void AASCharacter::MoveForward(float Value)
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		if (Value < 0.0f)
-		{
-			Value *= BackStepSpeedRate;
-		}
 
 		AddMovementInput(Direction, Value);
 	}
@@ -72,7 +93,8 @@ void AASCharacter::MoveRight(float Value)
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		AddMovementInput(Direction, Value * SideStepSpeedRate);
+
+		AddMovementInput(Direction, Value);
 	}
 }
 

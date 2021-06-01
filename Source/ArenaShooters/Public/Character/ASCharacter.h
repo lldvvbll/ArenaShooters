@@ -8,9 +8,10 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UASActionComponent;
 
-UCLASS(config=Game)
-class AASCharacter : public ACharacter
+UCLASS()
+class ARENASHOOTERS_API AASCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -19,6 +20,7 @@ public:
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
@@ -32,18 +34,13 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
 
-	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Action, Meta = (AllowPrivateAccess = "true"))
+	UASActionComponent* ASAction;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	float BaseTurnRate;
 
-	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	float BaseLookUpRate;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = "true"))
-	float SideStepSpeedRate;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = "true"))
-	float BackStepSpeedRate;
 };
 
