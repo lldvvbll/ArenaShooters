@@ -8,6 +8,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Character/ASActionComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AASCharacter::AASCharacter()
 {
@@ -25,6 +26,7 @@ AASCharacter::AASCharacter()
 
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
+	SprintSpeedRate = 1.6f;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
@@ -37,6 +39,53 @@ AASCharacter::AASCharacter()
 	CharMoveComp->AirControl = 0.0f;
 	CharMoveComp->GetNavAgentPropertiesRef().bCanCrouch = true;
 	CharMoveComp->bCanWalkOffLedgesWhenCrouching = true;
+
+	bReplicates = true;
+}
+
+void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AASCharacter, bSprinted);
+}
+
+void AASCharacter::Jump()
+{
+	if (IsLocallyControlled())
+	{
+		if (bIsCrouched)
+		{
+			UnCrouch(true);
+			return;
+		}
+	}
+
+	Super::Jump();
+}
+
+void AASCharacter::Falling()
+{
+	if (IsLocallyControlled())
+	{
+		if (bIsCrouched)
+		{
+			UnCrouch(true);
+		}
+	}
+}
+
+bool AASCharacter::CanCrouch() const
+{
+	if (GetCharacterMovement()->IsFalling())
+		return false;
+
+	return Super::CanCrouch();
+}
+
+bool AASCharacter::IsSprinted() const
+{
+	return bSprinted;
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -82,39 +131,6 @@ void AASCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 P
 	}
 }
 
-void AASCharacter::Jump()
-{
-	if (IsLocallyControlled())
-	{
-		if (bIsCrouched)
-		{
-			UnCrouch(true);
-			return;
-		}
-	}
-
-	Super::Jump();
-}
-
-void AASCharacter::Falling()
-{
-	if (IsLocallyControlled())
-	{
-		if (bIsCrouched)
-		{
-			UnCrouch(true);
-		}
-	}	
-}
-
-bool AASCharacter::CanCrouch() const
-{
-	if (GetCharacterMovement()->IsFalling())
-		return false;
-
-	return Super::CanCrouch();
-}
-
 void AASCharacter::MoveForward(float Value)
 {
 	if ((Controller != nullptr) && (Value != 0.0f))
@@ -151,11 +167,12 @@ void AASCharacter::LookUpAtRate(float Rate)
 
 void AASCharacter::Sprint()
 {
-
+	ServerSprint();
 }
 
 void AASCharacter::SprintEnd()
 {
+	ServerSpintEnd();
 }
 
 void AASCharacter::ToggleCrouch()
@@ -171,4 +188,30 @@ void AASCharacter::ToggleCrouch()
 			Crouch(true);
 		}
 	}
+}
+
+void AASCharacter::ServerSprint_Implementation()
+{
+	UCharacterMovementComponent* CharMoveComp = GetCharacterMovement();
+	auto DefaultCharMoveComp = GetDefault<UCharacterMovementComponent>();
+	if (CharMoveComp != nullptr && DefaultCharMoveComp != nullptr)
+	{
+		CharMoveComp->MaxWalkSpeed = DefaultCharMoveComp->MaxWalkSpeed * SprintSpeedRate;
+		CharMoveComp->MaxWalkSpeedCrouched = DefaultCharMoveComp->MaxWalkSpeedCrouched * SprintSpeedRate;
+	}
+
+	bSprinted = true;
+}
+
+void AASCharacter::ServerSpintEnd_Implementation()
+{
+	UCharacterMovementComponent* CharMoveComp = GetCharacterMovement();
+	auto DefaultCharMoveComp = GetDefault<UCharacterMovementComponent>();
+	if (CharMoveComp != nullptr && DefaultCharMoveComp != nullptr)
+	{
+		CharMoveComp->MaxWalkSpeed = DefaultCharMoveComp->MaxWalkSpeed;
+		CharMoveComp->MaxWalkSpeedCrouched = DefaultCharMoveComp->MaxWalkSpeedCrouched;
+	}
+
+	bSprinted = false;
 }

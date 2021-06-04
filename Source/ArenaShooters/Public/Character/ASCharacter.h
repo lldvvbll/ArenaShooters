@@ -18,9 +18,13 @@ class ARENASHOOTERS_API AASCharacter : public ACharacter
 public:
 	AASCharacter();
 
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
 	virtual void Jump() override;
 	virtual void Falling() override;
 	virtual bool CanCrouch() const override;
+
+	bool IsSprinted() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -34,6 +38,14 @@ protected:
 	void Sprint();
 	void SprintEnd();
 	void ToggleCrouch();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSprint();
+	void ServerSprint_Implementation();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSpintEnd();
+	void ServerSpintEnd_Implementation();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
@@ -50,5 +62,11 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	float BaseLookUpRate;
+
+	UPROPERTY(Replicated)
+	bool bSprinted;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement, Meta = (AllowPrivateAccess = "true"))
+	float SprintSpeedRate;
 };
 

@@ -22,6 +22,7 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Direction = CalculateDirection(CharVelocity, ASChar->GetActorRotation());
 	
 	bCrouched = ASChar->bIsCrouched;
+	bSprinted = ASChar->IsSprinted();
 }
 
 void UASAnimInstance::NativeBeginPlay()
