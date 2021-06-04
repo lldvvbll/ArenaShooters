@@ -15,6 +15,7 @@ AASCharacter::AASCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.0f;	
 	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->SocketOffset = FVector(100.0f, 50.0f, 100.0f);
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -34,13 +35,18 @@ AASCharacter::AASCharacter()
 	CharMoveComp->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 	CharMoveComp->JumpZVelocity = 600.f;
 	CharMoveComp->AirControl = 0.0f;
+	CharMoveComp->GetNavAgentPropertiesRef().bCanCrouch = true;
+	CharMoveComp->bCanWalkOffLedgesWhenCrouching = true;
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AASCharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AASCharacter::Sprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AASCharacter::SprintEnd);
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AASCharacter::ToggleCrouch);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AASCharacter::MoveRight);
@@ -52,6 +58,8 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AASCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
 {
+	Super::OnMovementModeChanged(PrevMovementMode, PreviousCustomMode);
+
 	if (ASAction == nullptr)
 		return;
 
@@ -72,6 +80,39 @@ void AASCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 P
 	default:
 		break;
 	}
+}
+
+void AASCharacter::Jump()
+{
+	if (IsLocallyControlled())
+	{
+		if (bIsCrouched)
+		{
+			UnCrouch(true);
+			return;
+		}
+	}
+
+	Super::Jump();
+}
+
+void AASCharacter::Falling()
+{
+	if (IsLocallyControlled())
+	{
+		if (bIsCrouched)
+		{
+			UnCrouch(true);
+		}
+	}	
+}
+
+bool AASCharacter::CanCrouch() const
+{
+	if (GetCharacterMovement()->IsFalling())
+		return false;
+
+	return Super::CanCrouch();
 }
 
 void AASCharacter::MoveForward(float Value)
@@ -106,4 +147,28 @@ void AASCharacter::TurnAtRate(float Rate)
 void AASCharacter::LookUpAtRate(float Rate)
 {
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AASCharacter::Sprint()
+{
+
+}
+
+void AASCharacter::SprintEnd()
+{
+}
+
+void AASCharacter::ToggleCrouch()
+{
+	if (IsLocallyControlled())
+	{
+		if (bIsCrouched)
+		{
+			UnCrouch(true);
+		}
+		else
+		{
+			Crouch(true);
+		}
+	}
 }

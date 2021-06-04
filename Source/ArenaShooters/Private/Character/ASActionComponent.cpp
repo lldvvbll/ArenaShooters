@@ -13,7 +13,5 @@ UASActionComponent::UASActionComponent()
 
 void UASActionComponent::SetMovementState(EMovementState NewState)
 {
-	AS_LOG(Warning, TEXT("NewState: %d"), static_cast<int32>(NewState));
-
 	CurrentMovementState = NewState;
 }

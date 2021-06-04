@@ -12,7 +12,6 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	AASCharacter* ASChar = Cast<AASCharacter>(TryGetPawnOwner());
 	if (!::IsValid(ASChar))
 		return;
 	
@@ -21,4 +20,13 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	FVector CharVelocity = ASChar->GetVelocity();
 	CurrentSpeed = CharVelocity.Size();
 	Direction = CalculateDirection(CharVelocity, ASChar->GetActorRotation());
+	
+	bCrouched = ASChar->bIsCrouched;
+}
+
+void UASAnimInstance::NativeBeginPlay()
+{
+	Super::NativeBeginPlay();
+
+	ASChar = Cast<AASCharacter>(TryGetPawnOwner());
 }

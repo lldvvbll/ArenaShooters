@@ -18,6 +18,10 @@ class ARENASHOOTERS_API AASCharacter : public ACharacter
 public:
 	AASCharacter();
 
+	virtual void Jump() override;
+	virtual void Falling() override;
+	virtual bool CanCrouch() const override;
+
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
@@ -26,6 +30,10 @@ protected:
 	void MoveRight(float Value);
 	void TurnAtRate(float Rate);
 	void LookUpAtRate(float Rate);
+
+	void Sprint();
+	void SprintEnd();
+	void ToggleCrouch();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
