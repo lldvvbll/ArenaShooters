@@ -19,6 +19,6 @@ public:
 	void SetMovementState(EMovementState NewState);
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	EMovementState CurrentMovementState;
 };

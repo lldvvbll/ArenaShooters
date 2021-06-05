@@ -6,6 +6,7 @@
 
 UASAnimInstance::UASAnimInstance()
 {
+	MaxWalkSpeedCrouched = 300.0f;
 }
 
 void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -30,4 +31,9 @@ void UASAnimInstance::NativeBeginPlay()
 	Super::NativeBeginPlay();
 
 	ASChar = Cast<AASCharacter>(TryGetPawnOwner());
+
+	if (UCharacterMovementComponent* MoveComp = ASChar->GetCharacterMovement())
+	{
+		MaxWalkSpeedCrouched = MoveComp->MaxWalkSpeedCrouched;
+	}
 }
