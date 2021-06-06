@@ -50,8 +50,8 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AASCharacter, bSprinted);
-	DOREPLIFETIME(AASCharacter, TurnValue);
-	DOREPLIFETIME(AASCharacter, TurnRateValue);
+	DOREPLIFETIME_CONDITION(AASCharacter, TurnValue, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AASCharacter, TurnRateValue, COND_SimulatedOnly);
 }
 
 void AASCharacter::Jump()
@@ -168,6 +168,7 @@ void AASCharacter::Turn(float Value)
 {
 	AddControllerYawInput(Value);
 
+	TurnValue = Value;
 	ServerSetTurnValue(Value);
 }
 
@@ -176,6 +177,7 @@ void AASCharacter::TurnAtRate(float Rate)
 	float Value = Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds();
 	AddControllerYawInput(Value);
 
+	TurnRateValue = Value;
 	ServerSetTurnRateValue(Value);
 }
 
