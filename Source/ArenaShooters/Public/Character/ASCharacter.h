@@ -25,6 +25,7 @@ public:
 	virtual bool CanCrouch() const override;
 
 	bool IsSprinted() const;
+	float GetTotalTurnValue() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -32,6 +33,7 @@ protected:
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	void Turn(float Value);
 	void TurnAtRate(float Rate);
 	void LookUpAtRate(float Rate);
 
@@ -46,6 +48,19 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSpintEnd();
 	void ServerSpintEnd_Implementation();
+
+	UFUNCTION()
+	void OnRep_bSprinted();
+
+	void SetMaxWalkSpeedRate(float Rate);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetTurnValue(float NewTurnValue);
+	void ServerSetTurnValue_Implementation(float NewTurnValue);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetTurnRateValue(float NewTurnRateValue);
+	void ServerSetTurnRateValue_Implementation(float NewTurnRateValue);
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
@@ -63,10 +78,16 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseLookUpRate;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_bSprinted)
 	bool bSprinted;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement, Meta = (AllowPrivateAccess = true))
 	float SprintSpeedRate;
+
+	UPROPERTY(Replicated)
+	float TurnValue;
+
+	UPROPERTY(Replicated)
+	float TurnRateValue;
 };
 

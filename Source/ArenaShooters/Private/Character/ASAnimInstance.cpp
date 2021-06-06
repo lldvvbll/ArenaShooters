@@ -19,11 +19,13 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bInAir = ASChar->GetCharacterMovement()->IsFalling();
 
 	FVector CharVelocity = ASChar->GetVelocity();
+	FRotator CharRotation = ASChar->GetActorRotation();
+
 	CurrentSpeed = CharVelocity.Size();
-	Direction = CalculateDirection(CharVelocity, ASChar->GetActorRotation());
-	
+	Direction = CalculateDirection(CharVelocity, CharRotation);
 	bCrouched = ASChar->bIsCrouched;
 	bSprinted = ASChar->IsSprinted();
+	TurnValue = ASChar->GetTotalTurnValue();
 }
 
 void UASAnimInstance::NativeBeginPlay()
@@ -31,6 +33,8 @@ void UASAnimInstance::NativeBeginPlay()
 	Super::NativeBeginPlay();
 
 	ASChar = Cast<AASCharacter>(TryGetPawnOwner());
+	if (!::IsValid(ASChar))
+		return;
 
 	if (UCharacterMovementComponent* MoveComp = ASChar->GetCharacterMovement())
 	{

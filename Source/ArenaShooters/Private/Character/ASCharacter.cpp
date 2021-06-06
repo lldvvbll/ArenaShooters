@@ -29,16 +29,18 @@ AASCharacter::AASCharacter()
 	SprintSpeedRate = 1.6f;
 
 	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
 	UCharacterMovementComponent* CharMoveComp = GetCharacterMovement();
-	CharMoveComp->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 	CharMoveComp->JumpZVelocity = 600.f;
 	CharMoveComp->AirControl = 0.0f;
 	CharMoveComp->GetNavAgentPropertiesRef().bCanCrouch = true;
 	CharMoveComp->bCanWalkOffLedgesWhenCrouching = true;
+	//CharMoveComp->bUseControllerDesiredRotation = true;
+	//CharMoveComp->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 
 	bReplicates = true;
 }
@@ -48,6 +50,8 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AASCharacter, bSprinted);
+	DOREPLIFETIME(AASCharacter, TurnValue);
+	DOREPLIFETIME(AASCharacter, TurnRateValue);
 }
 
 void AASCharacter::Jump()
@@ -88,6 +92,11 @@ bool AASCharacter::IsSprinted() const
 	return bSprinted;
 }
 
+float AASCharacter::GetTotalTurnValue() const
+{
+	return TurnValue + TurnRateValue;
+}
+
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
@@ -99,7 +108,7 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AASCharacter::MoveRight);
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("Turn", this, &AASCharacter::Turn);
 	PlayerInputComponent->BindAxis("TurnRate", this, &AASCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AASCharacter::LookUpAtRate);
@@ -155,9 +164,19 @@ void AASCharacter::MoveRight(float Value)
 	}
 }
 
+void AASCharacter::Turn(float Value)
+{
+	AddControllerYawInput(Value);
+
+	ServerSetTurnValue(Value);
+}
+
 void AASCharacter::TurnAtRate(float Rate)
 {
-	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	float Value = Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds();
+	AddControllerYawInput(Value);
+
+	ServerSetTurnRateValue(Value);
 }
 
 void AASCharacter::LookUpAtRate(float Rate)
@@ -192,26 +211,38 @@ void AASCharacter::ToggleCrouch()
 
 void AASCharacter::ServerSprint_Implementation()
 {
-	UCharacterMovementComponent* CharMoveComp = GetCharacterMovement();
-	auto DefaultCharMoveComp = GetDefault<UCharacterMovementComponent>();
-	if (CharMoveComp != nullptr && DefaultCharMoveComp != nullptr)
-	{
-		CharMoveComp->MaxWalkSpeed = DefaultCharMoveComp->MaxWalkSpeed * SprintSpeedRate;
-		CharMoveComp->MaxWalkSpeedCrouched = DefaultCharMoveComp->MaxWalkSpeedCrouched * SprintSpeedRate;
-	}
-
+	SetMaxWalkSpeedRate(SprintSpeedRate);
 	bSprinted = true;
 }
 
 void AASCharacter::ServerSpintEnd_Implementation()
 {
+	SetMaxWalkSpeedRate(1.0f);
+	bSprinted = false;
+}
+
+void AASCharacter::OnRep_bSprinted()
+{
+	SetMaxWalkSpeedRate(bSprinted ? SprintSpeedRate : 1.0f);
+}
+
+void AASCharacter::SetMaxWalkSpeedRate(float Rate)
+{
 	UCharacterMovementComponent* CharMoveComp = GetCharacterMovement();
 	auto DefaultCharMoveComp = GetDefault<UCharacterMovementComponent>();
 	if (CharMoveComp != nullptr && DefaultCharMoveComp != nullptr)
 	{
-		CharMoveComp->MaxWalkSpeed = DefaultCharMoveComp->MaxWalkSpeed;
-		CharMoveComp->MaxWalkSpeedCrouched = DefaultCharMoveComp->MaxWalkSpeedCrouched;
+		CharMoveComp->MaxWalkSpeed = DefaultCharMoveComp->MaxWalkSpeed * Rate;
+		CharMoveComp->MaxWalkSpeedCrouched = DefaultCharMoveComp->MaxWalkSpeedCrouched * Rate;
 	}
+}
 
-	bSprinted = false;
+void AASCharacter::ServerSetTurnValue_Implementation(float NewTurnValue)
+{
+	TurnValue = NewTurnValue;
+}
+
+void AASCharacter::ServerSetTurnRateValue_Implementation(float NewTurnRateValue)
+{
+	TurnRateValue = NewTurnRateValue;
 }
