@@ -6,6 +6,13 @@
 
 UASAnimInstance::UASAnimInstance()
 {
+	//static ConstructorHelpers::FObjectFinder<UAnimMontage> RIFLE_FIRE_MONTAGE(
+	//	TEXT("/Game/ArenaShooters/Blueprints/Characters/Animations/Montage_Rifle_Fire.Montage_Rifle_Fire"));
+	//if (RIFLE_FIRE_MONTAGE.Succeeded())
+	//{
+	//	RifleFireMontage = RIFLE_FIRE_MONTAGE.Object;
+	//}
+
 	MaxWalkSpeedCrouched = 300.0f;
 }
 
@@ -26,6 +33,7 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bCrouched = ASChar->bIsCrouched;
 	bSprinted = ASChar->IsSprinted();
 	TurnValue = ASChar->GetTotalTurnValue();
+	CurrentWeaponType = ASChar->GetCurrentWeaponType();
 }
 
 void UASAnimInstance::NativeBeginPlay()

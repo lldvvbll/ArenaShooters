@@ -4,6 +4,7 @@
 
 #include "ArenaShooters.h"
 #include "GameFramework/Character.h"
+#include "Common/ASEnums.h"
 #include "ASCharacter.generated.h"
 
 class USpringArmComponent;
@@ -26,6 +27,8 @@ public:
 
 	bool IsSprinted() const;
 	float GetTotalTurnValue() const;
+
+	EWeaponType GetCurrentWeaponType() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -89,5 +92,7 @@ private:
 
 	UPROPERTY(Replicated)
 	float TurnRateValue;
+
+	EWeaponType CurrentWeaponType;
 };
 

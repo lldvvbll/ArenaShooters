@@ -4,6 +4,7 @@
 
 #include "ArenaShooters.h"
 #include "Animation/AnimInstance.h"
+#include "Common/ASEnums.h"
 #include "ASAnimInstance.generated.h"
 
 class AASCharacter;
@@ -22,6 +23,9 @@ public:
 private:
 	UPROPERTY()
 	AASCharacter* ASChar;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* RifleFireMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	bool bInAir;
@@ -46,4 +50,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	float TurnValue;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	EWeaponType CurrentWeaponType;
 };

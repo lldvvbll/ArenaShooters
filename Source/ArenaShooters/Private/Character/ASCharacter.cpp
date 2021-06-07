@@ -27,6 +27,7 @@ AASCharacter::AASCharacter()
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 	SprintSpeedRate = 1.6f;
+	CurrentWeaponType = EWeaponType::Pistol;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
@@ -95,6 +96,11 @@ bool AASCharacter::IsSprinted() const
 float AASCharacter::GetTotalTurnValue() const
 {
 	return TurnValue + TurnRateValue;
+}
+
+EWeaponType AASCharacter::GetCurrentWeaponType() const
+{
+	return CurrentWeaponType;
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

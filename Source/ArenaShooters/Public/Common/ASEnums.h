@@ -13,3 +13,11 @@ enum class EMovementState : uint8
 	Mantling,
 	Ragdoll,
 };
+
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
+{
+	None,
+	Pistol,
+	Rifle,
+};
