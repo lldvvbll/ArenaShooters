@@ -10,6 +10,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UASActionComponent;
+class UASInventoryComponent;
 
 UCLASS()
 class ARENASHOOTERS_API AASCharacter : public ACharacter
@@ -75,6 +76,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Action, Meta = (AllowPrivateAccess = true))
 	UASActionComponent* ASAction;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, Meta = (AllowPrivateAccess = true))
+	UASInventoryComponent* ASInventory;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseTurnRate;
 
@@ -92,7 +96,5 @@ private:
 
 	UPROPERTY(Replicated)
 	float TurnRateValue;
-
-	EWeaponType CurrentWeaponType;
 };
 

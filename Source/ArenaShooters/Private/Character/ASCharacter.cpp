@@ -8,6 +8,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Character/ASActionComponent.h"
+#include "Character/ASInventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 
 AASCharacter::AASCharacter()
@@ -23,11 +24,11 @@ AASCharacter::AASCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	ASAction = CreateDefaultSubobject<UASActionComponent>(TEXT("ASAction"));
+	ASInventory = CreateDefaultSubobject<UASInventoryComponent>(TEXT("ASInventory"));
 
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 	SprintSpeedRate = 1.6f;
-	CurrentWeaponType = EWeaponType::Pistol;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
@@ -100,7 +101,7 @@ float AASCharacter::GetTotalTurnValue() const
 
 EWeaponType AASCharacter::GetCurrentWeaponType() const
 {
-	return CurrentWeaponType;
+	return ASInventory->GetWeaponType();
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -221,6 +222,8 @@ void AASCharacter::ServerSprint_Implementation()
 {
 	SetMaxWalkSpeedRate(SprintSpeedRate);
 	bSprinted = true;
+
+	ASInventory->CreateTestItem();
 }
 
 void AASCharacter::ServerSpintEnd_Implementation()
