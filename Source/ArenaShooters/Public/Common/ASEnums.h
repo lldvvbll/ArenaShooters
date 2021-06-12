@@ -29,15 +29,17 @@ enum class EWeaponType : uint8
 {
 	None,
 	Pistol,
-	Rifle,
+	AssaultRifle,
 };
 
 UENUM(BlueprintType)
 enum class EWeaponClass : uint8
 {
 	None,
-	M4A1,
-	P92,
+	Pistol_Silver,
+	Pistol_Dark,
+	AR_Silver,
+	AR_Dark,
 };
 
 UENUM(BlueprintType)
