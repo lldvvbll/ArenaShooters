@@ -36,7 +36,7 @@ public:
 
 		if (bLogWarning && LoadedDataAsset == nullptr)
 		{
-			LOG(Warning, TEXT("Failed to load Asset for identifier %s!"), *PrimaryAssetId.ToString());
+			AS_LOG(Warning, TEXT("Failed to load Asset for identifier %s!"), *PrimaryAssetId.ToString());
 		}
 
 		return LoadedDataAsset;

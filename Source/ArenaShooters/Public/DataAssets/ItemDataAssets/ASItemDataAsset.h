@@ -7,7 +7,9 @@
 #include "Common/ASEnums.h"
 #include "ASItemDataAsset.generated.h"
 
-UCLASS(Abstract, BlueprintType)
+class UASItem;
+
+UCLASS(Abstract)
 class ARENASHOOTERS_API UASItemDataAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
@@ -18,9 +20,12 @@ public:
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere)
 	FPrimaryAssetType AssetType;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	EItemType ItemType;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UASItem> ItemClass;
 };

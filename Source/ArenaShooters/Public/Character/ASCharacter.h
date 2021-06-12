@@ -67,28 +67,28 @@ protected:
 	void ServerSetTurnRateValue_Implementation(float NewTurnRateValue);
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	USpringArmComponent* CameraBoom;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	UCameraComponent* FollowCamera;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Action, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Category = Action, Meta = (AllowPrivateAccess = true))
 	UASActionComponent* ASAction;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = Inventory, Meta = (AllowPrivateAccess = true))
 	UASInventoryComponent* ASInventory;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseTurnRate;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseLookUpRate;
 
 	UPROPERTY(ReplicatedUsing = OnRep_bSprinted)
 	bool bSprinted;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Category = Movement, Meta = (AllowPrivateAccess = true))
 	float SprintSpeedRate;
 
 	UPROPERTY(Replicated)

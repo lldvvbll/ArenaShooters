@@ -4,10 +4,11 @@
 
 #include "ArenaShooters.h"
 #include "UObject/NoExportTypes.h"
-#include "Common/ASEnums.h"
 #include "ASItem.generated.h"
 
-UCLASS(BlueprintType, Blueprintable)
+class UASItemDataAsset;
+
+UCLASS(Abstract)
 class ARENASHOOTERS_API UASItem : public UObject
 {
 	GENERATED_BODY()
@@ -16,9 +17,10 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override;
 
-	void ChangeType();
-	EWeaponType GetWeaponType() const;
+	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset);
+	const UASItemDataAsset* GetDataAsset() const;
 
 protected:
-	EWeaponType WeaponType;
+	UPROPERTY(Replicated, VisibleAnywhere)
+	UASItemDataAsset* DataAsset;
 };

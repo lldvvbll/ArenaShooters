@@ -8,6 +8,7 @@ void UASItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(UASItem, DataAsset);
 }
 
 bool UASItem::IsSupportedForNetworking() const
@@ -15,11 +16,13 @@ bool UASItem::IsSupportedForNetworking() const
 	return true;
 }
 
-void UASItem::ChangeType()
+void UASItem::SetDataAsset(UASItemDataAsset* NewDataAsset)
 {
+	DataAsset = NewDataAsset;
 }
 
-EWeaponType UASItem::GetWeaponType() const
+const UASItemDataAsset* UASItem::GetDataAsset() const
 {
-	return EWeaponType();
+	return DataAsset;
 }
+

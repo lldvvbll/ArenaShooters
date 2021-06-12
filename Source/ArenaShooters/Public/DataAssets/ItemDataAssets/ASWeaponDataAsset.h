@@ -15,6 +15,6 @@ public:
 	UASWeaponDataAsset();
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
 };

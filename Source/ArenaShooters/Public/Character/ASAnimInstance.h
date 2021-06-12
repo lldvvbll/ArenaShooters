@@ -24,33 +24,33 @@ private:
 	UPROPERTY()
 	AASCharacter* ASChar;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Category = Montage, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* RifleFireMontage;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	bool bInAir;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	float CurrentSpeed;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	float Direction;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	bool bCrouched;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	bool bSprinted;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	float MaxWalkSpeedCrouched;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	float CurrentRotationSpeed;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	float TurnValue;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	EWeaponType CurrentWeaponType;
 };

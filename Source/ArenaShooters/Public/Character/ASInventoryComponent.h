@@ -7,9 +7,9 @@
 #include "Common/ASEnums.h"
 #include "ASInventoryComponent.generated.h"
 
-class UASItem;
+class UASWeapon;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS()
 class ARENASHOOTERS_API UASInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -21,9 +21,12 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void CreateTestItem();
-	EWeaponType GetWeaponType() const;
+	const EWeaponType GetWeaponType() const;
 
 private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
+	FPrimaryAssetId TestItemAssetId;
+
 	UPROPERTY(Replicated)
-	UASItem* TestItem;
+	UASWeapon* TestItem;
 };

@@ -2,9 +2,11 @@
 
 
 #include "Character/ASInventoryComponent.h"
-#include "Item/ASItem.h"
+#include "Item/ASWeapon.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/ActorChannel.h"
+#include "ASAssetManager.h"
+#include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
 
 UASInventoryComponent::UASInventoryComponent()
 {
@@ -38,16 +40,16 @@ void UASInventoryComponent::CreateTestItem()
 	{
 		if (TestItem == nullptr)
 		{
-			TestItem = NewObject<UASItem>(this);
+			if (auto DataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(TestItemAssetId))
+			{
+				TestItem = ::NewObject<UASWeapon>(this, DataAsset->ItemClass);
+				TestItem->SetDataAsset(DataAsset);
+			}
 		}
-		else
-		{
-			TestItem->ChangeType();
-		}		
 	}
 }
 
-EWeaponType UASInventoryComponent::GetWeaponType() const
+const EWeaponType UASInventoryComponent::GetWeaponType() const
 {
 	return (TestItem != nullptr) ? TestItem->GetWeaponType() : EWeaponType::None;
 }

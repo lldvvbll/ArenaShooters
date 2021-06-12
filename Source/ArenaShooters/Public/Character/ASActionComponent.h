@@ -8,7 +8,7 @@
 #include "ASActionComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS()
 class ARENASHOOTERS_API UASActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -19,6 +19,6 @@ public:
 	void SetMovementState(EMovementState NewState);
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 	EMovementState CurrentMovementState;
 };
