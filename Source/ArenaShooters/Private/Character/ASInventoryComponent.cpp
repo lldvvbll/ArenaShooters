@@ -7,6 +7,8 @@
 #include "Engine/ActorChannel.h"
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
+#include "Character/ASCharacter.h"
+#include "ItemActor/ASWeaponActor.h"
 
 UASInventoryComponent::UASInventoryComponent()
 {
@@ -44,6 +46,24 @@ void UASInventoryComponent::CreateTestItem()
 			{
 				TestItem = ::NewObject<UASWeapon>(this, DataAsset->ItemClass);
 				TestItem->SetDataAsset(DataAsset);
+
+				if (auto WeaponActor = GetWorld()->SpawnActor<AASWeaponActor>(DataAsset->ASWeaponActorClass))
+				{
+					if (auto Owner = Cast<AASCharacter>(GetOwner()))
+					{
+						Owner->SetWeaponActor(WeaponActor);
+						WeaponActor->SetOwner(Owner);
+						WeaponActor->AttachToComponent(Owner->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, FName(TEXT("hand_R_socket")));
+					}
+					else
+					{
+						AS_LOG(Warning, TEXT("Owner == nullptr"));
+					}
+				}
+				else
+				{
+					AS_LOG(Warning, TEXT("WeaponActor == nullptr"));
+				}
 			}
 		}
 	}

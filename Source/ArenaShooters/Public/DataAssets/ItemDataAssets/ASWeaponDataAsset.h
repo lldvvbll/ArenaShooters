@@ -6,6 +6,8 @@
 #include "DataAssets/ItemDataAssets/ASItemDataAsset.h"
 #include "ASWeaponDataAsset.generated.h"
 
+class AASWeaponActor;
+
 UCLASS()
 class ARENASHOOTERS_API UASWeaponDataAsset : public UASItemDataAsset
 {
@@ -17,4 +19,7 @@ public:
 public:
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AASWeaponActor> ASWeaponActorClass;
 };

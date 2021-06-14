@@ -25,4 +25,3 @@ const UASItemDataAsset* UASItem::GetDataAsset() const
 {
 	return DataAsset;
 }
-

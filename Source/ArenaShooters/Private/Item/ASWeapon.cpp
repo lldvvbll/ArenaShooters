@@ -9,26 +9,11 @@ void UASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UASWeapon, WeaponDataAsset);
-}
-
-void UASWeapon::SetDataAsset(UASItemDataAsset* NewDataAsset)
-{
-	Super::SetDataAsset(NewDataAsset);
-
-	auto NewWeaponDataAsset = Cast<UASWeaponDataAsset>(NewDataAsset);
-	check(NewWeaponDataAsset);
-
-	WeaponDataAsset = NewWeaponDataAsset;
-}
-
-const UASWeaponDataAsset* UASWeapon::GetWeaponDataAsset() const
-{
-	return WeaponDataAsset;
 }
 
 const EWeaponType UASWeapon::GetWeaponType() const
 {
+	const UASWeaponDataAsset* WeaponDataAsset = GetDataAsset<UASWeaponDataAsset>();
 	if (WeaponDataAsset == nullptr)
 	{
 		AS_LOG(Warning, TEXT("WeaponDataAsset == nullptr"));

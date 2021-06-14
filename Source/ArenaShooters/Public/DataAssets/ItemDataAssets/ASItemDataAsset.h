@@ -8,6 +8,7 @@
 #include "ASItemDataAsset.generated.h"
 
 class UASItem;
+class AASDroppedItemActor;
 
 UCLASS(Abstract)
 class ARENASHOOTERS_API UASItemDataAsset : public UPrimaryDataAsset
@@ -28,4 +29,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UASItem> ItemClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AASDroppedItemActor> DroppedItemActorClass;
 };

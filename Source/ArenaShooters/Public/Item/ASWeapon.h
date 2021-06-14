@@ -17,12 +17,6 @@ class ARENASHOOTERS_API UASWeapon : public UASItem
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset) override;
-	const UASWeaponDataAsset* GetWeaponDataAsset() const;
-
 	const EWeaponType GetWeaponType() const;
 
-protected:
-	UPROPERTY(Replicated, VisibleAnywhere)
-	UASWeaponDataAsset* WeaponDataAsset;
 };

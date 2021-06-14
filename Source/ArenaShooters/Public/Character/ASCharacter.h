@@ -11,6 +11,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UASActionComponent;
 class UASInventoryComponent;
+class AASWeaponActor;
 
 UCLASS()
 class ARENASHOOTERS_API AASCharacter : public ACharacter
@@ -30,6 +31,8 @@ public:
 	float GetTotalTurnValue() const;
 
 	EWeaponType GetCurrentWeaponType() const;
+
+	void SetWeaponActor(AASWeaponActor* NewWeaponActor) { WeaponActor = NewWeaponActor; }
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -96,5 +99,8 @@ private:
 
 	UPROPERTY(Replicated)
 	float TurnRateValue;
+
+	UPROPERTY(Replicated, VisibleAnywhere, Category = Weapon, Meta = (AllowPrivateAccess = true))
+	AASWeaponActor* WeaponActor;
 };
 

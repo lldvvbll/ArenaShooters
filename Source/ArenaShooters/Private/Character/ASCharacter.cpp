@@ -54,6 +54,9 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AASCharacter, bSprinted);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnValue, COND_SimulatedOnly);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnRateValue, COND_SimulatedOnly);
+
+	// Dummy
+	DOREPLIFETIME(AASCharacter, WeaponActor);
 }
 
 void AASCharacter::Jump()
