@@ -5,19 +5,41 @@
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
 #include "Net/UnrealNetwork.h"
 
+UASWeapon* UASWeapon::CreateFromDataAsset(UObject* Owner, UASWeaponDataAsset* DataAsset)
+{
+	if (DataAsset == nullptr)
+		return nullptr;
+
+	UASWeapon* NewItem = ::NewObject<UASWeapon>(Owner, DataAsset->ItemClass);
+	NewItem->SetDataAsset(DataAsset);
+
+	return NewItem;
+}
+
 void UASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 }
 
-const EWeaponType UASWeapon::GetWeaponType() const
+EEquipmentSlotType UASWeapon::GetEquipmentSlotType() const
 {
-	const UASWeaponDataAsset* WeaponDataAsset = GetDataAsset<UASWeaponDataAsset>();
-	if (WeaponDataAsset == nullptr)
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	if (WeaponDA == nullptr)
 	{
-		AS_LOG(Warning, TEXT("WeaponDataAsset == nullptr"));
+		AS_LOG_S(Warning);
 	}
 
-	return (WeaponDataAsset != nullptr) ? WeaponDataAsset->WeaponType : EWeaponType::None;
+	return (WeaponDA != nullptr) ? WeaponDA->GetEquipmentSlotType() : EEquipmentSlotType::SlotNum;
+}
+
+const EWeaponType UASWeapon::GetWeaponType() const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	if (WeaponDA == nullptr)
+	{
+		AS_LOG_S(Warning);
+	}
+
+	return (WeaponDA != nullptr) ? WeaponDA->WeaponType : EWeaponType::None;
 }

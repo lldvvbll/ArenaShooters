@@ -12,4 +12,4 @@ DECLARE_LOG_CATEGORY_EXTERN(ArenaShooters, Log, All);
 #define AS_LOG(Verbosity, Format, ...) UE_LOG(ArenaShooters, Verbosity, TEXT("%s %s"), *AS_LOG_CALLINFO, *FString::Printf(Format, ##__VA_ARGS__))
 //#define return_if(Expr, ...) { if (Expr) { LOG(Error, TEXT("ASSERTION: %s"), TEXT("'"#Expr"'")); return __VA_ARGS__; } }
 
-#define AS_LOG_SCREEN(Time, Color, Format, ...) (GEngine->AddOnScreenDebugMessage(INDEX_NONE, Time, Color, FString::Printf(Format, ##__VA_ARGS__)))
+#define AS_LOG_SCREEN(Time, Color, Format, ...) { if (GEngine != nullptr) { GEngine->AddOnScreenDebugMessage(INDEX_NONE, Time, Color, FString::Printf(Format, ##__VA_ARGS__)); } }

@@ -4,6 +4,7 @@
 
 #include "ArenaShooters.h"
 #include "UObject/NoExportTypes.h"
+#include "Common/ASEnums.h"
 #include "ASItem.generated.h"
 
 class UASItemDataAsset;
@@ -21,11 +22,7 @@ public:
 	void SetDataAsset(UASItemDataAsset* NewDataAsset);
 	const UASItemDataAsset* GetDataAsset() const;
 
-	template <typename T>
-	const T* GetDataAsset() const
-	{
-		return Cast<T>(DataAsset);
-	}
+	virtual EEquipmentSlotType GetEquipmentSlotType() const;
 
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)

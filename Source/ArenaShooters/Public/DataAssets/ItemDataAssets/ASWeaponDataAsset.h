@@ -4,6 +4,7 @@
 
 #include "ArenaShooters.h"
 #include "DataAssets/ItemDataAssets/ASItemDataAsset.h"
+#include "Common/ASEnums.h"
 #include "ASWeaponDataAsset.generated.h"
 
 class AASWeaponActor;
@@ -15,6 +16,8 @@ class ARENASHOOTERS_API UASWeaponDataAsset : public UASItemDataAsset
 	
 public:
 	UASWeaponDataAsset();
+
+	EEquipmentSlotType GetEquipmentSlotType() const;
 
 public:
 	UPROPERTY(EditAnywhere)

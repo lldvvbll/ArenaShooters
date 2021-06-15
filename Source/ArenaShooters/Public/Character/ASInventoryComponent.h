@@ -7,12 +7,16 @@
 #include "Common/ASEnums.h"
 #include "ASInventoryComponent.generated.h"
 
-class UASWeapon;
+class UASItem;
 
 UCLASS()
 class ARENASHOOTERS_API UASInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
+
+public:
+	using ItemBoolPair = TPair<UASItem*, bool>;
+	using ConstItemBoolPair = TPair<const UASItem*, bool>;
 
 public:	
 	UASInventoryComponent();
@@ -23,10 +27,18 @@ public:
 	void CreateTestItem();
 	const EWeaponType GetWeaponType() const;
 
+	ItemBoolPair GetItemFromEquipmentSlot(EEquipmentSlotType SlotType);
+	ConstItemBoolPair GetItemFromEquipmentSlot(EEquipmentSlotType SlotType) const;
+	ItemBoolPair SetItemToEquipmentSlot(EEquipmentSlotType SlotType, UASItem* NewItem);
+	ItemBoolPair RemoveItemFromEquipmentSlot(EEquipmentSlotType SlotType);
+
 private:
+	int32 ConvertToIndex(EEquipmentSlotType SlotType) const;
+
+private:
+	UPROPERTY(Replicated)
+	TArray<UASItem*> EquipmentSlots;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestItemAssetId;
-
-	UPROPERTY(Replicated)
-	UASWeapon* TestItem;
 };
