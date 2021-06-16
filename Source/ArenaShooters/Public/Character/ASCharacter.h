@@ -50,6 +50,8 @@ protected:
 	void Sprint();
 	void SprintEnd();
 	void ToggleCrouch();
+	void SelectMainWeapon();
+	void SelectSubWeapon();
 
 	UFUNCTION(Server, Reliable)
 	void ServerSprint();
@@ -71,6 +73,14 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetTurnRateValue(float NewTurnRateValue);
 	void ServerSetTurnRateValue_Implementation(float NewTurnRateValue);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSelectMainWeapon();
+	void ServerSelectMainWeapon_Implementation();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSelectSubWeapon();
+	void ServerSelectSubWeapon_Implementation();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))

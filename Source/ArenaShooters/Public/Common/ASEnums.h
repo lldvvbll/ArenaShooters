@@ -51,10 +51,17 @@ enum class EArmorType : uint8
 };
 
 UENUM(BlueprintType)
-enum class EEquipmentSlotType : uint8
+enum class EWeaponSlotType : uint8
 {
-	MainWeapon,
-	SubWeapon,
+	Main,
+	Sub,
+
+	SlotNum,	// => Invalid Slot Type
+};
+
+UENUM(BlueprintType)
+enum class EArmorSlotType : uint8
+{
 	Helmet,
 	Jacket,
 

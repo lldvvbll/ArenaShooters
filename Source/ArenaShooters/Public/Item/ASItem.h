@@ -22,6 +22,8 @@ public:
 	void SetDataAsset(UASItemDataAsset* NewDataAsset);
 	const UASItemDataAsset* GetDataAsset() const;
 
+	EItemType GetItemType() const;
+
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	UASItemDataAsset* DataAsset;

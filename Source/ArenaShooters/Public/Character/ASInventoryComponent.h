@@ -27,17 +27,25 @@ public:
 	void CreateTestItem();
 	const EWeaponType GetWeaponType() const;
 
-	ItemBoolPair GetItemFromEquipmentSlot(EEquipmentSlotType SlotType);
-	ConstItemBoolPair GetItemFromEquipmentSlot(EEquipmentSlotType SlotType) const;
-	ItemBoolPair SetItemToEquipmentSlot(EEquipmentSlotType SlotType, UASItem* NewItem);
-	ItemBoolPair RemoveItemFromEquipmentSlot(EEquipmentSlotType SlotType);
+	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);
+	ConstItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType) const;
+	ItemBoolPair SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem);
+	ItemBoolPair RemoveItemFromWeaponSlot(EWeaponSlotType SlotType);
 
-private:
-	int32 ConvertToIndex(EEquipmentSlotType SlotType) const;
+	ItemBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType);
+	ConstItemBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType) const;
+	ItemBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
+	ItemBoolPair RemoveItemFromArmorSlot(EArmorSlotType SlotType);
 
 private:
 	UPROPERTY(Replicated)
-	TArray<UASItem*> EquipmentSlots;
+	TArray<UASItem*> WeaponSlots;
+
+	UPROPERTY(Replicated)
+	TArray<UASItem*> ArmorSlots;
+
+	UPROPERTY(Replicated)
+	EWeaponSlotType SelectedWeaponSlotType;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestWeaponAssetId;

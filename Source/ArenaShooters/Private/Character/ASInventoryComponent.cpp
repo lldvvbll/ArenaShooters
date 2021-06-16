@@ -19,7 +19,10 @@ UASInventoryComponent::UASInventoryComponent()
 {
 	//PrimaryComponentTick.bCanEverTick = true;
 
-	EquipmentSlots.SetNumZeroed(ConvertToIndex(EEquipmentSlotType::SlotNum));
+	WeaponSlots.SetNumZeroed(static_cast<int32>(EWeaponSlotType::SlotNum));
+	ArmorSlots.SetNumZeroed(static_cast<int32>(EArmorSlotType::SlotNum));
+
+	SelectedWeaponSlotType = EWeaponSlotType::SlotNum;
 
 	SetIsReplicatedByDefault(true);
 }
@@ -28,14 +31,22 @@ bool UASInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunc
 {
 	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 	
-	for (auto& SlotItem : EquipmentSlots)
+	for (auto& SlotItem : WeaponSlots)
 	{
 		if (SlotItem != nullptr && !SlotItem->IsPendingKill())
 		{
 			WroteSomething |= Channel->ReplicateSubobject(SlotItem, *Bunch, *RepFlags);
 		}
 	}
-		
+
+	for (auto& SlotItem : ArmorSlots)
+	{
+		if (SlotItem != nullptr && !SlotItem->IsPendingKill())
+		{
+			WroteSomething |= Channel->ReplicateSubobject(SlotItem, *Bunch, *RepFlags);
+		}
+	}
+
 	return WroteSomething;
 }
 
@@ -43,7 +54,9 @@ void UASInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UASInventoryComponent, EquipmentSlots);
+	DOREPLIFETIME(UASInventoryComponent, WeaponSlots);
+	DOREPLIFETIME(UASInventoryComponent, ArmorSlots);
+	DOREPLIFETIME(UASInventoryComponent, SelectedWeaponSlotType);
 }
 
 void UASInventoryComponent::CreateTestItem()
@@ -52,8 +65,8 @@ void UASInventoryComponent::CreateTestItem()
 	{
 		if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(TestWeaponAssetId))
 		{
-			EEquipmentSlotType SlotType = EEquipmentSlotType::MainWeapon;
-			if (SetItemToEquipmentSlot(SlotType, UASWeapon::CreateFromDataAsset(this, WeaponDataAsset)).Value)
+			EWeaponSlotType SlotType = EWeaponSlotType::Main;
+			if (SetItemToWeaponSlot(SlotType, UASWeapon::CreateFromDataAsset(this, WeaponDataAsset)).Value)
 			{
 				if (auto WeaponActor = GetWorld()->SpawnActor<AASWeaponActor>(WeaponDataAsset->ASWeaponActorClass))
 				{
@@ -77,8 +90,8 @@ void UASInventoryComponent::CreateTestItem()
 
 		if (auto ArmorDataAsset = UASAssetManager::Get().GetDataAsset<UASArmorDataAsset>(TestArmorAssetId))
 		{
-			EEquipmentSlotType SlotType = EEquipmentSlotType::Helmet;
-			if (SetItemToEquipmentSlot(SlotType, UASArmor::CreateFromDataAsset(this, ArmorDataAsset)).Value)
+			EArmorSlotType SlotType = EArmorSlotType::Helmet;
+			if (SetItemToArmorSlot(SlotType, UASArmor::CreateFromDataAsset(this, ArmorDataAsset)).Value)
 			{
 				if (auto ArmorActor = GetWorld()->SpawnActor<AASArmorActor>(ArmorDataAsset->ASArmorActorClass))
 				{
@@ -104,7 +117,7 @@ void UASInventoryComponent::CreateTestItem()
 
 const EWeaponType UASInventoryComponent::GetWeaponType() const
 {
-	auto ItemPair = GetItemFromEquipmentSlot(EEquipmentSlotType::MainWeapon);
+	auto ItemPair = GetItemFromWeaponSlot(EWeaponSlotType::Main);
 	if (!ItemPair.Value)
 	{
 		AS_LOG_S(Error);
@@ -115,58 +128,182 @@ const EWeaponType UASInventoryComponent::GetWeaponType() const
 	return (Item != nullptr) ? Item->GetWeaponType() : EWeaponType::None;
 }
 
-TPair<UASItem*, bool> UASInventoryComponent::GetItemFromEquipmentSlot(EEquipmentSlotType SlotType)
+TPair<UASItem*, bool> UASInventoryComponent::GetItemFromWeaponSlot(EWeaponSlotType SlotType)
 {
-	if (SlotType == EEquipmentSlotType::SlotNum)
+	 ItemBoolPair ResultPair(nullptr, false);
+
+	if (SlotType != EWeaponSlotType::SlotNum)
+	{
+		ResultPair.Key = WeaponSlots[static_cast<int32>(SlotType)];
+		ResultPair.Value = true;
+	}
+	else
 	{
 		AS_LOG_S(Error);
-		return ItemBoolPair(nullptr, false);
 	}
 
-	return ItemBoolPair(EquipmentSlots[ConvertToIndex(SlotType)], true);
+	return ResultPair;
 }
 
-TPair<const UASItem*, bool> UASInventoryComponent::GetItemFromEquipmentSlot(EEquipmentSlotType SlotType) const
+TPair<const UASItem*, bool> UASInventoryComponent::GetItemFromWeaponSlot(EWeaponSlotType SlotType) const
 {
-	if (SlotType == EEquipmentSlotType::SlotNum)
+	ConstItemBoolPair ResultPair(nullptr, false);
+
+	if (SlotType != EWeaponSlotType::SlotNum)
+	{
+		ResultPair.Key = WeaponSlots[static_cast<int32>(SlotType)];
+		ResultPair.Value = true;
+	}
+	else
 	{
 		AS_LOG_S(Error);
-		return ConstItemBoolPair(nullptr, false);
 	}
 
-	return ConstItemBoolPair(EquipmentSlots[ConvertToIndex(SlotType)], true);
+	return ResultPair;
 }
 
-TPair<UASItem*, bool> UASInventoryComponent::SetItemToEquipmentSlot(EEquipmentSlotType SlotType, UASItem* NewItem)
+TPair<UASItem*, bool> UASInventoryComponent::SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem)
 {
-	if (SlotType == EEquipmentSlotType::SlotNum || NewItem == nullptr)
+	ItemBoolPair ResultPair(nullptr, false);
+
+	if (SlotType != EWeaponSlotType::SlotNum)
+	{
+		if (NewItem != nullptr && NewItem->GetItemType() == EItemType::Weapon)
+		{
+			int32 Idx = static_cast<int32>(SlotType);
+			if (WeaponSlots[Idx] == nullptr)
+			{
+				WeaponSlots[Idx] = NewItem;
+
+				ResultPair.Key = WeaponSlots[Idx];
+				ResultPair.Value = true;
+			}
+			else
+			{
+				ResultPair.Key = WeaponSlots[Idx];
+				ResultPair.Value = false;
+			}
+		}
+		else
+		{
+			AS_LOG_S(Error);
+		}
+	}
+	else
 	{
 		AS_LOG_S(Error);
-		return ItemBoolPair(nullptr, false);
 	}
 
-	int32 Idx = ConvertToIndex(SlotType);
-	if (EquipmentSlots[Idx] != nullptr)
-		return ItemBoolPair(EquipmentSlots[Idx], false);
-
-	EquipmentSlots[Idx] = NewItem;
-	return ItemBoolPair(EquipmentSlots[Idx], true);
+	return ResultPair;
 }
 
-TPair<UASItem*, bool> UASInventoryComponent::RemoveItemFromEquipmentSlot(EEquipmentSlotType SlotType)
+TPair<UASItem*, bool> UASInventoryComponent::RemoveItemFromWeaponSlot(EWeaponSlotType SlotType)
 {
-	auto ItemPair = GetItemFromEquipmentSlot(SlotType);
-	if (!ItemPair.Value)
+	ItemBoolPair ResultPair(nullptr, false);
+
+	if (SlotType != EWeaponSlotType::SlotNum)
+	{
+		int32 Idx = static_cast<int32>(SlotType);
+
+		ResultPair.Key = WeaponSlots[Idx];
+		ResultPair.Value = true;
+
+		WeaponSlots[Idx] = nullptr;
+	}
+	else
 	{
 		AS_LOG_S(Error);
-		return ItemBoolPair(nullptr, false);
 	}
 
-	EquipmentSlots[ConvertToIndex(SlotType)] = nullptr;
-	return ItemBoolPair(ItemPair.Key, true);
+	return ResultPair;
 }
 
-int32 UASInventoryComponent::ConvertToIndex(EEquipmentSlotType SlotType) const
+TPair<UASItem*, bool> UASInventoryComponent::GetItemFromArmorSlot(EArmorSlotType SlotType)
 {
-	return static_cast<int32>(SlotType);
+	ItemBoolPair ResultPair(nullptr, false);
+
+	if (SlotType != EArmorSlotType::SlotNum)
+	{
+		ResultPair.Key = ArmorSlots[static_cast<int32>(SlotType)];
+		ResultPair.Value = true;
+	}
+	else
+	{
+		AS_LOG_S(Error);
+	}
+
+	return ResultPair;
+}
+
+TPair<const UASItem*, bool> UASInventoryComponent::GetItemFromArmorSlot(EArmorSlotType SlotType) const
+{
+	ConstItemBoolPair ResultPair(nullptr, false);
+
+	if (SlotType != EArmorSlotType::SlotNum)
+	{
+		ResultPair.Key = ArmorSlots[static_cast<int32>(SlotType)];
+		ResultPair.Value = true;
+	}
+	else
+	{
+		AS_LOG_S(Error);
+	}
+
+	return ResultPair;
+}
+
+TPair<UASItem*, bool> UASInventoryComponent::SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem)
+{
+	ItemBoolPair ResultPair(nullptr, false);
+
+	if (SlotType != EArmorSlotType::SlotNum)
+	{
+		if (NewItem != nullptr && NewItem->GetItemType() == EItemType::Armor)
+		{
+			int32 Idx = static_cast<int32>(SlotType);
+			if (ArmorSlots[Idx] == nullptr)
+			{
+				ArmorSlots[Idx] = NewItem;
+
+				ResultPair.Key = ArmorSlots[Idx];
+				ResultPair.Value = true;
+			}
+			else
+			{
+				ResultPair.Key = ArmorSlots[Idx];
+				ResultPair.Value = false;
+			}
+		}
+		else
+		{
+			AS_LOG_S(Error);
+		}
+	}
+	else
+	{
+		AS_LOG_S(Error);
+	}
+
+	return ResultPair;
+}
+
+TPair<UASItem*, bool> UASInventoryComponent::RemoveItemFromArmorSlot(EArmorSlotType SlotType)
+{
+	ItemBoolPair ResultPair(nullptr, false);
+
+	if (SlotType != EArmorSlotType::SlotNum)
+	{
+		int32 Idx = static_cast<int32>(SlotType);
+
+		ResultPair.Key = ArmorSlots[Idx];
+		ResultPair.Value = true;
+
+		ArmorSlots[Idx] = nullptr;
+	}
+	else
+	{
+		AS_LOG_S(Error);
+	}
+
+	return ResultPair;
 }

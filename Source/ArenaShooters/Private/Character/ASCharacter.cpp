@@ -116,6 +116,8 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AASCharacter::Sprint);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AASCharacter::SprintEnd);
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AASCharacter::ToggleCrouch);
+	PlayerInputComponent->BindAction("SelectMainWeapon", IE_Pressed, this, &AASCharacter::SelectMainWeapon);
+	PlayerInputComponent->BindAction("SelectSubWeapon", IE_Pressed, this, &AASCharacter::SelectSubWeapon);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AASCharacter::MoveRight);
@@ -222,6 +224,18 @@ void AASCharacter::ToggleCrouch()
 	}
 }
 
+void AASCharacter::SelectMainWeapon()
+{
+	if (ASInventory != nullptr)
+
+	ServerSelectMainWeapon();
+}
+
+void AASCharacter::SelectSubWeapon()
+{
+	ServerSelectSubWeapon();
+}
+
 void AASCharacter::ServerSprint_Implementation()
 {
 	SetMaxWalkSpeedRate(SprintSpeedRate);
@@ -260,4 +274,14 @@ void AASCharacter::ServerSetTurnValue_Implementation(float NewTurnValue)
 void AASCharacter::ServerSetTurnRateValue_Implementation(float NewTurnRateValue)
 {
 	TurnRateValue = NewTurnRateValue;
+}
+
+void AASCharacter::ServerSelectMainWeapon_Implementation()
+{
+
+}
+
+void AASCharacter::ServerSelectSubWeapon_Implementation()
+{
+
 }
