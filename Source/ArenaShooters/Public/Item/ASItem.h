@@ -22,8 +22,6 @@ public:
 	void SetDataAsset(UASItemDataAsset* NewDataAsset);
 	const UASItemDataAsset* GetDataAsset() const;
 
-	virtual EEquipmentSlotType GetEquipmentSlotType() const;
-
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	UASItemDataAsset* DataAsset;

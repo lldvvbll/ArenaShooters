@@ -7,9 +7,13 @@
 #include "Engine/ActorChannel.h"
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
+#include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
 #include "Character/ASCharacter.h"
 #include "Item/ASItem.h"
+#include "Item/ASWeapon.h"
+#include "Item/ASArmor.h"
 #include "ItemActor/ASWeaponActor.h"
+#include "ItemActor/ASArmorActor.h"
 
 UASInventoryComponent::UASInventoryComponent()
 {
@@ -46,12 +50,12 @@ void UASInventoryComponent::CreateTestItem()
 {
 	if (GetOwner()->HasAuthority())
 	{
-		if (auto DataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(TestItemAssetId))
+		if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(TestWeaponAssetId))
 		{
-			EEquipmentSlotType SlotType = DataAsset->GetEquipmentSlotType();
-			if (SetItemToEquipmentSlot(SlotType, UASWeapon::CreateFromDataAsset(this, DataAsset)).Value)
+			EEquipmentSlotType SlotType = EEquipmentSlotType::MainWeapon;
+			if (SetItemToEquipmentSlot(SlotType, UASWeapon::CreateFromDataAsset(this, WeaponDataAsset)).Value)
 			{
-				if (auto WeaponActor = GetWorld()->SpawnActor<AASWeaponActor>(DataAsset->ASWeaponActorClass))
+				if (auto WeaponActor = GetWorld()->SpawnActor<AASWeaponActor>(WeaponDataAsset->ASWeaponActorClass))
 				{
 					if (auto Owner = Cast<AASCharacter>(GetOwner()))
 					{
@@ -67,6 +71,31 @@ void UASInventoryComponent::CreateTestItem()
 				else
 				{
 					AS_LOG(Warning, TEXT("WeaponActor == nullptr"));
+				}
+			}
+		}
+
+		if (auto ArmorDataAsset = UASAssetManager::Get().GetDataAsset<UASArmorDataAsset>(TestArmorAssetId))
+		{
+			EEquipmentSlotType SlotType = EEquipmentSlotType::Helmet;
+			if (SetItemToEquipmentSlot(SlotType, UASArmor::CreateFromDataAsset(this, ArmorDataAsset)).Value)
+			{
+				if (auto ArmorActor = GetWorld()->SpawnActor<AASArmorActor>(ArmorDataAsset->ASArmorActorClass))
+				{
+					if (auto Owner = Cast<AASCharacter>(GetOwner()))
+					{
+						Owner->SetHelmetMesh(ArmorActor);
+						ArmorActor->SetOwner(Owner);
+						ArmorActor->AttachToComponent(Owner->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, FName(TEXT("head_Helmet_socket")));
+					}
+					else
+					{
+						AS_LOG(Warning, TEXT("Owner == nullptr"));
+					}
+				}
+				else
+				{
+					AS_LOG(Warning, TEXT("ArmorActor == nullptr"));
 				}
 			}
 		}

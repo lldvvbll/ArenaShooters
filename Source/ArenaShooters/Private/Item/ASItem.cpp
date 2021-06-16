@@ -21,11 +21,6 @@ void UASItem::SetDataAsset(UASItemDataAsset* NewDataAsset)
 	DataAsset = NewDataAsset;
 }
 
-EEquipmentSlotType UASItem::GetEquipmentSlotType() const
-{
-	return EEquipmentSlotType::SlotNum;
-}
-
 const UASItemDataAsset* UASItem::GetDataAsset() const
 {
 	return DataAsset;

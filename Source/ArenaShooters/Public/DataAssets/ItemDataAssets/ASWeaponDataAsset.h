@@ -17,8 +17,6 @@ class ARENASHOOTERS_API UASWeaponDataAsset : public UASItemDataAsset
 public:
 	UASWeaponDataAsset();
 
-	EEquipmentSlotType GetEquipmentSlotType() const;
-
 public:
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;

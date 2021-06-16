@@ -40,5 +40,8 @@ private:
 	TArray<UASItem*> EquipmentSlots;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
-	FPrimaryAssetId TestItemAssetId;
+	FPrimaryAssetId TestWeaponAssetId;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
+	FPrimaryAssetId TestArmorAssetId;
 };

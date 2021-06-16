@@ -16,5 +16,5 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
-	USkeletalMeshComponent* SkeletalMesh;
+	USkeletalMeshComponent* WeaponMesh;
 };

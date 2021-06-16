@@ -12,6 +12,7 @@ class UCameraComponent;
 class UASActionComponent;
 class UASInventoryComponent;
 class AASWeaponActor;
+class AASArmorActor;
 
 UCLASS()
 class ARENASHOOTERS_API AASCharacter : public ACharacter
@@ -32,7 +33,9 @@ public:
 
 	EWeaponType GetCurrentWeaponType() const;
 
+	//	Dummy
 	void SetWeaponActor(AASWeaponActor* NewWeaponActor) { WeaponActor = NewWeaponActor; }
+	void SetHelmetMesh(AASArmorActor* NewHelmetActor) { HelmetActor = NewHelmetActor; }
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -81,7 +84,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Inventory, Meta = (AllowPrivateAccess = true))
 	UASInventoryComponent* ASInventory;
-
+	
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseTurnRate;
 
@@ -100,7 +103,11 @@ private:
 	UPROPERTY(Replicated)
 	float TurnRateValue;
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category = Weapon, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(Replicated, VisibleAnywhere, Category = Equipment, Meta = (AllowPrivateAccess = true))
 	AASWeaponActor* WeaponActor;
+
+	UPROPERTY(Replicated, VisibleAnywhere, Category = Equipment, Meta = (AllowPrivateAccess = true))
+	AASArmorActor* HelmetActor;
+
 };
 

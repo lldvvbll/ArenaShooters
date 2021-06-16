@@ -9,8 +9,10 @@ AASWeaponActor::AASWeaponActor()
 	PrimaryActorTick.bCanEverTick = false;
 	SetCanBeDamaged(false);
 
-	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
-	RootComponent = SkeletalMesh;
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
+	WeaponMesh->SetCollisionProfileName(TEXT("NoCollision"));
+
+	RootComponent = WeaponMesh;
 
 	bReplicates = true;
 }

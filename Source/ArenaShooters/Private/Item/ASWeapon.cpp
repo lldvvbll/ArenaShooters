@@ -3,7 +3,6 @@
 
 #include "Item/ASWeapon.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
-#include "Net/UnrealNetwork.h"
 
 UASWeapon* UASWeapon::CreateFromDataAsset(UObject* Owner, UASWeaponDataAsset* DataAsset)
 {
@@ -16,30 +15,10 @@ UASWeapon* UASWeapon::CreateFromDataAsset(UObject* Owner, UASWeaponDataAsset* Da
 	return NewItem;
 }
 
-void UASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-}
-
-EEquipmentSlotType UASWeapon::GetEquipmentSlotType() const
-{
-	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
-	if (WeaponDA == nullptr)
-	{
-		AS_LOG_S(Warning);
-	}
-
-	return (WeaponDA != nullptr) ? WeaponDA->GetEquipmentSlotType() : EEquipmentSlotType::SlotNum;
-}
-
 const EWeaponType UASWeapon::GetWeaponType() const
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
-	if (WeaponDA == nullptr)
-	{
-		AS_LOG_S(Warning);
-	}
+	check(WeaponDA);
 
-	return (WeaponDA != nullptr) ? WeaponDA->WeaponType : EWeaponType::None;
+	return WeaponDA->WeaponType;
 }

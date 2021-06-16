@@ -4,6 +4,7 @@
 #include "ASAssetManager.h"
 
 const FPrimaryAssetType	UASAssetManager::WeaponAssetType = TEXT("Weapon");
+const FPrimaryAssetType	UASAssetManager::ArmorAssetType = TEXT("Armor");
 
 UASAssetManager& UASAssetManager::Get()
 {

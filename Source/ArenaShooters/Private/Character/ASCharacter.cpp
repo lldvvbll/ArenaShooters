@@ -57,6 +57,7 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	// Dummy
 	DOREPLIFETIME(AASCharacter, WeaponActor);
+	DOREPLIFETIME(AASCharacter, HelmetActor);
 }
 
 void AASCharacter::Jump()
