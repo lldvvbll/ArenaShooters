@@ -33,7 +33,7 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bCrouched = ASChar->bIsCrouched;
 	bSprinted = ASChar->IsSprinted();
 	TurnValue = ASChar->GetTotalTurnValue();
-	CurrentWeaponType = ASChar->GetCurrentWeaponType();
+	CurrentWeaponType = ASChar->GetUsingWeaponType();
 }
 
 void UASAnimInstance::NativeBeginPlay()

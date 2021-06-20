@@ -7,6 +7,7 @@
 AASWeaponActor::AASWeaponActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 	SetCanBeDamaged(false);
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
@@ -14,5 +15,4 @@ AASWeaponActor::AASWeaponActor()
 
 	RootComponent = WeaponMesh;
 
-	bReplicates = true;
 }

@@ -8,6 +8,7 @@
 #include "ASArmor.generated.h"
 
 class UASArmorDataAsset;
+class AASArmorActor;
 
 UCLASS()
 class ARENASHOOTERS_API UASArmor : public UASItem
@@ -17,5 +18,15 @@ class ARENASHOOTERS_API UASArmor : public UASItem
 public:
 	static UASArmor* CreateFromDataAsset(UObject* Owner, UASArmorDataAsset* DataAsset);
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	const EArmorType GetArmorType() const;
+	bool IsEnableToEquip(EArmorSlotType SlotType) const;
+
+	TWeakObjectPtr<AASArmorActor>& GetActor();
+	const TWeakObjectPtr<AASArmorActor>& GetActor() const;
+
+protected:
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TWeakObjectPtr<AASArmorActor> ASArmorActor;
 };

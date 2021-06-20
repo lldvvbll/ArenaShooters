@@ -10,9 +10,18 @@
 #include "Character/ASActionComponent.h"
 #include "Character/ASInventoryComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "ASAssetManager.h"
+#include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
+#include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
+#include "Item/ASWeapon.h"
+#include "Item/ASArmor.h"
+#include "ItemActor/ASWeaponActor.h"
+#include "ItemActor/ASArmorActor.h"
 
 AASCharacter::AASCharacter()
 {
+	bReplicates = true;
+
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.0f;	
@@ -43,8 +52,6 @@ AASCharacter::AASCharacter()
 	CharMoveComp->bCanWalkOffLedgesWhenCrouching = true;
 	//CharMoveComp->bUseControllerDesiredRotation = true;
 	//CharMoveComp->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-
-	bReplicates = true;
 }
 
 void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -54,10 +61,6 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AASCharacter, bSprinted);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnValue, COND_SimulatedOnly);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnRateValue, COND_SimulatedOnly);
-
-	// Dummy
-	DOREPLIFETIME(AASCharacter, WeaponActor);
-	DOREPLIFETIME(AASCharacter, HelmetActor);
 }
 
 void AASCharacter::Jump()
@@ -103,9 +106,9 @@ float AASCharacter::GetTotalTurnValue() const
 	return TurnValue + TurnRateValue;
 }
 
-EWeaponType AASCharacter::GetCurrentWeaponType() const
+EWeaponType AASCharacter::GetUsingWeaponType() const
 {
-	return ASInventory->GetWeaponType();
+	return ASInventory->GetSelectedWeaponType();
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -226,22 +229,18 @@ void AASCharacter::ToggleCrouch()
 
 void AASCharacter::SelectMainWeapon()
 {
-	if (ASInventory != nullptr)
-
-	ServerSelectMainWeapon();
+	ServerSelectWeapon(EWeaponSlotType::Main);
 }
 
 void AASCharacter::SelectSubWeapon()
 {
-	ServerSelectSubWeapon();
+	ServerSelectWeapon(EWeaponSlotType::Sub);
 }
 
 void AASCharacter::ServerSprint_Implementation()
 {
 	SetMaxWalkSpeedRate(SprintSpeedRate);
 	bSprinted = true;
-
-	ASInventory->CreateTestItem();
 }
 
 void AASCharacter::ServerSpintEnd_Implementation()
@@ -276,12 +275,33 @@ void AASCharacter::ServerSetTurnRateValue_Implementation(float NewTurnRateValue)
 	TurnRateValue = NewTurnRateValue;
 }
 
-void AASCharacter::ServerSelectMainWeapon_Implementation()
+void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotType)
 {
+	if (ASInventory == nullptr)
+		return;
 
-}
+	ConstItemPtrBoolPair ResultPair = ASInventory->FindItemFromWeaponSlot(WeaponSlotType);
+	if (!ResultPair.Value)
+		return;
 
-void AASCharacter::ServerSelectSubWeapon_Implementation()
-{
+	if (ResultPair.Key != nullptr)
+	{
+		ASInventory->SelectWeapon(WeaponSlotType);
+	}
+	else
+	{
+		FPrimaryAssetId& WeaponAssetId = (WeaponSlotType == EWeaponSlotType::Main) ? TestARAssetId : TestPistolAssetId;
 
+		if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(WeaponAssetId))
+		{
+			UASItem* OldWeapon = nullptr;
+			if (ASInventory->InsertWeapon(WeaponSlotType, UASWeapon::CreateFromDataAsset(this, WeaponDataAsset), OldWeapon))
+			{
+				if (OldWeapon != nullptr)
+				{
+					AS_LOG_S(Error);
+				}
+			}
+		}
+	}
 }

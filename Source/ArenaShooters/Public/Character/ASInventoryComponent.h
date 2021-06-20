@@ -8,15 +8,20 @@
 #include "ASInventoryComponent.generated.h"
 
 class UASItem;
+class UASWeapon;
+class UASArmor;
+class UASWeaponDataAsset;
+class UASArmorDataAsset;
+class AASWeaponActor;
+class AASArmorActor;
+
+using ItemBoolPair = TPair<UASItem*, bool>;
+using ConstItemPtrBoolPair = TPair<TWeakObjectPtr<const UASItem>, bool>;
 
 UCLASS()
 class ARENASHOOTERS_API UASInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
-
-public:
-	using ItemBoolPair = TPair<UASItem*, bool>;
-	using ConstItemBoolPair = TPair<const UASItem*, bool>;
 
 public:	
 	UASInventoryComponent();
@@ -24,18 +29,48 @@ public:
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	void CreateTestItem();
-	const EWeaponType GetWeaponType() const;
+	const EWeaponType GetSelectedWeaponType() const;
 
-	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);
-	ConstItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType) const;
-	ItemBoolPair SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem);
+	bool InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem);
+	bool InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem);
+
+	void SelectWeapon(EWeaponSlotType SlotType);
+
+	ConstItemPtrBoolPair FindItemFromWeaponSlot(EWeaponSlotType SlotType) const;
+	ConstItemPtrBoolPair SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromWeaponSlot(EWeaponSlotType SlotType);
 
-	ItemBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType);
-	ConstItemBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType) const;
-	ItemBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
+	ConstItemPtrBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType) const;
+	ConstItemPtrBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromArmorSlot(EArmorSlotType SlotType);
+
+private:
+	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);
+	ItemBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType);
+
+	void OnWeaponInserted(EWeaponSlotType SlotType, UASWeapon* InsertedWeapon);
+	void OnArmorInserted(EArmorSlotType SlotType, UASArmor* InsertedArmor);
+	void OnWeaponRemoved(EWeaponSlotType SlotType, UASWeapon* RemovedWeapon);
+	void OnArmorRemoved(UASArmor* RemovedArmor);
+	void OnSelectedWeaponChanged(UASWeapon* OldWeapon, UASWeapon* NewWeapon);
+
+	void SpawnWeaponActor(UASWeapon& Weapon, const FName& AttachSocket);
+	void SpawnArmorActor(UASArmor& Armor, const FName& AttachSocket);
+
+	EWeaponSlotType GetWeaponSlotTypeFromWeapon(UASWeapon* InWeapon);
+
+public:
+	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnEquipWeaponEvent, EWeaponSlotType, UASWeapon*);
+	FOnEquipWeaponEvent OnEquipWeapon;
+
+	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnEquipArmorEvent, EArmorSlotType, UASArmor*);
+	FOnEquipArmorEvent OnEquipArmor;
+
+	static const FName UsingWeaponSocketName;
+	static const FName BackSocketName;
+	static const FName SideSocketName;
+	static const FName HelmetSocketName;
+	static const FName JacketSocketName;
 
 private:
 	UPROPERTY(Replicated)
@@ -45,11 +80,5 @@ private:
 	TArray<UASItem*> ArmorSlots;
 
 	UPROPERTY(Replicated)
-	EWeaponSlotType SelectedWeaponSlotType;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
-	FPrimaryAssetId TestWeaponAssetId;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
-	FPrimaryAssetId TestArmorAssetId;
+	TWeakObjectPtr<UASWeapon> SelectedWeapon;
 };

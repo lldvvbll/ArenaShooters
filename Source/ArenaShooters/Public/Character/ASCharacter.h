@@ -11,6 +11,8 @@ class USpringArmComponent;
 class UCameraComponent;
 class UASActionComponent;
 class UASInventoryComponent;
+class UASWeapon;
+class UASArmor;
 class AASWeaponActor;
 class AASArmorActor;
 
@@ -31,11 +33,7 @@ public:
 	bool IsSprinted() const;
 	float GetTotalTurnValue() const;
 
-	EWeaponType GetCurrentWeaponType() const;
-
-	//	Dummy
-	void SetWeaponActor(AASWeaponActor* NewWeaponActor) { WeaponActor = NewWeaponActor; }
-	void SetHelmetMesh(AASArmorActor* NewHelmetActor) { HelmetActor = NewHelmetActor; }
+	EWeaponType GetUsingWeaponType() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -75,12 +73,9 @@ protected:
 	void ServerSetTurnRateValue_Implementation(float NewTurnRateValue);
 
 	UFUNCTION(Server, Reliable)
-	void ServerSelectMainWeapon();
-	void ServerSelectMainWeapon_Implementation();
+	void ServerSelectWeapon(EWeaponSlotType WeaponSlotType);
+	void ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotType);
 
-	UFUNCTION(Server, Reliable)
-	void ServerSelectSubWeapon();
-	void ServerSelectSubWeapon_Implementation();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
@@ -113,11 +108,13 @@ private:
 	UPROPERTY(Replicated)
 	float TurnRateValue;
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category = Equipment, Meta = (AllowPrivateAccess = true))
-	AASWeaponActor* WeaponActor;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
+	FPrimaryAssetId TestARAssetId;
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category = Equipment, Meta = (AllowPrivateAccess = true))
-	AASArmorActor* HelmetActor;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
+	FPrimaryAssetId TestPistolAssetId;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
+	FPrimaryAssetId TestArmorAssetId;
 };
 

@@ -17,6 +17,8 @@ class ARENASHOOTERS_API UASWeaponDataAsset : public UASItemDataAsset
 public:
 	UASWeaponDataAsset();
 
+	bool IsEnableToEquip(EWeaponSlotType SlotType) const;
+
 public:
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
