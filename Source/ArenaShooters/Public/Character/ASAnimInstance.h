@@ -20,6 +20,9 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeBeginPlay() override;
 
+	UFUNCTION(BlueprintPure, Meta = (BlueprintThreadSafe))
+	bool IsActualSprinted() const;
+
 private:
 	UPROPERTY()
 	AASCharacter* ASChar;
@@ -53,4 +56,13 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	EWeaponType CurrentWeaponType;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	bool bAiming;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	float AimYaw;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
+	float AimPitch;
 };

@@ -24,6 +24,7 @@ class ARENASHOOTERS_API AASCharacter : public ACharacter
 public:
 	AASCharacter();
 
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 	virtual void Jump() override;
@@ -32,8 +33,10 @@ public:
 
 	bool IsSprinted() const;
 	float GetTotalTurnValue() const;
-
 	EWeaponType GetUsingWeaponType() const;
+	bool IsAiming() const;
+	FRotator GetAimOffsetRotator() const;
+	bool CanAim() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -48,16 +51,20 @@ protected:
 	void Sprint();
 	void SprintEnd();
 	void ToggleCrouch();
+	void PressedAimButton();
+	void ReleasedAmiButton();
 	void SelectMainWeapon();
 	void SelectSubWeapon();
+
+	void ResetAimKeyState();
 
 	UFUNCTION(Server, Reliable)
 	void ServerSprint();
 	void ServerSprint_Implementation();
 
 	UFUNCTION(Server, Reliable)
-	void ServerSpintEnd();
-	void ServerSpintEnd_Implementation();
+	void ServerSprintEnd();
+	void ServerSprintEnd_Implementation();
 
 	UFUNCTION()
 	void OnRep_bSprinted();
@@ -76,6 +83,12 @@ protected:
 	void ServerSelectWeapon(EWeaponSlotType WeaponSlotType);
 	void ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotType);
 
+	UFUNCTION(Server, Reliable)
+	void ServerAiming(bool bIsAiming);
+	void ServerAiming_Implementation(bool bIsAiming);
+
+	UFUNCTION()
+	void OnRep_bAiming();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
@@ -96,6 +109,18 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseLookUpRate;
 
+	UPROPERTY(EditDefaultsOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
+	FVector NormalCamOffset;
+
+	UPROPERTY(EditDefaultsOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
+	FVector AimingCamOffset;
+
+	UPROPERTY(EditDefaultsOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
+	float NormalCamArmLength;
+
+	UPROPERTY(EditDefaultsOnly, Category = Camera, Meta = (AllowPrivateAccess = true))
+	float AimingCamArmLength;
+
 	UPROPERTY(ReplicatedUsing = OnRep_bSprinted)
 	bool bSprinted;
 
@@ -107,6 +132,21 @@ private:
 
 	UPROPERTY(Replicated)
 	float TurnRateValue;
+
+	bool bPressedAimButton;
+	float AimKeyHoldTime;
+
+	UPROPERTY(ReplicatedUsing = OnRep_bAiming)
+	bool bAiming;
+
+	UPROPERTY(EditDefaultsOnly, Category = Aiming, Meta = (AllowPrivateAccess = true))
+	float MaxAimKeyHoldTime;
+
+	UPROPERTY(Replicated)
+	FRotator AimOffsetRotator;
+
+	UPROPERTY(EditDefaultsOnly, Category = Aiming, Meta = (AllowPrivateAccess = true))
+	float AimingSpeedRate;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

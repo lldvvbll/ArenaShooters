@@ -17,16 +17,26 @@
 #include "Item/ASArmor.h"
 #include "ItemActor/ASWeaponActor.h"
 #include "ItemActor/ASArmorActor.h"
+#include "GameFramework/PlayerInput.h"
 
 AASCharacter::AASCharacter()
 {
 	bReplicates = true;
 
+	BaseTurnRate = 45.f;
+	BaseLookUpRate = 45.f;
+	NormalCamOffset = FVector(0.0f, 50.0f, 100.0f);
+	AimingCamOffset = FVector(0.0f, 50.0f, 80.0f);
+	NormalCamArmLength = 200.0f;
+	AimingCamArmLength = 100.0f;
+	SprintSpeedRate = 1.6f;
+	MaxAimKeyHoldTime = 0.3f;
+
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 300.0f;	
+	CameraBoom->TargetArmLength = NormalCamArmLength;
 	CameraBoom->bUsePawnControlRotation = true;
-	CameraBoom->SocketOffset = FVector(100.0f, 50.0f, 100.0f);
+	CameraBoom->SocketOffset = NormalCamOffset;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -34,10 +44,6 @@ AASCharacter::AASCharacter()
 
 	ASAction = CreateDefaultSubobject<UASActionComponent>(TEXT("ASAction"));
 	ASInventory = CreateDefaultSubobject<UASInventoryComponent>(TEXT("ASInventory"));
-
-	BaseTurnRate = 45.f;
-	BaseLookUpRate = 45.f;
-	SprintSpeedRate = 1.6f;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
@@ -54,6 +60,29 @@ AASCharacter::AASCharacter()
 	//CharMoveComp->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 }
 
+void AASCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bPressedAimButton && CanAim() && IsLocallyControlled())
+	{
+		AimKeyHoldTime += DeltaSeconds;
+		if (AimKeyHoldTime >= MaxAimKeyHoldTime)
+		{
+			ResetAimKeyState();
+			ServerAiming(true);
+		}
+	}
+
+	if (bAiming)
+	{
+		if (IsLocallyControlled() || GetLocalRole() == ROLE_Authority)
+		{
+			AimOffsetRotator = (GetControlRotation() - GetActorRotation()).GetNormalized();
+		}
+	}
+}
+
 void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -61,6 +90,8 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AASCharacter, bSprinted);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnValue, COND_SimulatedOnly);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnRateValue, COND_SimulatedOnly);
+	DOREPLIFETIME(AASCharacter, bAiming);
+	DOREPLIFETIME_CONDITION(AASCharacter, AimOffsetRotator, COND_SimulatedOnly);
 }
 
 void AASCharacter::Jump()
@@ -85,6 +116,11 @@ void AASCharacter::Falling()
 		{
 			UnCrouch(true);
 		}
+
+		if (bAiming)
+		{
+			ServerAiming(false);
+		}
 	}
 }
 
@@ -108,7 +144,22 @@ float AASCharacter::GetTotalTurnValue() const
 
 EWeaponType AASCharacter::GetUsingWeaponType() const
 {
-	return ASInventory->GetSelectedWeaponType();
+	return (ASInventory != nullptr) ? ASInventory->GetSelectedWeaponType() : EWeaponType::None;
+}
+
+bool AASCharacter::IsAiming() const
+{
+	return bAiming;
+}
+
+FRotator AASCharacter::GetAimOffsetRotator() const
+{
+	return AimOffsetRotator;
+}
+
+bool AASCharacter::CanAim() const
+{
+	return (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling();
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -119,6 +170,8 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AASCharacter::Sprint);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AASCharacter::SprintEnd);
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AASCharacter::ToggleCrouch);
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &AASCharacter::PressedAimButton);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &AASCharacter::ReleasedAmiButton);
 	PlayerInputComponent->BindAction("SelectMainWeapon", IE_Pressed, this, &AASCharacter::SelectMainWeapon);
 	PlayerInputComponent->BindAction("SelectSubWeapon", IE_Pressed, this, &AASCharacter::SelectSubWeapon);
 
@@ -164,6 +217,11 @@ void AASCharacter::MoveForward(float Value)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
+		if (bAiming && Value > 0.0f)
+		{
+			Value /= 2.0f;
+		}
+
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -204,12 +262,18 @@ void AASCharacter::LookUpAtRate(float Rate)
 
 void AASCharacter::Sprint()
 {
+	if (bSprinted || bAiming)
+		return;
+
 	ServerSprint();
 }
 
 void AASCharacter::SprintEnd()
 {
-	ServerSpintEnd();
+	if (!bSprinted)
+		return;
+
+	ServerSprintEnd();
 }
 
 void AASCharacter::ToggleCrouch()
@@ -227,6 +291,18 @@ void AASCharacter::ToggleCrouch()
 	}
 }
 
+void AASCharacter::PressedAimButton()
+{
+	bPressedAimButton = true;
+	AimKeyHoldTime = 0.0f;
+}
+
+void AASCharacter::ReleasedAmiButton()
+{
+	ResetAimKeyState();
+	ServerAiming(false);
+}
+
 void AASCharacter::SelectMainWeapon()
 {
 	ServerSelectWeapon(EWeaponSlotType::Main);
@@ -237,14 +313,26 @@ void AASCharacter::SelectSubWeapon()
 	ServerSelectWeapon(EWeaponSlotType::Sub);
 }
 
+void AASCharacter::ResetAimKeyState()
+{
+	bPressedAimButton = false;
+	AimKeyHoldTime = 0.0f;
+}
+
 void AASCharacter::ServerSprint_Implementation()
 {
+	if (bSprinted || bAiming)
+		return;
+
 	SetMaxWalkSpeedRate(SprintSpeedRate);
 	bSprinted = true;
 }
 
-void AASCharacter::ServerSpintEnd_Implementation()
+void AASCharacter::ServerSprintEnd_Implementation()
 {
+	if (!bSprinted)
+		return;
+
 	SetMaxWalkSpeedRate(1.0f);
 	bSprinted = false;
 }
@@ -303,5 +391,49 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 				}
 			}
 		}
+	}
+}
+
+void AASCharacter::ServerAiming_Implementation(bool bIsAiming)
+{
+	if (bAiming == bIsAiming)
+		return;
+
+	if (bIsAiming)
+	{
+		if (!CanAim())
+			return;
+
+		bAiming = true;
+		SetMaxWalkSpeedRate(AimingSpeedRate);
+		ServerSprintEnd_Implementation();
+
+		if (CameraBoom != nullptr)
+		{
+			CameraBoom->TargetArmLength = AimingCamArmLength;
+			CameraBoom->SocketOffset = AimingCamOffset;
+		}
+	}
+	else
+	{
+		bAiming = false;
+		SetMaxWalkSpeedRate(1.0f);
+
+		if (CameraBoom != nullptr)
+		{
+			CameraBoom->TargetArmLength = NormalCamArmLength;
+			CameraBoom->SocketOffset = NormalCamOffset;
+		}
+	}
+}
+
+void AASCharacter::OnRep_bAiming()
+{
+	SetMaxWalkSpeedRate(bAiming ? AimingSpeedRate : 1.0f);
+
+	if (CameraBoom != nullptr)
+	{
+		CameraBoom->TargetArmLength = bAiming ? AimingCamArmLength : NormalCamArmLength;
+		CameraBoom->SocketOffset =  bAiming ? AimingCamOffset : NormalCamOffset;
 	}
 }
