@@ -3,6 +3,7 @@
 #include "ASGameMode.h"
 #include "Character/ASCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "ASPlayerController.h"
 
 AASGameMode::AASGameMode()
 {
@@ -11,4 +12,6 @@ AASGameMode::AASGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
+
+	PlayerControllerClass = AASPlayerController::StaticClass();
 }

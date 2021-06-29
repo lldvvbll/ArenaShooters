@@ -13,6 +13,8 @@ AASWeaponActor::AASWeaponActor()
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetCollisionProfileName(TEXT("NoCollision"));
 
-	RootComponent = WeaponMesh;
+	ScopeCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ScopeCamera"));
 
+	RootComponent = WeaponMesh;
+	ScopeCamera->SetupAttachment(RootComponent);
 }

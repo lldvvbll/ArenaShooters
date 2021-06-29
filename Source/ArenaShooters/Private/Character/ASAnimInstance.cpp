@@ -35,7 +35,8 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	TurnValue = ASChar->GetTotalTurnValue();
 	CurrentWeaponType = ASChar->GetUsingWeaponType();
 	bAiming = ASChar->IsAiming();
-	if (bAiming)
+	bScoping = ASChar->IsScoping();
+	if (bAiming || bScoping)
 	{
 		FRotator AimRot = ASChar->GetAimOffsetRotator();
 		AimYaw = FMath::ClampAngle(AimRot.Yaw, -90.0f, 90.0f);
@@ -55,6 +56,8 @@ void UASAnimInstance::NativeBeginPlay()
 	{
 		MaxWalkSpeedCrouched = MoveComp->MaxWalkSpeedCrouched;
 	}
+
+	bLocallyControlled = ASChar->IsLocallyControlled();
 }
 
 bool UASAnimInstance::IsActualSprinted() const

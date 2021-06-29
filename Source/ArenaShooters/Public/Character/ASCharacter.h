@@ -37,6 +37,7 @@ public:
 	bool IsAiming() const;
 	FRotator GetAimOffsetRotator() const;
 	bool CanAim() const;
+	bool IsScoping() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -89,6 +90,15 @@ protected:
 
 	UFUNCTION()
 	void OnRep_bAiming();
+
+	UFUNCTION(Server, Reliable)
+	void ServerScope(bool bIsScoping);
+	void ServerScope_Implementation(bool bIsScoping);
+
+	UFUNCTION()
+	void OnRep_bScoping();
+
+	void ChangeViewTargetForScope(bool bScope);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
@@ -147,6 +157,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Aiming, Meta = (AllowPrivateAccess = true))
 	float AimingSpeedRate;
+
+	UPROPERTY(ReplicatedUsing = OnRep_bScoping)
+	bool bScoping;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

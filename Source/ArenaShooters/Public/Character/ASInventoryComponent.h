@@ -29,7 +29,9 @@ public:
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	TWeakObjectPtr<UASWeapon> GetSelectedWeapon() const;
 	const EWeaponType GetSelectedWeaponType() const;
+	const EWeaponSlotType GetSelectedWeaponSlotType() const;
 
 	bool InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem);
 	bool InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem);
@@ -58,6 +60,7 @@ private:
 	void SpawnArmorActor(UASArmor& Armor, const FName& AttachSocket);
 
 	EWeaponSlotType GetWeaponSlotTypeFromWeapon(UASWeapon* InWeapon);
+	const FName& GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing) const;
 
 public:
 	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnEquipWeaponEvent, EWeaponSlotType, UASWeapon*);
@@ -67,6 +70,7 @@ public:
 	FOnEquipArmorEvent OnEquipArmor;
 
 	static const FName UsingWeaponSocketName;
+	static const FName UsingWeaponPistolSocketName;
 	static const FName BackSocketName;
 	static const FName SideSocketName;
 	static const FName HelmetSocketName;
@@ -81,4 +85,7 @@ private:
 
 	UPROPERTY(Replicated)
 	TWeakObjectPtr<UASWeapon> SelectedWeapon;
+
+	UPROPERTY(Replicated)
+	EWeaponSlotType SelectedWeaponSlotType;
 };

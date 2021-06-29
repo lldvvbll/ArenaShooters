@@ -17,4 +17,7 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	USkeletalMeshComponent* WeaponMesh;
+
+	UPROPERTY(EditDefaultsOnly)
+	UCameraComponent* ScopeCamera;
 };

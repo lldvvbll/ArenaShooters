@@ -25,9 +25,9 @@ AASCharacter::AASCharacter()
 
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-	NormalCamOffset = FVector(0.0f, 50.0f, 100.0f);
-	AimingCamOffset = FVector(0.0f, 50.0f, 80.0f);
+	NormalCamOffset = FVector(0.0f, 30.0f, 100.0f);
 	NormalCamArmLength = 200.0f;
+	AimingCamOffset = FVector(0.0f, 30.0f, 80.0f);
 	AimingCamArmLength = 100.0f;
 	SprintSpeedRate = 1.6f;
 	MaxAimKeyHoldTime = 0.3f;
@@ -74,7 +74,7 @@ void AASCharacter::Tick(float DeltaSeconds)
 		}
 	}
 
-	if (bAiming)
+	if (bAiming || bScoping)
 	{
 		if (IsLocallyControlled() || GetLocalRole() == ROLE_Authority)
 		{
@@ -91,7 +91,8 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnValue, COND_SimulatedOnly);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnRateValue, COND_SimulatedOnly);
 	DOREPLIFETIME(AASCharacter, bAiming);
-	DOREPLIFETIME_CONDITION(AASCharacter, AimOffsetRotator, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AASCharacter, AimOffsetRotator, COND_SimulatedOnly); 
+	DOREPLIFETIME(AASCharacter, bScoping);
 }
 
 void AASCharacter::Jump()
@@ -120,6 +121,10 @@ void AASCharacter::Falling()
 		if (bAiming)
 		{
 			ServerAiming(false);
+		}
+		if (bScoping)
+		{
+			ServerScope(false);
 		}
 	}
 }
@@ -159,7 +164,12 @@ FRotator AASCharacter::GetAimOffsetRotator() const
 
 bool AASCharacter::CanAim() const
 {
-	return (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling();
+	return !bAiming && !bScoping && (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling();
+}
+
+bool AASCharacter::IsScoping() const
+{
+	return bScoping;
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -217,7 +227,7 @@ void AASCharacter::MoveForward(float Value)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		if (bAiming && Value > 0.0f)
+		if ((bAiming || bScoping) && Value > 0.0f)
 		{
 			Value /= 2.0f;
 		}
@@ -262,7 +272,7 @@ void AASCharacter::LookUpAtRate(float Rate)
 
 void AASCharacter::Sprint()
 {
-	if (bSprinted || bAiming)
+	if (bSprinted || (bAiming || bScoping))
 		return;
 
 	ServerSprint();
@@ -299,17 +309,35 @@ void AASCharacter::PressedAimButton()
 
 void AASCharacter::ReleasedAmiButton()
 {
+	if (!bAiming && bPressedAimButton)
+	{
+		ServerScope(!bScoping);
+	}
+	else
+	{
+		ServerAiming(false);
+	}
+
 	ResetAimKeyState();
-	ServerAiming(false);
 }
 
 void AASCharacter::SelectMainWeapon()
 {
+	if (ASInventory == nullptr)
+		return;
+	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Main)
+		return;
+
 	ServerSelectWeapon(EWeaponSlotType::Main);
 }
 
 void AASCharacter::SelectSubWeapon()
 {
+	if (ASInventory == nullptr)
+		return;
+	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Sub)
+		return;
+
 	ServerSelectWeapon(EWeaponSlotType::Sub);
 }
 
@@ -367,6 +395,17 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 {
 	if (ASInventory == nullptr)
 		return;
+	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType)
+		return;
+
+	if (bAiming)
+	{
+		ServerAiming_Implementation(false);
+	}
+	if (bScoping)
+	{
+		ServerScope_Implementation(false);
+	}
 
 	ConstItemPtrBoolPair ResultPair = ASInventory->FindItemFromWeaponSlot(WeaponSlotType);
 	if (!ResultPair.Value)
@@ -436,4 +475,66 @@ void AASCharacter::OnRep_bAiming()
 		CameraBoom->TargetArmLength = bAiming ? AimingCamArmLength : NormalCamArmLength;
 		CameraBoom->SocketOffset =  bAiming ? AimingCamOffset : NormalCamOffset;
 	}
+}
+
+void AASCharacter::ServerScope_Implementation(bool bIsScoping)
+{
+	if (bScoping == bIsScoping)
+		return;
+
+	if (bIsScoping)
+	{
+		if (!CanAim())
+			return;
+
+		ServerSprintEnd_Implementation();
+
+		bScoping = true;
+		SetMaxWalkSpeedRate(AimingSpeedRate);
+		ChangeViewTargetForScope(true);
+	}
+	else
+	{
+		bScoping = false;
+		SetMaxWalkSpeedRate(1.0f);
+		ChangeViewTargetForScope(false);
+	}
+}
+
+void AASCharacter::OnRep_bScoping()
+{
+	if (bScoping)
+	{
+		SetMaxWalkSpeedRate(AimingSpeedRate);
+	}
+	else
+	{
+		SetMaxWalkSpeedRate(1.0f);
+	}
+}
+
+void AASCharacter::ChangeViewTargetForScope(bool bScope)
+{
+	auto PlayerController = Cast<APlayerController>(Controller);
+	if (PlayerController == nullptr)
+		return;
+
+	if (bScope)
+	{
+		if (ASInventory != nullptr)
+		{
+			TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+			if (SelectedWeapon.IsValid())
+			{
+				if (AASWeaponActor* WeaponActor = SelectedWeapon->GetActor().Get())
+				{
+					PlayerController->SetViewTargetWithBlend(WeaponActor, 0.3f, EViewTargetBlendFunction::VTBlend_EaseOut);
+				}
+			}
+		}
+	}
+	else
+	{
+		PlayerController->SetViewTargetWithBlend(this);
+	}	
 }

@@ -14,6 +14,7 @@
 #include "ItemActor/ASArmorActor.h"
 
 const FName UASInventoryComponent::UsingWeaponSocketName = TEXT("weapon_rhand_socket");
+const FName UASInventoryComponent::UsingWeaponPistolSocketName = TEXT("weapon_rhand_socket_pistol");
 const FName UASInventoryComponent::BackSocketName = TEXT("weapon_back_socket");
 const FName UASInventoryComponent::SideSocketName = TEXT("weapon_side_socekt");
 const FName UASInventoryComponent::HelmetSocketName = TEXT("helmet_socket");
@@ -24,6 +25,7 @@ UASInventoryComponent::UASInventoryComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 
+	SelectedWeaponSlotType = EWeaponSlotType::SlotNum;
 	WeaponSlots.SetNumZeroed(static_cast<int32>(EWeaponSlotType::SlotNum));
 	ArmorSlots.SetNumZeroed(static_cast<int32>(EArmorSlotType::SlotNum));
 }
@@ -58,11 +60,22 @@ void UASInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME(UASInventoryComponent, WeaponSlots);
 	DOREPLIFETIME(UASInventoryComponent, ArmorSlots);
 	DOREPLIFETIME(UASInventoryComponent, SelectedWeapon);
+	DOREPLIFETIME(UASInventoryComponent, SelectedWeaponSlotType);	
+}
+
+TWeakObjectPtr<UASWeapon> UASInventoryComponent::GetSelectedWeapon() const
+{
+	return SelectedWeapon.IsValid() ? SelectedWeapon : TWeakObjectPtr<UASWeapon>();
 }
 
 const EWeaponType UASInventoryComponent::GetSelectedWeaponType() const
 {
 	return SelectedWeapon.IsValid() ? SelectedWeapon->GetWeaponType() : EWeaponType::None;
+}
+
+const EWeaponSlotType UASInventoryComponent::GetSelectedWeaponSlotType() const
+{
+	return SelectedWeaponSlotType;
 }
 
 bool UASInventoryComponent::InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem)
@@ -157,6 +170,7 @@ void UASInventoryComponent::SelectWeapon(EWeaponSlotType SlotType)
 		return;
 
 	SelectedWeapon = NewWeapon;
+	SelectedWeaponSlotType = SlotType;
 	OnSelectedWeaponChanged(OldWeapon, NewWeapon);
 }
 
@@ -366,23 +380,13 @@ void UASInventoryComponent::OnWeaponInserted(EWeaponSlotType SlotType, UASWeapon
 	if (SelectedWeapon.IsValid())
 	{
 		// 이미 들고 있는 무기가 있다.
-		switch (SlotType)
-		{
-		case EWeaponSlotType::Main:
-			SpawnWeaponActor(*InsertedWeapon, BackSocketName);
-			break;
-		case EWeaponSlotType::Sub:
-			SpawnWeaponActor(*InsertedWeapon, SideSocketName);
-			break;
-		default:
-			AS_LOG_S(Error);
-			break;
-		}
+		SpawnWeaponActor(*InsertedWeapon, GetProperWeaponSocketName(InsertedWeapon->GetWeaponType(), false));
 	}
 	else
 	{
-		SpawnWeaponActor(*InsertedWeapon, UsingWeaponSocketName);
+		SpawnWeaponActor(*InsertedWeapon, GetProperWeaponSocketName(InsertedWeapon->GetWeaponType(), true));
 		SelectedWeapon = InsertedWeapon;
+		SelectedWeaponSlotType = SlotType;
 	}
 }
 
@@ -391,12 +395,12 @@ void UASInventoryComponent::OnArmorInserted(EArmorSlotType SlotType, UASArmor* I
 	if (InsertedArmor == nullptr)
 		return;
 
-	switch (SlotType)
+	switch (InsertedArmor->GetArmorType())
 	{
-	case EArmorSlotType::Helmet:
+	case EArmorType::Helmet:
 		SpawnArmorActor(*InsertedArmor, HelmetSocketName);
 		break;
-	case EArmorSlotType::Jacket:
+	case EArmorType::Jacket:
 		SpawnArmorActor(*InsertedArmor, JacketSocketName);
 		break;
 	default:
@@ -407,8 +411,13 @@ void UASInventoryComponent::OnArmorInserted(EArmorSlotType SlotType, UASArmor* I
 
 void UASInventoryComponent::OnWeaponRemoved(EWeaponSlotType SlotType, UASWeapon* RemovedWeapon)
 {
-	if (RemovedWeapon != nullptr)
+	if (SelectedWeaponSlotType == SlotType)
 	{
+		SelectedWeaponSlotType = EWeaponSlotType::SlotNum;
+	}
+
+	if (RemovedWeapon != nullptr)
+	{	
 		if (SelectedWeapon.Get() == RemovedWeapon)
 		{
 			SelectedWeapon.Reset();
@@ -451,21 +460,10 @@ void UASInventoryComponent::OnSelectedWeaponChanged(UASWeapon* OldWeapon, UASWea
 		{
 			OldWeaponActor->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 
-			EWeaponSlotType OldWeaponSlotType = GetWeaponSlotTypeFromWeapon(OldWeapon);
 			if (auto ASChar = Cast<AASCharacter>(GetOwner()))
 			{
-				switch (OldWeaponSlotType)
-				{
-				case EWeaponSlotType::Main:
-					OldWeaponActor->AttachToComponent(ASChar->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, BackSocketName);
-					break;
-				case EWeaponSlotType::Sub:
-					OldWeaponActor->AttachToComponent(ASChar->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, SideSocketName);
-					break;
-				default:
-					AS_LOG_S(Error);
-					break;
-				}				
+				OldWeaponActor->AttachToComponent(ASChar->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform,
+					GetProperWeaponSocketName(OldWeapon->GetWeaponType(), false));
 			}
 		}
 	}
@@ -479,7 +477,8 @@ void UASInventoryComponent::OnSelectedWeaponChanged(UASWeapon* OldWeapon, UASWea
 			
 			if (auto ASChar = Cast<AASCharacter>(GetOwner()))
 			{
-				NewWeaponActor->AttachToComponent(ASChar->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, UsingWeaponSocketName);
+				NewWeaponActor->AttachToComponent(ASChar->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform,
+					GetProperWeaponSocketName(NewWeapon->GetWeaponType(), true));
 			}
 		}
 	}
@@ -562,4 +561,38 @@ EWeaponSlotType UASInventoryComponent::GetWeaponSlotTypeFromWeapon(UASWeapon* In
 	}
 
 	return EWeaponSlotType::SlotNum;
+}
+
+const FName& UASInventoryComponent::GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing) const
+{
+	if (bUsing)
+	{
+		switch (WeaponType)
+		{
+		case EWeaponType::Pistol:
+			return UsingWeaponPistolSocketName;
+		case EWeaponType::AssaultRifle:
+			return UsingWeaponSocketName;
+		default:
+			AS_LOG_S(Error);
+			break;
+		}
+
+		return UsingWeaponSocketName;
+	}
+	else
+	{
+		switch (WeaponType)
+		{
+		case EWeaponType::Pistol:
+			return SideSocketName;
+		case EWeaponType::AssaultRifle:
+			return BackSocketName;
+		default:
+			AS_LOG_S(Error);
+			break;
+		}
+
+		return BackSocketName;
+	}
 }
