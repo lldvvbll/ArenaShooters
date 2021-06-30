@@ -100,6 +100,13 @@ protected:
 
 	void ChangeViewTargetForScope(bool bScope);
 
+public:
+	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
+	FOnScopeEvent OnScopeEvent;
+
+	DECLARE_EVENT(AASCharacter, FOnUnscopeEvent)
+	FOnUnscopeEvent OnUnscopeEvent;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	USpringArmComponent* CameraBoom;

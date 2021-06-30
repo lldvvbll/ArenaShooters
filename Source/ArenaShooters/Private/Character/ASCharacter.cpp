@@ -491,13 +491,20 @@ void AASCharacter::ServerScope_Implementation(bool bIsScoping)
 
 		bScoping = true;
 		SetMaxWalkSpeedRate(AimingSpeedRate);
-		ChangeViewTargetForScope(true);
+
+		TWeakObjectPtr<UASWeapon> SelectedWeapon;
+		if (ASInventory != nullptr)
+		{
+			SelectedWeapon = ASInventory->GetSelectedWeapon();
+		}
+		OnScopeEvent.Broadcast(SelectedWeapon);
 	}
 	else
 	{
 		bScoping = false;
 		SetMaxWalkSpeedRate(1.0f);
-		ChangeViewTargetForScope(false);
+
+		OnUnscopeEvent.Broadcast();
 	}
 }
 
@@ -506,10 +513,18 @@ void AASCharacter::OnRep_bScoping()
 	if (bScoping)
 	{
 		SetMaxWalkSpeedRate(AimingSpeedRate);
+
+		TWeakObjectPtr<UASWeapon> SelectedWeapon;
+		if (ASInventory != nullptr)
+		{
+			SelectedWeapon = ASInventory->GetSelectedWeapon();
+		}
+		OnScopeEvent.Broadcast(SelectedWeapon);
 	}
 	else
 	{
 		SetMaxWalkSpeedRate(1.0f);
+		OnUnscopeEvent.Broadcast();
 	}
 }
 

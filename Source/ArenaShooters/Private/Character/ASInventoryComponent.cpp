@@ -109,7 +109,7 @@ bool UASInventoryComponent::InsertWeapon(EWeaponSlotType SlotType, UASWeapon* Ne
 	}
 
 	Out_OldItem = RemoveResultPair.Key;	
-	OnEquipWeapon.Broadcast(SlotType, Cast<UASWeapon>(RemoveResultPair.Key));
+	OnInsertWeapon.Broadcast(SlotType, Cast<UASWeapon>(RemoveResultPair.Key));
 
 	return true;
 }
@@ -145,7 +145,7 @@ bool UASInventoryComponent::InsertArmor(EArmorSlotType SlotType, UASArmor* NewAr
 	}
 
 	Out_OldItem = RemoveResultPair.Key;
-	OnEquipArmor.Broadcast(SlotType, Cast<UASArmor>(RemoveResultPair.Key));
+	OnInsertArmor.Broadcast(SlotType, Cast<UASArmor>(RemoveResultPair.Key));
 
 	return true;
 }

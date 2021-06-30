@@ -7,6 +7,7 @@
 #include "ASPlayerController.generated.h"
 
 class UUserWidget;
+class UASWeapon;
 
 UCLASS()
 class ARENASHOOTERS_API AASPlayerController : public APlayerController
@@ -16,8 +17,15 @@ class ARENASHOOTERS_API AASPlayerController : public APlayerController
 public:
 	AASPlayerController();
 
+	virtual void SetPawn(APawn* InPawn) override;
+
 protected:
 	virtual void BeginPlay() override;
+
+	void OnScope(const TWeakObjectPtr<UASWeapon>& UsingWeapon);
+	void OnUnscope();
+
+	void ShowCrossHair(bool bShow);
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = UI, Meta = (AllowPrivateAccess = true))

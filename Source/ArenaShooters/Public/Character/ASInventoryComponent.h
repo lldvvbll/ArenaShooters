@@ -63,11 +63,11 @@ private:
 	const FName& GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing) const;
 
 public:
-	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnEquipWeaponEvent, EWeaponSlotType, UASWeapon*);
-	FOnEquipWeaponEvent OnEquipWeapon;
+	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnInsertWeaponEvent, EWeaponSlotType, UASWeapon*);
+	FOnInsertWeaponEvent OnInsertWeapon;
 
-	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnEquipArmorEvent, EArmorSlotType, UASArmor*);
-	FOnEquipArmorEvent OnEquipArmor;
+	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnInsertArmorEvent, EArmorSlotType, UASArmor*);
+	FOnInsertArmorEvent OnInsertArmor;
 
 	static const FName UsingWeaponSocketName;
 	static const FName UsingWeaponPistolSocketName;
