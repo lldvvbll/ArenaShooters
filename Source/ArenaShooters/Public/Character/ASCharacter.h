@@ -98,8 +98,6 @@ protected:
 	UFUNCTION()
 	void OnRep_bScoping();
 
-	void ChangeViewTargetForScope(bool bScope);
-
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
 	FOnScopeEvent OnScopeEvent;

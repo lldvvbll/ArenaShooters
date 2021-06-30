@@ -527,29 +527,3 @@ void AASCharacter::OnRep_bScoping()
 		OnUnscopeEvent.Broadcast();
 	}
 }
-
-void AASCharacter::ChangeViewTargetForScope(bool bScope)
-{
-	auto PlayerController = Cast<APlayerController>(Controller);
-	if (PlayerController == nullptr)
-		return;
-
-	if (bScope)
-	{
-		if (ASInventory != nullptr)
-		{
-			TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-			if (SelectedWeapon.IsValid())
-			{
-				if (AASWeaponActor* WeaponActor = SelectedWeapon->GetActor().Get())
-				{
-					PlayerController->SetViewTargetWithBlend(WeaponActor, 0.3f, EViewTargetBlendFunction::VTBlend_EaseOut);
-				}
-			}
-		}
-	}
-	else
-	{
-		PlayerController->SetViewTargetWithBlend(this);
-	}	
-}
