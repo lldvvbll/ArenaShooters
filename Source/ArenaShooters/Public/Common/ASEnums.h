@@ -67,3 +67,11 @@ enum class EArmorSlotType : uint8
 
 	SlotNum,	// => Invalid Slot Type
 };
+
+UENUM(BlueprintType)
+enum class EShootingStanceType : uint8
+{
+	None,
+	Aiming,		// °ßÂø¼¦
+	Scoping,	// Á¶ÁØ°æ
+};

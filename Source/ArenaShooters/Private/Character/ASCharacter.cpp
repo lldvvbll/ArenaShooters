@@ -31,6 +31,7 @@ AASCharacter::AASCharacter()
 	AimingCamArmLength = 100.0f;
 	SprintSpeedRate = 1.6f;
 	MaxAimKeyHoldTime = 0.3f;
+	ShootingStance = EShootingStanceType::None;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -70,11 +71,11 @@ void AASCharacter::Tick(float DeltaSeconds)
 		if (AimKeyHoldTime >= MaxAimKeyHoldTime)
 		{
 			ResetAimKeyState();
-			ServerAiming(true);
+			ServerChangeShootingStance(EShootingStanceType::Aiming);
 		}
 	}
 
-	if (bAiming || bScoping)
+	if (ShootingStance != EShootingStanceType::None)
 	{
 		if (IsLocallyControlled() || GetLocalRole() == ROLE_Authority)
 		{
@@ -90,9 +91,8 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AASCharacter, bSprinted);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnValue, COND_SimulatedOnly);
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnRateValue, COND_SimulatedOnly);
-	DOREPLIFETIME(AASCharacter, bAiming);
 	DOREPLIFETIME_CONDITION(AASCharacter, AimOffsetRotator, COND_SimulatedOnly); 
-	DOREPLIFETIME(AASCharacter, bScoping);
+	DOREPLIFETIME(AASCharacter, ShootingStance);
 }
 
 void AASCharacter::Jump()
@@ -118,13 +118,9 @@ void AASCharacter::Falling()
 			UnCrouch(true);
 		}
 
-		if (bAiming)
+		if (ShootingStance != EShootingStanceType::None)
 		{
-			ServerAiming(false);
-		}
-		if (bScoping)
-		{
-			ServerScope(false);
+			ServerChangeShootingStance(EShootingStanceType::None);
 		}
 	}
 }
@@ -152,11 +148,6 @@ EWeaponType AASCharacter::GetUsingWeaponType() const
 	return (ASInventory != nullptr) ? ASInventory->GetSelectedWeaponType() : EWeaponType::None;
 }
 
-bool AASCharacter::IsAiming() const
-{
-	return bAiming;
-}
-
 FRotator AASCharacter::GetAimOffsetRotator() const
 {
 	return AimOffsetRotator;
@@ -164,12 +155,12 @@ FRotator AASCharacter::GetAimOffsetRotator() const
 
 bool AASCharacter::CanAim() const
 {
-	return !bAiming && !bScoping && (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling();
+	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling();
 }
 
-bool AASCharacter::IsScoping() const
+EShootingStanceType AASCharacter::GetShootingStance() const
 {
-	return bScoping;
+	return ShootingStance;
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -181,9 +172,10 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AASCharacter::SprintEnd);
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AASCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &AASCharacter::PressedAimButton);
-	PlayerInputComponent->BindAction("Aim", IE_Released, this, &AASCharacter::ReleasedAmiButton);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &AASCharacter::ReleasedAimButton);
 	PlayerInputComponent->BindAction("SelectMainWeapon", IE_Pressed, this, &AASCharacter::SelectMainWeapon);
 	PlayerInputComponent->BindAction("SelectSubWeapon", IE_Pressed, this, &AASCharacter::SelectSubWeapon);
+	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &AASCharacter::Shoot);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AASCharacter::MoveRight);
@@ -227,7 +219,7 @@ void AASCharacter::MoveForward(float Value)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		if ((bAiming || bScoping) && Value > 0.0f)
+		if (ShootingStance != EShootingStanceType::None && Value > 0.0f)
 		{
 			Value /= 2.0f;
 		}
@@ -272,7 +264,7 @@ void AASCharacter::LookUpAtRate(float Rate)
 
 void AASCharacter::Sprint()
 {
-	if (bSprinted || (bAiming || bScoping))
+	if (bSprinted || (ShootingStance != EShootingStanceType::None))
 		return;
 
 	ServerSprint();
@@ -307,15 +299,15 @@ void AASCharacter::PressedAimButton()
 	AimKeyHoldTime = 0.0f;
 }
 
-void AASCharacter::ReleasedAmiButton()
+void AASCharacter::ReleasedAimButton()
 {
-	if (!bAiming && bPressedAimButton)
+	if (ShootingStance != EShootingStanceType::Aiming && bPressedAimButton)
 	{
-		ServerScope(!bScoping);
+		ServerChangeShootingStance((ShootingStance == EShootingStanceType::None) ? EShootingStanceType::Scoping : EShootingStanceType::None);
 	}
 	else
 	{
-		ServerAiming(false);
+		ServerChangeShootingStance(EShootingStanceType::None);
 	}
 
 	ResetAimKeyState();
@@ -341,6 +333,11 @@ void AASCharacter::SelectSubWeapon()
 	ServerSelectWeapon(EWeaponSlotType::Sub);
 }
 
+void AASCharacter::Shoot()
+{
+	ServerShoot();
+}
+
 void AASCharacter::ResetAimKeyState()
 {
 	bPressedAimButton = false;
@@ -349,7 +346,7 @@ void AASCharacter::ResetAimKeyState()
 
 void AASCharacter::ServerSprint_Implementation()
 {
-	if (bSprinted || bAiming)
+	if (bSprinted || ShootingStance != EShootingStanceType::None)
 		return;
 
 	SetMaxWalkSpeedRate(SprintSpeedRate);
@@ -398,13 +395,9 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType)
 		return;
 
-	if (bAiming)
+	if (ShootingStance != EShootingStanceType::None)
 	{
-		ServerAiming_Implementation(false);
-	}
-	if (bScoping)
-	{
-		ServerScope_Implementation(false);
+		ServerChangeShootingStance(EShootingStanceType::None);
 	}
 
 	ConstItemPtrBoolPair ResultPair = ASInventory->FindItemFromWeaponSlot(WeaponSlotType);
@@ -433,17 +426,109 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 	}
 }
 
-void AASCharacter::ServerAiming_Implementation(bool bIsAiming)
+void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType NewShootingStance)
 {
-	if (bAiming == bIsAiming)
+	if (ShootingStance == NewShootingStance)
 		return;
 
+	switch (ShootingStance)
+	{
+	case EShootingStanceType::None:
+		break;
+	case EShootingStanceType::Aiming:
+		Aim(false);
+		break;
+	case EShootingStanceType::Scoping:
+		Scope(false);
+		break;
+	default:
+		AS_LOG_S(Error);
+		break;
+	}
+
+	switch (NewShootingStance)
+	{
+	case EShootingStanceType::None:
+		break;
+	case EShootingStanceType::Aiming:
+		Aim(true);
+		break;
+	case EShootingStanceType::Scoping:
+		Scope(true);
+		break;
+	default:
+		AS_LOG_S(Error);
+		break;
+	}
+}
+
+void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
+{
+	switch (OldShootingStance)
+	{
+	case EShootingStanceType::None:
+		break;
+	case EShootingStanceType::Aiming:
+		{
+			SetMaxWalkSpeedRate(1.0f);
+			if (CameraBoom != nullptr)
+			{
+				CameraBoom->TargetArmLength = NormalCamArmLength;
+				CameraBoom->SocketOffset = NormalCamOffset;
+			}
+		}		
+		break;
+	case EShootingStanceType::Scoping:
+		{
+			SetMaxWalkSpeedRate(1.0f);
+			OnUnscopeEvent.Broadcast();
+		}
+		break;
+	default:
+		AS_LOG_S(Error);
+		break;
+	}
+
+	switch (ShootingStance)
+	{
+	case EShootingStanceType::None:
+		break;
+	case EShootingStanceType::Aiming:
+		{
+			SetMaxWalkSpeedRate(AimingSpeedRate);
+			if (CameraBoom != nullptr)
+			{
+				CameraBoom->TargetArmLength = AimingCamArmLength;
+				CameraBoom->SocketOffset = AimingCamOffset;
+			}
+		}
+		break;
+	case EShootingStanceType::Scoping:
+		{
+			SetMaxWalkSpeedRate(AimingSpeedRate);
+
+			TWeakObjectPtr<UASWeapon> SelectedWeapon;
+			if (ASInventory != nullptr)
+			{
+				SelectedWeapon = ASInventory->GetSelectedWeapon();
+			}
+			OnScopeEvent.Broadcast(SelectedWeapon);
+		}
+		break;
+	default:
+		AS_LOG_S(Error);
+		break;
+	}
+}
+
+void AASCharacter::Aim(bool bIsAiming)
+{
 	if (bIsAiming)
 	{
 		if (!CanAim())
 			return;
 
-		bAiming = true;
+		ShootingStance = EShootingStanceType::Aiming;
 		SetMaxWalkSpeedRate(AimingSpeedRate);
 		ServerSprintEnd_Implementation();
 
@@ -455,7 +540,7 @@ void AASCharacter::ServerAiming_Implementation(bool bIsAiming)
 	}
 	else
 	{
-		bAiming = false;
+		ShootingStance = EShootingStanceType::None;
 		SetMaxWalkSpeedRate(1.0f);
 
 		if (CameraBoom != nullptr)
@@ -466,22 +551,8 @@ void AASCharacter::ServerAiming_Implementation(bool bIsAiming)
 	}
 }
 
-void AASCharacter::OnRep_bAiming()
+void AASCharacter::Scope(bool bIsScoping)
 {
-	SetMaxWalkSpeedRate(bAiming ? AimingSpeedRate : 1.0f);
-
-	if (CameraBoom != nullptr)
-	{
-		CameraBoom->TargetArmLength = bAiming ? AimingCamArmLength : NormalCamArmLength;
-		CameraBoom->SocketOffset =  bAiming ? AimingCamOffset : NormalCamOffset;
-	}
-}
-
-void AASCharacter::ServerScope_Implementation(bool bIsScoping)
-{
-	if (bScoping == bIsScoping)
-		return;
-
 	if (bIsScoping)
 	{
 		if (!CanAim())
@@ -489,7 +560,7 @@ void AASCharacter::ServerScope_Implementation(bool bIsScoping)
 
 		ServerSprintEnd_Implementation();
 
-		bScoping = true;
+		ShootingStance = EShootingStanceType::Scoping;
 		SetMaxWalkSpeedRate(AimingSpeedRate);
 
 		TWeakObjectPtr<UASWeapon> SelectedWeapon;
@@ -501,29 +572,17 @@ void AASCharacter::ServerScope_Implementation(bool bIsScoping)
 	}
 	else
 	{
-		bScoping = false;
+		ShootingStance = EShootingStanceType::None;
 		SetMaxWalkSpeedRate(1.0f);
 
 		OnUnscopeEvent.Broadcast();
 	}
 }
 
-void AASCharacter::OnRep_bScoping()
+void AASCharacter::ServerShoot_Implementation()
 {
-	if (bScoping)
-	{
-		SetMaxWalkSpeedRate(AimingSpeedRate);
-
-		TWeakObjectPtr<UASWeapon> SelectedWeapon;
-		if (ASInventory != nullptr)
-		{
-			SelectedWeapon = ASInventory->GetSelectedWeapon();
-		}
-		OnScopeEvent.Broadcast(SelectedWeapon);
-	}
-	else
-	{
-		SetMaxWalkSpeedRate(1.0f);
-		OnUnscopeEvent.Broadcast();
-	}
+	if (ASInventory == nullptr)
+		return;
+		
+	ASInventory->Shoot();
 }

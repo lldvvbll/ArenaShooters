@@ -29,7 +29,8 @@ public:
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	TWeakObjectPtr<UASWeapon> GetSelectedWeapon() const;
+	const TWeakObjectPtr<UASWeapon>& GetSelectedWeapon() const;
+	TWeakObjectPtr<AASWeaponActor> GetSelectedWeaponActor();
 	const EWeaponType GetSelectedWeaponType() const;
 	const EWeaponSlotType GetSelectedWeaponSlotType() const;
 
@@ -45,6 +46,8 @@ public:
 	ConstItemPtrBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType) const;
 	ConstItemPtrBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromArmorSlot(EArmorSlotType SlotType);
+
+	void Shoot();
 
 private:
 	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);

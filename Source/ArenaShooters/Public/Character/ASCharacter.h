@@ -34,10 +34,9 @@ public:
 	bool IsSprinted() const;
 	float GetTotalTurnValue() const;
 	EWeaponType GetUsingWeaponType() const;
-	bool IsAiming() const;
 	FRotator GetAimOffsetRotator() const;
 	bool CanAim() const;
-	bool IsScoping() const;
+	EShootingStanceType GetShootingStance() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -53,9 +52,10 @@ protected:
 	void SprintEnd();
 	void ToggleCrouch();
 	void PressedAimButton();
-	void ReleasedAmiButton();
+	void ReleasedAimButton();
 	void SelectMainWeapon();
 	void SelectSubWeapon();
+	void Shoot();
 
 	void ResetAimKeyState();
 
@@ -85,18 +85,18 @@ protected:
 	void ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotType);
 
 	UFUNCTION(Server, Reliable)
-	void ServerAiming(bool bIsAiming);
-	void ServerAiming_Implementation(bool bIsAiming);
+	void ServerChangeShootingStance(EShootingStanceType NewShootingStance);
+	void ServerChangeShootingStance_Implementation(EShootingStanceType NewShootingStance);
 
 	UFUNCTION()
-	void OnRep_bAiming();
+	void OnRep_ShootingStance(EShootingStanceType OldShootingStance);
+
+	void Aim(bool bIsAiming);
+	void Scope(bool bIsScoping);
 
 	UFUNCTION(Server, Reliable)
-	void ServerScope(bool bIsScoping);
-	void ServerScope_Implementation(bool bIsScoping);
-
-	UFUNCTION()
-	void OnRep_bScoping();
+	void ServerShoot();
+	void ServerShoot_Implementation();
 
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
@@ -151,9 +151,6 @@ private:
 	bool bPressedAimButton;
 	float AimKeyHoldTime;
 
-	UPROPERTY(ReplicatedUsing = OnRep_bAiming)
-	bool bAiming;
-
 	UPROPERTY(EditDefaultsOnly, Category = Aiming, Meta = (AllowPrivateAccess = true))
 	float MaxAimKeyHoldTime;
 
@@ -163,8 +160,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Aiming, Meta = (AllowPrivateAccess = true))
 	float AimingSpeedRate;
 
-	UPROPERTY(ReplicatedUsing = OnRep_bScoping)
-	bool bScoping;
+	UPROPERTY(ReplicatedUsing = OnRep_ShootingStance)
+	EShootingStanceType ShootingStance;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

@@ -4,6 +4,8 @@
 #include "ItemActor/ASWeaponActor.h"
 #include "Net/UnrealNetwork.h"
 
+const FName AASWeaponActor::MuzzleSocketName = TEXT("MuzzleFlash");
+
 AASWeaponActor::AASWeaponActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -17,4 +19,17 @@ AASWeaponActor::AASWeaponActor()
 
 	RootComponent = WeaponMesh;
 	ScopeCamera->SetupAttachment(RootComponent);
+}
+
+void AASWeaponActor::GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator OutRotation) const
+{
+	if (WeaponMesh != nullptr)
+	{
+		WeaponMesh->GetSocketWorldLocationAndRotation(MuzzleSocketName, OutLocation, OutRotation);
+	}
+	else
+	{
+		OutLocation = GetActorLocation();
+		OutRotation = GetActorRotation();
+	}	
 }

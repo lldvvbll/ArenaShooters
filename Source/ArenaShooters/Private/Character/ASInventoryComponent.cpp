@@ -12,6 +12,7 @@
 #include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
 #include "ItemActor/ASWeaponActor.h"
 #include "ItemActor/ASArmorActor.h"
+#include "ItemActor/ASBullet.h"
 
 const FName UASInventoryComponent::UsingWeaponSocketName = TEXT("weapon_rhand_socket");
 const FName UASInventoryComponent::UsingWeaponPistolSocketName = TEXT("weapon_rhand_socket_pistol");
@@ -63,9 +64,17 @@ void UASInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME(UASInventoryComponent, SelectedWeaponSlotType);	
 }
 
-TWeakObjectPtr<UASWeapon> UASInventoryComponent::GetSelectedWeapon() const
+const TWeakObjectPtr<UASWeapon>& UASInventoryComponent::GetSelectedWeapon() const
 {
-	return SelectedWeapon.IsValid() ? SelectedWeapon : TWeakObjectPtr<UASWeapon>();
+	return SelectedWeapon;
+}
+
+TWeakObjectPtr<AASWeaponActor> UASInventoryComponent::GetSelectedWeaponActor()
+{
+	if (!SelectedWeapon.IsValid())
+		return TWeakObjectPtr<AASWeaponActor>();
+
+	return SelectedWeapon->GetActor();	
 }
 
 const EWeaponType UASInventoryComponent::GetSelectedWeaponType() const
@@ -330,6 +339,28 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromArmorSlot(EArmorSlotType SlotT
 	}
 
 	return ResultPair;
+}
+
+void UASInventoryComponent::Shoot()
+{
+	if (!SelectedWeapon.IsValid())
+		return;
+
+	auto DataAsset = Cast<UASWeaponDataAsset>(SelectedWeapon->GetDataAsset());
+	if (DataAsset == nullptr)
+		return;
+
+	TWeakObjectPtr<AASWeaponActor>& WeaponActor = SelectedWeapon->GetActor();
+	if (!WeaponActor.IsValid())
+		return;
+
+	FVector MuzzleLocation;
+	FRotator MuzzleRotation;
+	WeaponActor->GetMuzzleLocationAndRotation(MuzzleLocation, MuzzleRotation);
+
+	FActorSpawnParameters Param;
+	Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	GetWorld()->SpawnActor<AASBullet>(DataAsset->ASBulletClass, MuzzleLocation, MuzzleRotation, Param);
 }
 
 ItemBoolPair UASInventoryComponent::GetItemFromWeaponSlot(EWeaponSlotType SlotType)

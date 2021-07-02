@@ -34,9 +34,8 @@ void UASAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bSprinted = ASChar->IsSprinted();
 	TurnValue = ASChar->GetTotalTurnValue();
 	CurrentWeaponType = ASChar->GetUsingWeaponType();
-	bAiming = ASChar->IsAiming();
-	bScoping = ASChar->IsScoping();
-	if (bAiming || bScoping)
+	ShootingStance = ASChar->GetShootingStance();
+	if (ShootingStance != EShootingStanceType::None)
 	{
 		FRotator AimRot = ASChar->GetAimOffsetRotator();
 		AimYaw = FMath::ClampAngle(AimRot.Yaw, -90.0f, 90.0f);
