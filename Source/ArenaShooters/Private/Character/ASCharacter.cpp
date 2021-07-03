@@ -27,8 +27,9 @@ AASCharacter::AASCharacter()
 	BaseLookUpRate = 45.f;
 	NormalCamOffset = FVector(0.0f, 30.0f, 100.0f);
 	NormalCamArmLength = 200.0f;
-	AimingCamOffset = FVector(0.0f, 30.0f, 80.0f);
-	AimingCamArmLength = 100.0f;
+	AimingCamOffset = FVector(0.0f, 45.0f, 75.0f);
+	AimingCamArmLength = 80.0f;
+	AimingSpeedRate = 0.5f;
 	SprintSpeedRate = 1.6f;
 	MaxAimKeyHoldTime = 0.3f;
 	ShootingStance = EShootingStanceType::None;
