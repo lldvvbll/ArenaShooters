@@ -14,7 +14,7 @@ class ARENASHOOTERS_API AASWeaponActor : public AActor
 public:	
 	AASWeaponActor();
 
-	void GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator OutRotation) const;
+	void GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator& OutRotation) const;
 
 protected:
 	static const FName MuzzleSocketName;

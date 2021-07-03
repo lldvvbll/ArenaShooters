@@ -10,8 +10,11 @@ AASBullet::AASBullet()
 	bReplicates = true;
 
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
+
 	Projectile = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile"));
+
 	Sphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Sphere"));
+	Sphere->SetCollisionProfileName(TEXT("NoCollision"));
 
 	RootComponent = Collision;
 	Sphere->SetupAttachment(RootComponent);

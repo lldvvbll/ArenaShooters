@@ -4,6 +4,9 @@
 #include "Item/ASWeapon.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
 #include "Net/UnrealNetwork.h"
+#include "ItemActor/ASBullet.h"
+#include "ItemActor/ASWeaponActor.h"
+#include "Character/ASCharacter.h"
 
 UASWeapon* UASWeapon::CreateFromDataAsset(UObject* Owner, UASWeaponDataAsset* DataAsset)
 {
@@ -47,4 +50,18 @@ TWeakObjectPtr<AASWeaponActor>& UASWeapon::GetActor()
 const TWeakObjectPtr<AASWeaponActor>& UASWeapon::GetActor() const
 {
 	return ASWeaponActor;
+}
+
+void UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	if (WeaponDA == nullptr)
+		return;
+
+	FActorSpawnParameters Param;
+	Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	if (auto Bullet = GetWorld()->SpawnActor<AASBullet>(WeaponDA->ASBulletClass, MuzzleLocation, MuzzleRotation, Param))
+	{
+		Bullet->SetOwner(Cast<AASCharacter>(GetOuter()));
+	}
 }

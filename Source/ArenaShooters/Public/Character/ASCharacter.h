@@ -95,8 +95,8 @@ protected:
 	void Scope(bool bIsScoping);
 
 	UFUNCTION(Server, Reliable)
-	void ServerShoot();
-	void ServerShoot_Implementation();
+	void ServerShoot(const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
+	void ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
 
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)

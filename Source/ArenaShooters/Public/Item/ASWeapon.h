@@ -26,6 +26,8 @@ public:
 	TWeakObjectPtr<AASWeaponActor>& GetActor();
 	const TWeakObjectPtr<AASWeaponActor>& GetActor() const;
 
+	void Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
+
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	TWeakObjectPtr<AASWeaponActor> ASWeaponActor;

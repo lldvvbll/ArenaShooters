@@ -47,8 +47,6 @@ public:
 	ConstItemPtrBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromArmorSlot(EArmorSlotType SlotType);
 
-	void Shoot();
-
 private:
 	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);
 	ItemBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType);

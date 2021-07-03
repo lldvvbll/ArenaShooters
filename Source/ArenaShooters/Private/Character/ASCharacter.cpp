@@ -335,7 +335,20 @@ void AASCharacter::SelectSubWeapon()
 
 void AASCharacter::Shoot()
 {
-	ServerShoot();
+	if (ShootingStance == EShootingStanceType::None)
+		return;
+	if (ASInventory == nullptr)
+		return;
+
+	TWeakObjectPtr<AASWeaponActor> WeaponActor = ASInventory->GetSelectedWeaponActor();
+	if (!WeaponActor.IsValid())
+		return;
+	
+	FVector MuzzleLocation;
+	FRotator MuzzleRotation;
+	WeaponActor->GetMuzzleLocationAndRotation(MuzzleLocation, MuzzleRotation);
+
+	ServerShoot(MuzzleLocation, MuzzleRotation);
 }
 
 void AASCharacter::ResetAimKeyState()
@@ -579,10 +592,16 @@ void AASCharacter::Scope(bool bIsScoping)
 	}
 }
 
-void AASCharacter::ServerShoot_Implementation()
+void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
 {
+	if (ShootingStance == EShootingStanceType::None)
+		return;
 	if (ASInventory == nullptr)
 		return;
-		
-	ASInventory->Shoot();
+
+	const TWeakObjectPtr<UASWeapon>& SelectedWeapon = ASInventory->GetSelectedWeapon();
+	if (!SelectedWeapon.IsValid())
+		return;
+
+	SelectedWeapon->Fire(ShootingStance, MuzzleLocation, MuzzleRotation);
 }
