@@ -15,17 +15,13 @@ AASBullet::AASBullet()
 	Collision->CanCharacterStepUpOn = ECB_No;
 
 	Projectile = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile"));
+	Projectile->InitialSpeed = 12000.0f;
+	Projectile->MaxSpeed = 15000.0f;
 
-	Sphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Sphere"));
-	Sphere->SetCollisionProfileName(TEXT("NoCollision"));
-	Sphere->CanCharacterStepUpOn = ECB_No;
-	Sphere->SetGenerateOverlapEvents(false);
+	Particle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Particle"));
 
 	RootComponent = Collision;
-	Sphere->SetupAttachment(RootComponent);
-
-	Projectile->InitialSpeed = 12000.0f;
-	Projectile->MaxSpeed = 12000.0f;
+	Particle->SetupAttachment(RootComponent);
 }
 
 void AASBullet::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved,
