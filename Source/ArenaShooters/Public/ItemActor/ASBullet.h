@@ -16,6 +16,9 @@ class ARENASHOOTERS_API AASBullet : public AActor
 public:	
 	AASBullet();
 
+	virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved,
+		FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	USphereComponent* Collision;

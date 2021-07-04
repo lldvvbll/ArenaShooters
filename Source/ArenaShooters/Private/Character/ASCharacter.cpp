@@ -51,7 +51,9 @@ AASCharacter::AASCharacter()
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	Capsule->InitCapsuleSize(42.f, 96.0f);
+	Capsule->SetCollisionProfileName(TEXT("ASCharacter"));
 
 	UCharacterMovementComponent* CharMoveComp = GetCharacterMovement();
 	CharMoveComp->JumpZVelocity = 600.f;
@@ -132,6 +134,21 @@ bool AASCharacter::CanCrouch() const
 		return false;
 
 	return Super::CanCrouch();
+}
+
+void AASCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved,
+	FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	if (MyComp == GetMesh())
+	{
+		AS_LOG_A(Warning, TEXT("AASCharacter::NotifyHit(), %s"), TEXT("GetMesh"));
+	}	
+	else if (MyComp == GetCapsuleComponent())
+	{
+		AS_LOG_A(Warning, TEXT("AASCharacter::NotifyHit(), %s"), TEXT("GetCapsuleComponent"));
+	}
 }
 
 bool AASCharacter::IsSprinted() const

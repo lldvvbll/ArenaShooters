@@ -31,6 +31,9 @@ public:
 	virtual void Falling() override;
 	virtual bool CanCrouch() const override;
 
+	virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved,
+		FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+
 	bool IsSprinted() const;
 	float GetTotalTurnValue() const;
 	EWeaponType GetUsingWeaponType() const;

@@ -13,3 +13,9 @@ DECLARE_LOG_CATEGORY_EXTERN(ArenaShooters, Log, All);
 //#define return_if(Expr, ...) { if (Expr) { LOG(Error, TEXT("ASSERTION: %s"), TEXT("'"#Expr"'")); return __VA_ARGS__; } }
 
 #define AS_LOG_SCREEN(Time, Color, Format, ...) { if (GEngine != nullptr) { GEngine->AddOnScreenDebugMessage(INDEX_NONE, Time, Color, FString::Printf(Format, ##__VA_ARGS__)); } }
+
+#define AS_LOG_AT(Verbosity, Time, Format, ...) { AS_LOG(Verbosity, TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__)); AS_LOG_SCREEN(Time, ((ELogVerbosity::Verbosity == ELogVerbosity::Error) ? FColor::Red : FColor::Yellow), TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__)); }
+#define AS_LOG_A(Verbosity, Format, ...) AS_LOG_AT(Verbosity, 1.0f, TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__))
+
+#define AS_LOG_SAT(Verbosity, Time) { AS_LOG_S(Verbosity); AS_LOG_SCREEN(Time, ((ELogVerbosity::Verbosity == ELogVerbosity::Error) ? FColor::Red : FColor::Yellow), TEXT("%s"), *AS_LOG_CALLINFO); }
+#define AS_LOG_SA(Verbosity) AS_LOG_SAT(Verbosity, 1.0f)
