@@ -3,6 +3,7 @@
 
 #include "ItemActor/ASBullet.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Character/ASCharacter.h"
 
 AASBullet::AASBullet()
 {
@@ -18,10 +19,11 @@ AASBullet::AASBullet()
 	Projectile->InitialSpeed = 12000.0f;
 	Projectile->MaxSpeed = 15000.0f;
 
-	Particle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Particle"));
-
+	TraceParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TraceParticle"));
+	DefaultSparkParticle = CreateDefaultSubobject<UParticleSystem>(TEXT("SparkParticle"));
+	
 	RootComponent = Collision;
-	Particle->SetupAttachment(RootComponent);
+	TraceParticle->SetupAttachment(RootComponent);
 }
 
 void AASBullet::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved,
@@ -29,6 +31,21 @@ void AASBullet::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitive
 {
 	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 
-	AS_LOG_S(Warning);
-	AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("AASBullet::NotifyHit()"));
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		SetLifeSpan(1.0f);
+	}
+	else
+	{
+		if (TraceParticle)
+		{
+			TraceParticle->Deactivate();
+		}
+
+		if (Other == nullptr || !Other->IsA(AASCharacter::StaticClass()))
+		{
+			// юс╫ц
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), DefaultSparkParticle, Hit.ImpactPoint);
+		}		
+	}
 }

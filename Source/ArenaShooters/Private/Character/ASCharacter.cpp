@@ -389,9 +389,9 @@ void AASCharacter::Shoot()
 			{
 				TargetLoc = TraceEndLoc;
 			}
-
+			
 			FVector FireDir = (TargetLoc - MuzzleLoc).GetSafeNormal();
-			FRotator FireRot = FRotationMatrix::MakeFromXZ(FireDir, FVector::ZAxisVector).Rotator();
+			FRotator FireRot = FRotationMatrix::MakeFromX(FireDir).Rotator();
 			ServerShoot(MuzzleLoc, FireRot);
 		}		
 		break;

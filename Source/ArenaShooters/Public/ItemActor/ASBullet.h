@@ -26,9 +26,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	UProjectileMovementComponent* Projectile;
 
-	//UPROPERTY(EditDefaultsOnly)
-	//UStaticMeshComponent* Sphere;
+	UPROPERTY(EditDefaultsOnly)
+	UParticleSystemComponent* TraceParticle;
 
 	UPROPERTY(EditDefaultsOnly)
-	UParticleSystemComponent* Particle;
+	UParticleSystem* DefaultSparkParticle;
 };
