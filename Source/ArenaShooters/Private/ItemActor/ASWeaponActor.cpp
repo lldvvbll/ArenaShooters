@@ -21,6 +21,19 @@ AASWeaponActor::AASWeaponActor()
 	ScopeCamera->SetupAttachment(RootComponent);
 }
 
+FVector AASWeaponActor::GetMuzzleLocation() const
+{
+	if (WeaponMesh != nullptr)
+	{
+		return WeaponMesh->GetSocketLocation(MuzzleSocketName);
+	}
+	else
+	{
+		AS_LOG_S(Error);
+		return GetActorLocation();
+	}	
+}
+
 void AASWeaponActor::GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator& OutRotation) const
 {
 	if (WeaponMesh != nullptr)
@@ -30,8 +43,8 @@ void AASWeaponActor::GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator
 	}
 	else
 	{
+		AS_LOG_S(Error);
 		OutLocation = GetActorLocation();
 		OutRotation = GetActorRotation();
-		AS_LOG_S(Error);
 	}	
 }

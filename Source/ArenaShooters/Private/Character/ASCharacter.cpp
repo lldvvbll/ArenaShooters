@@ -19,6 +19,8 @@
 #include "ItemActor/ASArmorActor.h"
 #include "GameFramework/PlayerInput.h"
 
+#include "DrawDebugHelpers.h"
+
 AASCharacter::AASCharacter()
 {
 	bReplicates = true;
@@ -362,11 +364,50 @@ void AASCharacter::Shoot()
 	if (!WeaponActor.IsValid())
 		return;
 	
-	FVector MuzzleLocation;
-	FRotator MuzzleRotation;
-	WeaponActor->GetMuzzleLocationAndRotation(MuzzleLocation, MuzzleRotation);
+	switch (ShootingStance)
+	{
+	case EShootingStanceType::Aiming:
+		{
+			FVector CamLoc = FollowCamera->GetComponentLocation();
+			FVector CamForward = FollowCamera->GetForwardVector().GetSafeNormal();
+			FVector MuzzleLoc = WeaponActor->GetMuzzleLocation();
 
-	ServerShoot(MuzzleLocation, MuzzleRotation);
+			float LengthToStartLoc = FMath::Abs((CamLoc - MuzzleLoc) | CamForward);
+			FVector TraceStartLoc = CamLoc + (CamForward * LengthToStartLoc);
+			FVector TraceEndLoc = CamLoc + (CamForward * 15000.0f);
+
+			FVector TargetLoc;
+
+			FHitResult HitResult;
+			FCollisionQueryParams QueryParams;
+			QueryParams.AddIgnoredActor(this);
+			if (GetWorld()->LineTraceSingleByProfile(HitResult, TraceStartLoc, TraceEndLoc, TEXT("Bullet"), QueryParams))
+			{
+				TargetLoc = HitResult.Location;
+			}
+			else
+			{
+				TargetLoc = TraceEndLoc;
+			}
+
+			FVector FireDir = (TargetLoc - MuzzleLoc).GetSafeNormal();
+			FRotator FireRot = FRotationMatrix::MakeFromXZ(FireDir, FVector::ZAxisVector).Rotator();
+			ServerShoot(MuzzleLoc, FireRot);
+		}		
+		break;
+	case EShootingStanceType::Scoping:
+		{
+			FVector MuzzleLocation;
+			FRotator MuzzleRotation;
+			WeaponActor->GetMuzzleLocationAndRotation(MuzzleLocation, MuzzleRotation);
+
+			ServerShoot(MuzzleLocation, MuzzleRotation);
+		}
+		break;
+	default:
+		AS_LOG_SA(Error);
+		break;
+	}
 }
 
 void AASCharacter::ResetAimKeyState()
@@ -610,7 +651,36 @@ void AASCharacter::Scope(bool bIsScoping)
 	}
 }
 
-void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
+bool AASCharacter::ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation)
+{
+	constexpr float ValidLocDiff = 200.0f;
+	constexpr float ValidRotDiff = 45.0f;
+
+	TWeakObjectPtr<AASWeaponActor> SelectedWeaponActor = ASInventory->GetSelectedWeaponActor();
+	if (!SelectedWeaponActor.IsValid())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	FVector LocDiff = SelectedWeaponActor->GetMuzzleLocation() - MuzzleLocation;
+	if (FMath::Abs(LocDiff.X) > ValidLocDiff || FMath::Abs(LocDiff.Y) > ValidLocDiff || FMath::Abs(LocDiff.Z) > ValidLocDiff)
+	{
+		AS_LOG(Error, TEXT("%s"), *LocDiff.ToString());
+		return false;
+	}
+	
+	FRotator RotDiff = (GetActorRotation() - ShootRotation).GetNormalized();
+	if (FMath::Abs(RotDiff.Pitch) > ValidRotDiff || FMath::Abs(RotDiff.Yaw) > ValidRotDiff)
+	{
+		AS_LOG(Error, TEXT("%s"), *RotDiff.ToString());
+		return false;
+	}
+
+	return true;
+}
+
+void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation)
 {
 	if (ShootingStance == EShootingStanceType::None)
 		return;
@@ -621,5 +691,5 @@ void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, con
 	if (!SelectedWeapon.IsValid())
 		return;
 
-	SelectedWeapon->Fire(ShootingStance, MuzzleLocation, MuzzleRotation);
+	SelectedWeapon->Fire(ShootingStance, MuzzleLocation, ShootRotation);
 }

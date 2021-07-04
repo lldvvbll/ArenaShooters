@@ -97,9 +97,11 @@ protected:
 	void Aim(bool bIsAiming);
 	void Scope(bool bIsScoping);
 
-	UFUNCTION(Server, Reliable)
-	void ServerShoot(const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
-	void ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerShoot(const FVector& MuzzleLocation, const FRotator& ShootRotation);
+	bool ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation);
+	void ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation);
+
 
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
