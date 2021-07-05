@@ -58,10 +58,19 @@ void UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLo
 	if (WeaponDA == nullptr)
 		return;
 
+	auto Outer = Cast<AASCharacter>(GetOuter());
+	if (Outer == nullptr)
+		return;
+
 	FActorSpawnParameters Param;
+	Param.Owner = Outer;
 	Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
 	if (auto Bullet = GetWorld()->SpawnActor<AASBullet>(WeaponDA->ASBulletClass, MuzzleLocation, MuzzleRotation, Param))
 	{
-		Bullet->SetOwner(Cast<AASCharacter>(GetOuter()));
-	}
+		if (ASWeaponActor.IsValid())
+		{
+			ASWeaponActor->MulticastPlayFireEffect();
+		}
+	}	
 }
