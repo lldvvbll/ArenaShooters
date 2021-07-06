@@ -38,7 +38,6 @@ public:
 	float GetTotalTurnValue() const;
 	EWeaponType GetUsingWeaponType() const;
 	FRotator GetAimOffsetRotator() const;
-	bool CanAim() const;
 	EShootingStanceType GetShootingStance() const;
 
 protected:
@@ -94,8 +93,11 @@ protected:
 	UFUNCTION()
 	void OnRep_ShootingStance(EShootingStanceType OldShootingStance);
 
-	void Aim(bool bIsAiming);
-	void Scope(bool bIsScoping);
+	bool CanAimOrScope() const;
+	void StartAiming();
+	void EndAiming();
+	void StartScoping();
+	void EndScoping();
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerShoot(const FVector& MuzzleLocation, const FRotator& ShootRotation);

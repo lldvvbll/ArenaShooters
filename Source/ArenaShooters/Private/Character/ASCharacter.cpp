@@ -70,7 +70,7 @@ void AASCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (bPressedAimButton && CanAim() && IsLocallyControlled())
+	if (bPressedAimButton && CanAimOrScope() && IsLocallyControlled())
 	{
 		AimKeyHoldTime += DeltaSeconds;
 		if (AimKeyHoldTime >= MaxAimKeyHoldTime)
@@ -171,11 +171,6 @@ EWeaponType AASCharacter::GetUsingWeaponType() const
 FRotator AASCharacter::GetAimOffsetRotator() const
 {
 	return AimOffsetRotator;
-}
-
-bool AASCharacter::CanAim() const
-{
-	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling();
 }
 
 EShootingStanceType AASCharacter::GetShootingStance() const
@@ -508,10 +503,14 @@ void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType
 	case EShootingStanceType::None:
 		break;
 	case EShootingStanceType::Aiming:
-		Aim(false);
+		{
+			EndAiming();
+		}		
 		break;
 	case EShootingStanceType::Scoping:
-		Scope(false);
+		{
+			EndScoping();
+		}
 		break;
 	default:
 		AS_LOG_S(Error);
@@ -523,10 +522,16 @@ void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType
 	case EShootingStanceType::None:
 		break;
 	case EShootingStanceType::Aiming:
-		Aim(true);
+		if (CanAimOrScope())
+		{
+			StartAiming();
+		}		
 		break;
 	case EShootingStanceType::Scoping:
-		Scope(true);
+		if (CanAimOrScope())
+		{
+			StartScoping();
+		}		
 		break;
 	default:
 		AS_LOG_S(Error);
@@ -542,18 +547,12 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 		break;
 	case EShootingStanceType::Aiming:
 		{
-			SetMaxWalkSpeedRate(1.0f);
-			if (CameraBoom != nullptr)
-			{
-				CameraBoom->TargetArmLength = NormalCamArmLength;
-				CameraBoom->SocketOffset = NormalCamOffset;
-			}
+			EndAiming();
 		}		
 		break;
 	case EShootingStanceType::Scoping:
 		{
-			SetMaxWalkSpeedRate(1.0f);
-			OnUnscopeEvent.Broadcast();
+			EndScoping();
 		}
 		break;
 	default:
@@ -567,24 +566,12 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 		break;
 	case EShootingStanceType::Aiming:
 		{
-			SetMaxWalkSpeedRate(AimingSpeedRate);
-			if (CameraBoom != nullptr)
-			{
-				CameraBoom->TargetArmLength = AimingCamArmLength;
-				CameraBoom->SocketOffset = AimingCamOffset;
-			}
+			StartAiming();
 		}
 		break;
 	case EShootingStanceType::Scoping:
 		{
-			SetMaxWalkSpeedRate(AimingSpeedRate);
-
-			TWeakObjectPtr<UASWeapon> SelectedWeapon;
-			if (ASInventory != nullptr)
-			{
-				SelectedWeapon = ASInventory->GetSelectedWeapon();
-			}
-			OnScopeEvent.Broadcast(SelectedWeapon);
+			StartScoping();
 		}
 		break;
 	default:
@@ -593,62 +580,68 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 	}
 }
 
-void AASCharacter::Aim(bool bIsAiming)
+bool AASCharacter::CanAimOrScope() const
 {
-	if (bIsAiming)
-	{
-		if (!CanAim())
-			return;
+	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling();
+}
 
+void AASCharacter::StartAiming()
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
 		ShootingStance = EShootingStanceType::Aiming;
-		SetMaxWalkSpeedRate(AimingSpeedRate);
 		ServerSprintEnd_Implementation();
+	}	
 
-		if (CameraBoom != nullptr)
-		{
-			CameraBoom->TargetArmLength = AimingCamArmLength;
-			CameraBoom->SocketOffset = AimingCamOffset;
-		}
-	}
-	else
+	SetMaxWalkSpeedRate(AimingSpeedRate);
+	if (CameraBoom != nullptr)
 	{
-		ShootingStance = EShootingStanceType::None;
-		SetMaxWalkSpeedRate(1.0f);
-
-		if (CameraBoom != nullptr)
-		{
-			CameraBoom->TargetArmLength = NormalCamArmLength;
-			CameraBoom->SocketOffset = NormalCamOffset;
-		}
+		CameraBoom->TargetArmLength = AimingCamArmLength;
+		CameraBoom->SocketOffset = AimingCamOffset;
 	}
 }
 
-void AASCharacter::Scope(bool bIsScoping)
+void AASCharacter::EndAiming()
 {
-	if (bIsScoping)
-	{
-		if (!CanAim())
-			return;
-
-		ServerSprintEnd_Implementation();
-
-		ShootingStance = EShootingStanceType::Scoping;
-		SetMaxWalkSpeedRate(AimingSpeedRate);
-
-		TWeakObjectPtr<UASWeapon> SelectedWeapon;
-		if (ASInventory != nullptr)
-		{
-			SelectedWeapon = ASInventory->GetSelectedWeapon();
-		}
-		OnScopeEvent.Broadcast(SelectedWeapon);
-	}
-	else
+	if (GetLocalRole() == ROLE_Authority)
 	{
 		ShootingStance = EShootingStanceType::None;
-		SetMaxWalkSpeedRate(1.0f);
-
-		OnUnscopeEvent.Broadcast();
 	}
+
+	SetMaxWalkSpeedRate(1.0f);
+	if (CameraBoom != nullptr)
+	{
+		CameraBoom->TargetArmLength = NormalCamArmLength;
+		CameraBoom->SocketOffset = NormalCamOffset;
+	}
+}
+
+void AASCharacter::StartScoping()
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		ShootingStance = EShootingStanceType::Scoping;
+		ServerSprintEnd_Implementation();
+	}
+
+	SetMaxWalkSpeedRate(AimingSpeedRate);
+	TWeakObjectPtr<UASWeapon> SelectedWeapon;
+	if (ASInventory != nullptr)
+	{
+		SelectedWeapon = ASInventory->GetSelectedWeapon();
+	}
+	OnScopeEvent.Broadcast(SelectedWeapon);
+}
+
+void AASCharacter::EndScoping()
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		ShootingStance = EShootingStanceType::None;
+	}
+
+	SetMaxWalkSpeedRate(1.0f);
+	OnUnscopeEvent.Broadcast();
 }
 
 bool AASCharacter::ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation)
