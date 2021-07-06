@@ -17,12 +17,8 @@ AASWeaponActor::AASWeaponActor()
 
 	ScopeCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ScopeCamera"));
 
-	MuzzleFlashParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlashParticle"));
-	MuzzleFlashParticle->SetAutoActivate(false);
-
 	RootComponent = WeaponMesh;
 	ScopeCamera->SetupAttachment(RootComponent);
-	MuzzleFlashParticle->SetupAttachment(RootComponent, MuzzleSocketName);
 }
 
 FVector AASWeaponActor::GetMuzzleLocation() const
@@ -53,20 +49,14 @@ void AASWeaponActor::GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator
 	}	
 }
 
-void AASWeaponActor::MulticastPlayFireEffect_Implementation()
-{
+void AASWeaponActor::MulticastPlayFireAnim_Implementation()
+{	
 	if (!IsNetMode(NM_DedicatedServer))
 	{
-		if (MuzzleFlashParticle != nullptr)
+		if (WeaponMesh != nullptr)
 		{
-			if (MuzzleFlashParticle->IsActive())
-			{
-				MuzzleFlashParticle->ForceReset();
-			}
-			else
-			{
-				MuzzleFlashParticle->Activate();
-			}
+			WeaponMesh->SetPosition(0.0f, false);
+			WeaponMesh->Play(false);
 		}
 	}
 }

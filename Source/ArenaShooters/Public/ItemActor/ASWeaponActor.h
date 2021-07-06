@@ -18,8 +18,8 @@ public:
 	void GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator& OutRotation) const;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastPlayFireEffect();
-	void MulticastPlayFireEffect_Implementation();
+	void MulticastPlayFireAnim();
+	void MulticastPlayFireAnim_Implementation();
 
 protected:
 	static const FName MuzzleSocketName;
@@ -30,7 +30,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	UCameraComponent* ScopeCamera;
-
-	UPROPERTY(EditDefaultsOnly)
-	UParticleSystemComponent* MuzzleFlashParticle;
 };

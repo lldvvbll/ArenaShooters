@@ -70,7 +70,7 @@ void UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLo
 	{
 		if (ASWeaponActor.IsValid())
 		{
-			ASWeaponActor->MulticastPlayFireEffect();
+			ASWeaponActor->MulticastPlayFireAnim();
 		}
 	}	
 }
