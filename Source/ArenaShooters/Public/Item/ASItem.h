@@ -19,7 +19,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override;
 
-	void SetDataAsset(UASItemDataAsset* NewDataAsset);
+	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset);
 	const UASItemDataAsset* GetDataAsset() const;
 
 	EItemType GetItemType() const;

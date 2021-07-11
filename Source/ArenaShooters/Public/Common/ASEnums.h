@@ -75,3 +75,12 @@ enum class EShootingStanceType : uint8
 	Aiming,		// 견착샷
 	Scoping,	// 조준경
 };
+
+UENUM(BlueprintType)
+enum class EFireMode : uint8
+{
+	SemiAuto,		// 단발
+	FullAuto,		// 연사
+
+	ModeNum,
+};

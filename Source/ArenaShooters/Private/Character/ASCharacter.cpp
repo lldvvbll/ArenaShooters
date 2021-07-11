@@ -33,8 +33,11 @@ AASCharacter::AASCharacter()
 	AimingCamArmLength = 80.0f;
 	AimingSpeedRate = 0.5f;
 	SprintSpeedRate = 1.6f;
+	bPressedAimButton = false;
+	AimKeyHoldTime = 0.0f;
 	MaxAimKeyHoldTime = 0.3f;
 	ShootingStance = EShootingStanceType::None;
+	bPressedShootButton = false;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -86,6 +89,11 @@ void AASCharacter::Tick(float DeltaSeconds)
 		{
 			AimOffsetRotator = (GetControlRotation() - GetActorRotation()).GetNormalized();
 		}
+	}
+
+	if (bPressedShootButton && IsLocallyControlled())
+	{
+		Shoot();
 	}
 }
 
@@ -213,7 +221,9 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &AASCharacter::ReleasedAimButton);
 	PlayerInputComponent->BindAction("SelectMainWeapon", IE_Pressed, this, &AASCharacter::SelectMainWeapon);
 	PlayerInputComponent->BindAction("SelectSubWeapon", IE_Pressed, this, &AASCharacter::SelectSubWeapon);
-	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &AASCharacter::Shoot);
+	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &AASCharacter::PressedShootButton);
+	PlayerInputComponent->BindAction("Shoot", IE_Released, this, &AASCharacter::ReleasedShootButton);
+	PlayerInputComponent->BindAction("ChangeFireMode", IE_Pressed, this, &AASCharacter::ChangeFireMode);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AASCharacter::MoveRight);
@@ -371,6 +381,40 @@ void AASCharacter::SelectSubWeapon()
 	ServerSelectWeapon(EWeaponSlotType::Sub);
 }
 
+void AASCharacter::PressedShootButton()
+{
+	const TWeakObjectPtr<UASWeapon>& Weapon = ASInventory->GetSelectedWeapon();
+	if (!Weapon.IsValid())
+		return;
+
+	switch (Weapon->GetFireMode())
+	{
+	case EFireMode::SemiAuto:
+		{
+			Shoot();
+		}
+		break;
+	case EFireMode::FullAuto:
+		{
+			bPressedShootButton = true;
+		}
+		break;
+	default:
+		AS_LOG_S(Error);
+		break;
+	}
+}
+
+void AASCharacter::ReleasedShootButton()
+{
+	bPressedShootButton = false;
+}
+
+void AASCharacter::ChangeFireMode()
+{
+	ServerChangeFireMode();
+}
+
 void AASCharacter::Shoot()
 {
 	if (ShootingStance == EShootingStanceType::None)
@@ -378,7 +422,13 @@ void AASCharacter::Shoot()
 	if (ASInventory == nullptr)
 		return;
 
-	TWeakObjectPtr<AASWeaponActor> WeaponActor = ASInventory->GetSelectedWeaponActor();
+	const TWeakObjectPtr<UASWeapon>& Weapon = ASInventory->GetSelectedWeapon();
+	if (!Weapon.IsValid())
+		return;
+	if (!Weapon->CanFire())
+		return;
+
+	const TWeakObjectPtr<AASWeaponActor>& WeaponActor = Weapon->GetActor();
 	if (!WeaponActor.IsValid())
 		return;
 	
@@ -411,6 +461,8 @@ void AASCharacter::Shoot()
 			FVector FireDir = (TargetLoc - MuzzleLoc).GetSafeNormal();
 			FRotator FireRot = FRotationMatrix::MakeFromX(FireDir).Rotator();
 			ServerShoot(MuzzleLoc, FireRot);
+			
+			Weapon->SetLastFireTick();
 		}		
 		break;
 	case EShootingStanceType::Scoping:
@@ -420,6 +472,8 @@ void AASCharacter::Shoot()
 			WeaponActor->GetMuzzleLocationAndRotation(MuzzleLocation, MuzzleRotation);
 
 			ServerShoot(MuzzleLocation, MuzzleRotation);
+
+			Weapon->SetLastFireTick();
 		}
 		break;
 	default:
@@ -648,12 +702,10 @@ void AASCharacter::StartScoping()
 	}
 
 	SetMaxWalkSpeedRate(AimingSpeedRate);
-	TWeakObjectPtr<UASWeapon> SelectedWeapon;
 	if (ASInventory != nullptr)
 	{
-		SelectedWeapon = ASInventory->GetSelectedWeapon();
-	}
-	OnScopeEvent.Broadcast(SelectedWeapon);
+		OnScopeEvent.Broadcast(ASInventory->GetSelectedWeapon());
+	}	
 }
 
 void AASCharacter::EndScoping()
@@ -712,4 +764,13 @@ void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, con
 	{
 		MulticastPlayShootMontage();
 	}
+}
+
+void AASCharacter::ServerChangeFireMode_Implementation()
+{
+	const TWeakObjectPtr<UASWeapon>& Weapon = ASInventory->GetSelectedWeapon();
+	if (!Weapon.IsValid())
+		return;
+
+	Weapon->ChangeToNextFireMode();
 }

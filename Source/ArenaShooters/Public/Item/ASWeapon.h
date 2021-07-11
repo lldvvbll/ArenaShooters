@@ -22,6 +22,8 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset) override;
+
 	const EWeaponType GetWeaponType() const;
 	bool IsEnableToEquip(EWeaponSlotType SlotType) const;
 
@@ -30,7 +32,23 @@ public:
 
 	AASBullet* Fire(AASCharacter* Owner, EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
 
+	EFireMode GetFireMode() const;
+	void ChangeToNextFireMode();
+
+	int64 GetFireInterval() const;
+	bool CanFire() const;
+	void SetLastFireTick();
+
+	UFUNCTION()
+	void OnRep_CurrentFireMode();
+
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	TWeakObjectPtr<AASWeaponActor> ASWeaponActor;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentFireMode, EditDefaultsOnly)
+	EFireMode CurrentFireMode;
+
+	UPROPERTY(Replicated)
+	int64 LastFireTick;
 };

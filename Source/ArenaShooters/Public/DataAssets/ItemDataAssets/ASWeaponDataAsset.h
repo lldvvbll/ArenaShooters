@@ -29,4 +29,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AASBullet> ASBulletClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<EFireMode> FireModes;
+
+	UPROPERTY(EditDefaultsOnly)
+	int64 FireInterval;
 };

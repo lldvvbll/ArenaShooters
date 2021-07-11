@@ -62,6 +62,10 @@ protected:
 	void ReleasedAimButton();
 	void SelectMainWeapon();
 	void SelectSubWeapon();
+	void PressedShootButton();
+	void ReleasedShootButton();
+	void ChangeFireMode();
+
 	void Shoot();
 
 	void ResetAimKeyState();
@@ -109,6 +113,9 @@ protected:
 	//bool ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation);
 	void ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation);
 
+	UFUNCTION(Server, Reliable)
+	void ServerChangeFireMode();
+	void ServerChangeFireMode_Implementation();
 
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
@@ -171,6 +178,8 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Aiming, Meta = (AllowPrivateAccess = true))
 	float AimingSpeedRate;
+
+	bool bPressedShootButton;
 
 	UPROPERTY(ReplicatedUsing = OnRep_ShootingStance)
 	EShootingStanceType ShootingStance;
