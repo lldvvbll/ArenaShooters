@@ -6,13 +6,6 @@
 
 UASAnimInstance::UASAnimInstance()
 {
-	//static ConstructorHelpers::FObjectFinder<UAnimMontage> RIFLE_FIRE_MONTAGE(
-	//	TEXT("/Game/ArenaShooters/Blueprints/Characters/Animations/Montage_Rifle_Fire.Montage_Rifle_Fire"));
-	//if (RIFLE_FIRE_MONTAGE.Succeeded())
-	//{
-	//	RifleFireMontage = RIFLE_FIRE_MONTAGE.Object;
-	//}
-
 	MaxWalkSpeedCrouched = 300.0f;
 }
 
@@ -62,4 +55,24 @@ void UASAnimInstance::NativeBeginPlay()
 bool UASAnimInstance::IsActualSprinted() const
 {
 	return  bSprinted && !bInAir && (CurrentSpeed > 800.0f);
+}
+
+void UASAnimInstance::PlayShootMontage(EWeaponType WeaponType)
+{
+	switch (WeaponType)
+	{
+	case EWeaponType::Pistol:
+		{
+			Montage_Play(PistolShootMontage);
+		}
+		break;
+	case EWeaponType::AssaultRifle:
+		{
+			Montage_Play(ARShootMontage);
+		}
+		break;
+	default:
+		AS_LOG_SCREEN(1.0f, FColor::Red, TEXT("UASAnimInstance::PlayShootMontage() - Invalid WeaponType"));
+		break;
+	}
 }

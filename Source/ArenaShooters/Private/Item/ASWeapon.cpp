@@ -52,25 +52,16 @@ const TWeakObjectPtr<AASWeaponActor>& UASWeapon::GetActor() const
 	return ASWeaponActor;
 }
 
-void UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
+AASBullet* UASWeapon::Fire(AASCharacter* Owner, EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
 	if (WeaponDA == nullptr)
-		return;
-
-	auto Outer = Cast<AASCharacter>(GetOuter());
-	if (Outer == nullptr)
-		return;
+		return false;
 
 	FActorSpawnParameters Param;
-	Param.Owner = Outer;
+	Param.Owner = Owner;
 	Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
-	if (auto Bullet = GetWorld()->SpawnActor<AASBullet>(WeaponDA->ASBulletClass, MuzzleLocation, MuzzleRotation, Param))
-	{
-		if (ASWeaponActor.IsValid())
-		{
-			ASWeaponActor->MulticastPlayFireAnim();
-		}
-	}	
+	auto Bullet = GetWorld()->SpawnActor<AASBullet>(WeaponDA->ASBulletClass, MuzzleLocation, MuzzleRotation, Param);
+	return Bullet;
 }

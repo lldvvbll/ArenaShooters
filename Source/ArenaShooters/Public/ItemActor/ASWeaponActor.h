@@ -17,9 +17,7 @@ public:
 	FVector GetMuzzleLocation() const;
 	void GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator& OutRotation) const;
 
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastPlayFireAnim();
-	void MulticastPlayFireAnim_Implementation();
+	void PlayFireAnim();
 
 protected:
 	static const FName MuzzleSocketName;

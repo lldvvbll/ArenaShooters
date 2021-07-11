@@ -23,12 +23,17 @@ public:
 	UFUNCTION(BlueprintPure, Meta = (BlueprintThreadSafe))
 	bool IsActualSprinted() const;
 
+	void PlayShootMontage(EWeaponType WeaponType);
+
 private:
 	UPROPERTY()
 	AASCharacter* ASChar;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* RifleFireMontage;
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* PistolShootMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* ARShootMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	bool bInAir;

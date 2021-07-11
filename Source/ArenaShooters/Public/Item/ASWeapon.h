@@ -9,6 +9,8 @@
 
 class UASWeaponDataAsset;
 class AASWeaponActor;
+class AASBullet;
+class AASCharacter;
 
 UCLASS()
 class ARENASHOOTERS_API UASWeapon : public UASItem
@@ -26,7 +28,7 @@ public:
 	TWeakObjectPtr<AASWeaponActor>& GetActor();
 	const TWeakObjectPtr<AASWeaponActor>& GetActor() const;
 
-	void Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
+	AASBullet* Fire(AASCharacter* Owner, EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
 
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)

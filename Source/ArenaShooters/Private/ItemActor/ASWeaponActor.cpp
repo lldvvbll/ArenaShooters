@@ -49,14 +49,11 @@ void AASWeaponActor::GetMuzzleLocationAndRotation(FVector& OutLocation, FRotator
 	}	
 }
 
-void AASWeaponActor::MulticastPlayFireAnim_Implementation()
+void AASWeaponActor::PlayFireAnim()
 {	
-	if (!IsNetMode(NM_DedicatedServer))
+	if (WeaponMesh != nullptr)
 	{
-		if (WeaponMesh != nullptr)
-		{
-			WeaponMesh->SetPosition(0.0f, false);
-			WeaponMesh->Play(false);
-		}
+		WeaponMesh->SetPosition(0.0f, false);
+		WeaponMesh->Play(false);
 	}
 }

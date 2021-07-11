@@ -11,6 +11,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UASActionComponent;
 class UASInventoryComponent;
+class UASAnimInstance;
 class UASWeapon;
 class UASArmor;
 class AASWeaponActor;
@@ -39,6 +40,10 @@ public:
 	EWeaponType GetUsingWeaponType() const;
 	FRotator GetAimOffsetRotator() const;
 	EShootingStanceType GetShootingStance() const;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlayShootMontage();
+	void MulticastPlayShootMontage_Implementation();
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -99,9 +104,9 @@ protected:
 	void StartScoping();
 	void EndScoping();
 
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void ServerShoot(const FVector& MuzzleLocation, const FRotator& ShootRotation);
-	bool ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation);
+	//bool ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation);
 	void ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation);
 
 
