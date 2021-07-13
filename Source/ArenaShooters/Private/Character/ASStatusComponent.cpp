@@ -8,6 +8,7 @@ UASStatusComponent::UASStatusComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	bWantsInitializeComponent = true;
+	SetIsReplicatedByDefault(true);
 }
 
 void UASStatusComponent::InitializeComponent()

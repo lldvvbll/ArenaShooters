@@ -7,11 +7,11 @@
 
 AASGameMode::AASGameMode()
 {
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ArenaShooters/Blueprints/Characters/BP_Character"));
-	if (PlayerPawnBPClass.Class != nullptr)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-	}
+	//static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ArenaShooters/Blueprints/Characters/BP_Character"));
+	//if (PlayerPawnBPClass.Class != nullptr)
+	//{
+	//	DefaultPawnClass = PlayerPawnBPClass.Class;
+	//}
 
-	PlayerControllerClass = AASPlayerController::StaticClass();
+	//PlayerControllerClass = AASPlayerController::StaticClass();
 }

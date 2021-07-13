@@ -21,6 +21,7 @@
 #include "ItemActor/ASBullet.h"
 #include "GameFramework/PlayerInput.h"
 #include "Character/ASAnimInstance.h"
+#include "ASGameInstance.h"
 
 AASCharacter::AASCharacter()
 {
@@ -222,9 +223,9 @@ float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent cons
 {
 	float ActualDamage = Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);
 
-	if (PointDamageEvent.HitInfo.BoneName == TEXT("head"))
+	if (auto GameInst = GetGameInstance<UASGameInstance>())
 	{
-		ActualDamage *= 1.2f;
+		ActualDamage *= GameInst->GetDamageRateByBone(GetMesh(), PointDamageEvent.HitInfo.BoneName);
 	}
 
 	if (ASStatus != nullptr)

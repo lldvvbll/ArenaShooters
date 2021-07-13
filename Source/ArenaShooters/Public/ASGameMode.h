@@ -14,6 +14,3 @@ class AASGameMode : public AGameModeBase
 public:
 	AASGameMode();
 };
-
-
-
