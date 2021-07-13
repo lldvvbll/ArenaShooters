@@ -9,6 +9,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Character/ASActionComponent.h"
 #include "Character/ASInventoryComponent.h"
+#include "Character/ASStatusComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
@@ -51,6 +52,7 @@ AASCharacter::AASCharacter()
 
 	ASAction = CreateDefaultSubobject<UASActionComponent>(TEXT("ASAction"));
 	ASInventory = CreateDefaultSubobject<UASInventoryComponent>(TEXT("ASInventory"));
+	ASStatus = CreateDefaultSubobject<UASStatusComponent>(TEXT("ASStatus"));
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
@@ -153,11 +155,18 @@ void AASCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimit
 
 	if (MyComp == GetMesh())
 	{
-		AS_LOG_A(Warning, TEXT("AASCharacter::NotifyHit(), %s"), TEXT("GetMesh"));
-	}	
-	else if (MyComp == GetCapsuleComponent())
-	{
-		AS_LOG_A(Warning, TEXT("AASCharacter::NotifyHit(), %s"), TEXT("GetCapsuleComponent"));
+		if (auto Bullet = Cast<AASBullet>(Other))
+		{
+			auto OtherChar = Cast<AASCharacter>(Other->GetOwner());
+			if (OtherChar != nullptr)
+			{
+				float Damage = Bullet->GetDamage();
+				FVector ShotDir = Bullet->GetActorForwardVector();
+				FPointDamageEvent DamageEvent(Damage, Hit, ShotDir, TSubclassOf<UDamageType>(UDamageType::StaticClass()));
+
+				TakeDamage(Damage, DamageEvent, OtherChar->GetController(), Bullet);
+			}
+		}
 	}
 }
 
@@ -207,6 +216,23 @@ void AASCharacter::MulticastPlayShootMontage_Implementation()
 			WeaponActor->PlayFireAnim();
 		}
 	}
+}
+
+float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);
+
+	if (PointDamageEvent.HitInfo.BoneName == TEXT("head"))
+	{
+		ActualDamage *= 1.2f;
+	}
+
+	if (ASStatus != nullptr)
+	{
+		ASStatus->ModifyCurrentHealth(-ActualDamage);
+	}
+
+	return ActualDamage;
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

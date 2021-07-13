@@ -20,7 +20,7 @@ public:
 	bool IsEnableToEquip(EArmorSlotType SlotType) const;
 
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	EArmorType ArmorType;
 
 	UPROPERTY(EditDefaultsOnly)

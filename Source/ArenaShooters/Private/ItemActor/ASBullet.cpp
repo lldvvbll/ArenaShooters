@@ -7,9 +7,10 @@
 
 AASBullet::AASBullet()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	SetCanBeDamaged(false);
 	bReplicates = true;
+	Damage = 0.0f;
 
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	Collision->SetCollisionProfileName(TEXT("Bullet"));
@@ -37,7 +38,7 @@ void AASBullet::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitive
 	}
 	else
 	{
-		if (TraceParticle)
+		if (TraceParticle != nullptr)
 		{
 			TraceParticle->Deactivate();
 		}
@@ -48,4 +49,14 @@ void AASBullet::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitive
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), DefaultSparkParticle, Hit.ImpactPoint);
 		}		
 	}
+}
+
+float AASBullet::GetDamage() const
+{
+	return Damage;
+}
+
+void AASBullet::SetDamage(float NewDamage)
+{
+	Damage = NewDamage;
 }

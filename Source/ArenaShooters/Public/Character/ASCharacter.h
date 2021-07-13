@@ -11,6 +11,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UASActionComponent;
 class UASInventoryComponent;
+class UASStatusComponent;
 class UASAnimInstance;
 class UASWeapon;
 class UASArmor;
@@ -26,7 +27,7 @@ public:
 	AASCharacter();
 
 	virtual void Tick(float DeltaSeconds) override;
-	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void Jump() override;
 	virtual void Falling() override;
@@ -46,6 +47,8 @@ public:
 	void MulticastPlayShootMontage_Implementation();
 
 protected:
+	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
+		class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 
@@ -136,7 +139,10 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Inventory, Meta = (AllowPrivateAccess = true))
 	UASInventoryComponent* ASInventory;
-	
+
+	UPROPERTY(EditDefaultsOnly, Category = Inventory, Meta = (AllowPrivateAccess = true))
+	UASStatusComponent* ASStatus;
+
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseTurnRate;
 

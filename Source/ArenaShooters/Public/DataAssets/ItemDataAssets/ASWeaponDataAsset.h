@@ -21,7 +21,7 @@ public:
 	bool IsEnableToEquip(EWeaponSlotType SlotType) const;
 
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	EWeaponType WeaponType;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -35,4 +35,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	int64 FireInterval;
+
+	UPROPERTY(EditDefaultsOnly)
+	float Damage;
 };

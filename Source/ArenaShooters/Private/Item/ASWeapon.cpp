@@ -77,6 +77,8 @@ AASBullet* UASWeapon::Fire(AASCharacter* Owner, EShootingStanceType ShootingStan
 	auto Bullet = GetWorld()->SpawnActor<AASBullet>(WeaponDA->ASBulletClass, MuzzleLocation, MuzzleRotation, Param);
 	if (Bullet != nullptr)
 	{
+		Bullet->SetDamage(WeaponDA->Damage);
+
 		LastFireTick = FDateTime::Now().GetTicks();
 	}
 

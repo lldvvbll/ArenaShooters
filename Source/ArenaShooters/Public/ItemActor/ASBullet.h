@@ -19,6 +19,9 @@ public:
 	virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved,
 		FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 
+	float GetDamage() const;
+	void SetDamage(float NewDamage);
+
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	USphereComponent* Collision;
@@ -31,4 +34,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	UParticleSystem* DefaultSparkParticle;
+
+	float Damage;
 };
