@@ -10,6 +10,21 @@ AASDroppedItemActor::AASDroppedItemActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+	SetCanBeDamaged(false);
+
+	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
+	Collision->SetCollisionProfileName(TEXT("DroppedItem"));
+	Collision->CanCharacterStepUpOn = ECB_No;
+
+	SkeletalMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComp"));
+	SkeletalMeshComp->SetCollisionProfileName(TEXT("NoCollision"));
+
+	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
+	StaticMeshComp->SetCollisionProfileName(TEXT("NoCollision"));
+
+	RootComponent = Collision;
+	SkeletalMeshComp->SetupAttachment(RootComponent);
+	StaticMeshComp->SetupAttachment(RootComponent);
 }
 
 bool AASDroppedItemActor::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)

@@ -19,6 +19,7 @@
 #include "ItemActor/ASWeaponActor.h"
 #include "ItemActor/ASArmorActor.h"
 #include "ItemActor/ASBullet.h"
+#include "ItemActor/ASDroppedItemActor.h"
 #include "GameFramework/PlayerInput.h"
 #include "Character/ASAnimInstance.h"
 #include "ASGameInstance.h"
@@ -156,10 +157,11 @@ void AASCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimit
 
 	if (MyComp == GetMesh())
 	{
-		if (auto Bullet = Cast<AASBullet>(Other))
+		if (Other != nullptr && Other->IsA(AASBullet::StaticClass()))
 		{
+			auto Bullet = Cast<AASBullet>(Other);
 			auto OtherChar = Cast<AASCharacter>(Other->GetOwner());
-			if (OtherChar != nullptr)
+			if (Bullet != nullptr && OtherChar != nullptr)
 			{
 				float Damage = Bullet->GetDamage();
 				FVector ShotDir = Bullet->GetActorForwardVector();
@@ -169,6 +171,26 @@ void AASCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimit
 			}
 		}
 	}
+}
+
+void AASCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (OtherActor == nullptr)
+		return;
+
+	if (IsLocallyControlled())
+	{
+		if (OtherActor->IsA(AASDroppedItemActor::StaticClass()))
+		{
+			auto DroppedItem = Cast<AASDroppedItemActor>(OtherActor);
+			if (DroppedItem != nullptr)
+			{
+				AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("AASDroppedItemActor"));
+			}
+		}
+	}	
 }
 
 bool AASCharacter::IsSprinted() const

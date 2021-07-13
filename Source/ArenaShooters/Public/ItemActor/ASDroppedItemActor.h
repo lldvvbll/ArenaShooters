@@ -19,7 +19,16 @@ public:
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-private:
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	USphereComponent* Collision;
+
+	UPROPERTY(EditDefaultsOnly)
+	USkeletalMeshComponent* SkeletalMeshComp;
+
+	UPROPERTY(EditDefaultsOnly)
+	UStaticMeshComponent* StaticMeshComp;
+
 	UPROPERTY(Replicated)
 	TArray<UASItem*> ASItems;
 };
