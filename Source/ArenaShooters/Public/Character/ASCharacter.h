@@ -36,6 +36,7 @@ public:
 	virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved,
 		FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 	bool IsSprinted() const;
 	float GetTotalTurnValue() const;
@@ -143,6 +144,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Inventory, Meta = (AllowPrivateAccess = true))
 	UASStatusComponent* ASStatus;
+
+	UPROPERTY(EditDefaultsOnly)
+	UBoxComponent* InteractionBox;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseTurnRate;

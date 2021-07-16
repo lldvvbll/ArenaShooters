@@ -56,6 +56,11 @@ AASCharacter::AASCharacter()
 	ASInventory = CreateDefaultSubobject<UASInventoryComponent>(TEXT("ASInventory"));
 	ASStatus = CreateDefaultSubobject<UASStatusComponent>(TEXT("ASStatus"));
 
+	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
+	InteractionBox->SetCollisionProfileName(TEXT("Interaction"));
+	InteractionBox->SetBoxExtent(FVector(130.0f, 130.0f, 95.0f), false);
+	InteractionBox->SetupAttachment(RootComponent);
+
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
@@ -187,10 +192,30 @@ void AASCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 			auto DroppedItem = Cast<AASDroppedItemActor>(OtherActor);
 			if (DroppedItem != nullptr)
 			{
-				AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("AASDroppedItemActor"));
+				AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("NotifyActorBeginOverlap"));
 			}
 		}
 	}	
+}
+
+void AASCharacter::NotifyActorEndOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorEndOverlap(OtherActor);
+
+	if (OtherActor == nullptr)
+		return;
+
+	if (IsLocallyControlled())
+	{
+		if (OtherActor->IsA(AASDroppedItemActor::StaticClass()))
+		{
+			auto DroppedItem = Cast<AASDroppedItemActor>(OtherActor);
+			if (DroppedItem != nullptr)
+			{
+				AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("NotifyActorEndOverlap"));
+			}
+		}
+	}
 }
 
 bool AASCharacter::IsSprinted() const

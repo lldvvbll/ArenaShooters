@@ -14,13 +14,15 @@ AASDroppedItemActor::AASDroppedItemActor()
 
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	Collision->SetCollisionProfileName(TEXT("DroppedItem"));
-	Collision->CanCharacterStepUpOn = ECB_No;
+	Collision->SetGenerateOverlapEvents(true);
 
 	SkeletalMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComp"));
 	SkeletalMeshComp->SetCollisionProfileName(TEXT("NoCollision"));
+	SkeletalMeshComp->SetIsReplicated(true);
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	StaticMeshComp->SetCollisionProfileName(TEXT("NoCollision"));
+	StaticMeshComp->SetIsReplicated(true);
 
 	RootComponent = Collision;
 	SkeletalMeshComp->SetupAttachment(RootComponent);
@@ -47,4 +49,20 @@ void AASDroppedItemActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AASDroppedItemActor, ASItems);
+}
+
+void AASDroppedItemActor::SetSkeletalMesh(USkeletalMesh* InSkelMesh)
+{
+	if (SkeletalMeshComp != nullptr)
+	{
+		SkeletalMeshComp->SetSkeletalMesh(InSkelMesh);
+	}
+}
+
+void AASDroppedItemActor::SetStaticMesh(UStaticMesh* InStaticMesh)
+{
+	if (StaticMeshComp != nullptr)
+	{
+		StaticMeshComp->SetStaticMesh(InStaticMesh);
+	}
 }
