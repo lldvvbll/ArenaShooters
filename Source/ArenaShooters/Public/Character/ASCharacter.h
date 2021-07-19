@@ -72,7 +72,6 @@ protected:
 	void ChangeFireMode();
 
 	void Shoot();
-
 	void ResetAimKeyState();
 
 	UFUNCTION(Server, Reliable)
@@ -194,6 +193,7 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_ShootingStance)
 	EShootingStanceType ShootingStance;
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

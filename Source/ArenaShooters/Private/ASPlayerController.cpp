@@ -6,6 +6,7 @@
 #include "Character/ASCharacter.h"
 #include "Item/ASWeapon.h"
 #include "ItemActor/ASWeaponActor.h"
+#include "GUI/ASInventoryUserWidget.h"
 
 AASPlayerController::AASPlayerController()
 {
@@ -15,6 +16,8 @@ AASPlayerController::AASPlayerController()
 	{
 		SimpleCrossHairClass = SimpleCrossHairClassFinder.Class;
 	}
+
+	UIInputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
 }
 
 void AASPlayerController::SetPawn(APawn* InPawn)
@@ -28,6 +31,20 @@ void AASPlayerController::SetPawn(APawn* InPawn)
 	}
 }
 
+void AASPlayerController::ChangeInputMode(bool bGameMode)
+{
+	if (bGameMode)
+	{
+		SetInputMode(GameInputMode);
+		bShowMouseCursor = false;
+	}
+	else
+	{
+		SetInputMode(UIInputMode);
+		bShowMouseCursor = true;
+	}
+}
+
 void AASPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -37,6 +54,13 @@ void AASPlayerController::BeginPlay()
 		SimpleCrossHair = CreateWidget<UUserWidget>(this, SimpleCrossHairClass);
 		SimpleCrossHair->AddToViewport();
 	}
+}
+
+void AASPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	InputComponent->BindAction(TEXT("ShowInventory"), EInputEvent::IE_Pressed, this, &AASPlayerController::ShowInventoryWidget);
 }
 
 void AASPlayerController::OnScope(const TWeakObjectPtr<UASWeapon>& UsingWeapon)
@@ -76,5 +100,24 @@ void AASPlayerController::ShowCrossHair(bool bShow)
 	if (SimpleCrossHair != nullptr)
 	{
 		SimpleCrossHair->SetVisibility(bShow ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+	}
+}
+
+void AASPlayerController::ShowInventoryWidget()
+{
+	if (InventoryWidget == nullptr)
+	{
+		InventoryWidget = CreateWidget<UASInventoryUserWidget>(this, InventoryWidgetClass);
+		if (InventoryWidget != nullptr)
+		{
+			InventoryWidget->AddToViewport(1);
+			ChangeInputMode(false);
+		}
+	}
+	else
+	{
+		InventoryWidget->RemoveFromParent();
+		InventoryWidget = nullptr;
+		ChangeInputMode(true);
 	}
 }

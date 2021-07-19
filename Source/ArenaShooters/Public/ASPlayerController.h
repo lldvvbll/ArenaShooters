@@ -8,6 +8,7 @@
 
 class UUserWidget;
 class UASWeapon;
+class UASInventoryUserWidget;
 
 UCLASS()
 class ARENASHOOTERS_API AASPlayerController : public APlayerController
@@ -19,13 +20,17 @@ public:
 
 	virtual void SetPawn(APawn* InPawn) override;
 
+	void ChangeInputMode(bool bGameMode);
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;
 
 	void OnScope(const TWeakObjectPtr<UASWeapon>& UsingWeapon);
 	void OnUnscope();
 
 	void ShowCrossHair(bool bShow);
+	void ShowInventoryWidget();
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = UI, Meta = (AllowPrivateAccess = true))
@@ -33,4 +38,13 @@ private:
 
 	UPROPERTY()
 	UUserWidget* SimpleCrossHair;
+
+	UPROPERTY(EditDefaultsOnly, Category = UI, Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UASInventoryUserWidget> InventoryWidgetClass;
+
+	UPROPERTY()
+	UASInventoryUserWidget* InventoryWidget;
+
+	FInputModeGameOnly GameInputMode;
+	FInputModeGameAndUI UIInputMode;
 };
