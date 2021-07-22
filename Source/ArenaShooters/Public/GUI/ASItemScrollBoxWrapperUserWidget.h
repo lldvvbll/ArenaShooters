@@ -26,5 +26,6 @@ private:
 	UPROPERTY(EditInstanceOnly, Meta = (AllowPrivateAccess = true))
 	bool bInventoryScrollBoxWrapper;
 
+	UPROPERTY()
 	UScrollBox* ItemScrollBox;
 };

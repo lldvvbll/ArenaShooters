@@ -48,6 +48,8 @@ public:
 	void MulticastPlayShootMontage();
 	void MulticastPlayShootMontage_Implementation();
 
+	UASInventoryComponent* GetInventoryComponent();
+
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
 		class AController* EventInstigator, AActor* DamageCauser) override;
@@ -98,6 +100,10 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSelectWeapon(EWeaponSlotType WeaponSlotType);
 	void ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotType);
+
+	UFUNCTION(Server, Reliable)
+	void ServerPickUpWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
+	void ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
 
 	UFUNCTION(Server, Reliable)
 	void ServerChangeShootingStance(EShootingStanceType NewShootingStance);

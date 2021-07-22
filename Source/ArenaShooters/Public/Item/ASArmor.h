@@ -21,7 +21,6 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	const EArmorType GetArmorType() const;
-	bool IsEnableToEquip(EArmorSlotType SlotType) const;
 
 	TWeakObjectPtr<AASArmorActor>& GetActor();
 	const TWeakObjectPtr<AASArmorActor>& GetActor() const;

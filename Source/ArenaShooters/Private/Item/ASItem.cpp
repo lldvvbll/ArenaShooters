@@ -31,3 +31,8 @@ EItemType UASItem::GetItemType() const
 {
 	return (DataAsset != nullptr) ? DataAsset->ItemType : EItemType::None;
 }
+
+UTexture2D* UASItem::GetEquipmentSlotImage() const
+{
+	return (DataAsset != nullptr) ? DataAsset->EquipmentSlotImage : nullptr;
+}

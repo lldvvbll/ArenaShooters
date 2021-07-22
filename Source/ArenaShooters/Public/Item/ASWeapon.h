@@ -25,7 +25,6 @@ public:
 	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset) override;
 
 	const EWeaponType GetWeaponType() const;
-	bool IsEnableToEquip(EWeaponSlotType SlotType) const;
 
 	TWeakObjectPtr<AASWeaponActor>& GetActor();
 	const TWeakObjectPtr<AASWeaponActor>& GetActor() const;

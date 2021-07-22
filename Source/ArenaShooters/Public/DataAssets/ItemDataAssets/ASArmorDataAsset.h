@@ -17,8 +17,6 @@ class ARENASHOOTERS_API UASArmorDataAsset : public UASItemDataAsset
 public:
 	UASArmorDataAsset();
 
-	bool IsEnableToEquip(EArmorSlotType SlotType) const;
-
 public:
 	UPROPERTY(EditDefaultsOnly)
 	EArmorType ArmorType;

@@ -86,19 +86,66 @@ const EWeaponSlotType UASInventoryComponent::GetSelectedWeaponSlotType() const
 	return SelectedWeaponSlotType;
 }
 
+bool UASInventoryComponent::IsSuitableWeaponSlot(EWeaponSlotType SlotType, UASWeapon* Weapon)
+{
+	if (Weapon == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (Weapon->GetItemType() != EItemType::Weapon)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	switch (Weapon->GetWeaponType())
+	{
+	case EWeaponType::Pistol:
+		return (SlotType == EWeaponSlotType::Sub);
+	case EWeaponType::AssaultRifle:
+		return (SlotType == EWeaponSlotType::Main);
+	default:
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	return false;
+}
+
+bool UASInventoryComponent::IsSuitableArmorSlot(EArmorSlotType SlotType, UASArmor* Armor)
+{
+	if (Armor == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (Armor->GetItemType() != EItemType::Armor)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	switch (Armor->GetArmorType())
+	{
+	case EArmorType::Helmet:
+		return (SlotType == EArmorSlotType::Helmet);
+	case EArmorType::Jacket:
+		return (SlotType == EArmorSlotType::Jacket);
+	default:
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	return false;
+}
+
 bool UASInventoryComponent::InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem)
 {
-	if (NewWeapon == nullptr)
-	{
-		AS_LOG_S(Error);
+	if (!IsSuitableWeaponSlot(SlotType, NewWeapon))
 		return false;
-	}
-		
-	if (NewWeapon->GetItemType() != EItemType::Weapon || !NewWeapon->IsEnableToEquip(SlotType))
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
 
 	ItemBoolPair RemoveResultPair = RemoveItemFromWeaponSlot(SlotType);
 	if (!RemoveResultPair.Value)
@@ -124,18 +171,9 @@ bool UASInventoryComponent::InsertWeapon(EWeaponSlotType SlotType, UASWeapon* Ne
 
 bool UASInventoryComponent::InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem)
 {
-	if (NewArmor == nullptr)
-	{
-		AS_LOG_S(Error);
+	if (!IsSuitableArmorSlot(SlotType, NewArmor))
 		return false;
-	}
 		
-	if (NewArmor->GetItemType() != EItemType::Armor || !NewArmor->IsEnableToEquip(SlotType))
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-	
 	ItemBoolPair RemoveResultPair = RemoveItemFromArmorSlot(SlotType);
 	if (!RemoveResultPair.Value)
 	{
@@ -602,5 +640,27 @@ const FName& UASInventoryComponent::GetProperWeaponSocketName(EWeaponType Weapon
 		}
 
 		return BackSocketName;
+	}
+}
+
+void UASInventoryComponent::OnRep_WeaponSlots(TArray<UASItem*>& OldWeaponSlots)
+{
+	for (int32 Idx = 0; Idx < WeaponSlots.Num(); ++Idx)
+	{
+		if (WeaponSlots[Idx] != OldWeaponSlots[Idx])
+		{
+			OnInsertWeapon.Broadcast(static_cast<EWeaponSlotType>(Idx), Cast<UASWeapon>(OldWeaponSlots[Idx]));
+		}
+	}
+}
+
+void UASInventoryComponent::OnRep_ArmorSlots(TArray<UASItem*>& OldArmorSlots)
+{
+	for (int32 Idx = 0; Idx < ArmorSlots.Num(); ++Idx)
+	{
+		if (ArmorSlots[Idx] != OldArmorSlots[Idx])
+		{
+			OnInsertArmor.Broadcast(static_cast<EArmorSlotType>(Idx), Cast<UASArmor>(OldArmorSlots[Idx]));
+		}
 	}
 }

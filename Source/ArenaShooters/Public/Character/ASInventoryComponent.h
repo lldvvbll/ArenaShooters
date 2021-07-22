@@ -34,6 +34,9 @@ public:
 	const EWeaponType GetSelectedWeaponType() const;
 	const EWeaponSlotType GetSelectedWeaponSlotType() const;
 
+	static bool IsSuitableWeaponSlot(EWeaponSlotType SlotType, UASWeapon* Weapon);
+	static bool IsSuitableArmorSlot(EArmorSlotType SlotType, UASArmor* Armor);
+
 	bool InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem);
 	bool InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem);
 
@@ -63,6 +66,12 @@ private:
 	EWeaponSlotType GetWeaponSlotTypeFromWeapon(UASWeapon* InWeapon);
 	const FName& GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing) const;
 
+	UFUNCTION()
+	void OnRep_WeaponSlots(TArray<UASItem*>& OldWeaponSlots);
+
+	UFUNCTION()
+	void OnRep_ArmorSlots(TArray<UASItem*>& OldArmorSlots);
+
 public:
 	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnInsertWeaponEvent, EWeaponSlotType, UASWeapon*);
 	FOnInsertWeaponEvent OnInsertWeapon;
@@ -78,10 +87,10 @@ public:
 	static const FName JacketSocketName;
 
 private:
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_WeaponSlots)
 	TArray<UASItem*> WeaponSlots;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_ArmorSlots)
 	TArray<UASItem*> ArmorSlots;
 
 	UPROPERTY(Replicated)

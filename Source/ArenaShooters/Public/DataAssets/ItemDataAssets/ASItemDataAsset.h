@@ -32,4 +32,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AASDroppedItemActor> DroppedItemActorClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	UTexture2D* EquipmentSlotImage;
 };

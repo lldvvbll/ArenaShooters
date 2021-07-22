@@ -31,14 +31,6 @@ const EArmorType UASArmor::GetArmorType() const
 	return ArmorDA->ArmorType;
 }
 
-bool UASArmor::IsEnableToEquip(EArmorSlotType SlotType) const
-{
-	auto ArmorDA = Cast<UASArmorDataAsset>(GetDataAsset());
-	check(ArmorDA);
-
-	return ArmorDA->IsEnableToEquip(SlotType);
-}
-
 TWeakObjectPtr<AASArmorActor>& UASArmor::GetActor()
 {
 	return ASArmorActor;

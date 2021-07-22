@@ -22,5 +22,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
 	TSubclassOf<UASDragItemUserWidget> DragItemWidgetClass;
 
+	UPROPERTY()
 	UASDragItemUserWidget* DraggedItemWidget;
 };

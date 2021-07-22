@@ -266,6 +266,11 @@ void AASCharacter::MulticastPlayShootMontage_Implementation()
 	}
 }
 
+UASInventoryComponent* AASCharacter::GetInventoryComponent()
+{
+	return ASInventory;
+}
+
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float ActualDamage = Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);
@@ -641,6 +646,28 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 				}
 			}
 		}
+	}
+}
+
+void AASCharacter::ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, UASWeapon* NewWeapon)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->IsSuitableWeaponSlot(SlotType, NewWeapon))
+		return;
+
+	UASItem* OldWeapon = nullptr;
+	if (ASInventory->InsertWeapon(SlotType, NewWeapon, OldWeapon))
+	{
+
+	}
+	else
+	{
+		AS_LOG_S(Error);
 	}
 }
 

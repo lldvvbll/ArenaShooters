@@ -110,6 +110,7 @@ void AASPlayerController::ShowInventoryWidget()
 		InventoryWidget = CreateWidget<UASInventoryUserWidget>(this, InventoryWidgetClass);
 		if (InventoryWidget != nullptr)
 		{
+			InventoryWidget->Bind();
 			InventoryWidget->AddToViewport(1);
 			ChangeInputMode(false);
 		}

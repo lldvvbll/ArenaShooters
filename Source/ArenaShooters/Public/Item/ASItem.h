@@ -23,6 +23,7 @@ public:
 	const UASItemDataAsset* GetDataAsset() const;
 
 	EItemType GetItemType() const;
+	UTexture2D* GetEquipmentSlotImage() const;
 
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)

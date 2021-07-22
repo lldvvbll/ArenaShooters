@@ -43,14 +43,6 @@ const EWeaponType UASWeapon::GetWeaponType() const
 	return WeaponDA->WeaponType;
 }
 
-bool UASWeapon::IsEnableToEquip(EWeaponSlotType SlotType) const
-{
-	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
-	check(WeaponDA);
-
-	return WeaponDA->IsEnableToEquip(SlotType);
-}
-
 TWeakObjectPtr<AASWeaponActor>& UASWeapon::GetActor()
 {
 	return ASWeaponActor;
