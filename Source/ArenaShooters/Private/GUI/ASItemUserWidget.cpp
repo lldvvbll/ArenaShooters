@@ -5,12 +5,66 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GUI/ASDragItemUserWidget.h"
 #include "GUI/ASItemDragDropOperation.h"
+#include "Item/ASItem.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
+#include "Common/ASEnums.h"
+
+void UASItemUserWidget::SetItem(const TWeakObjectPtr<UASItem>& NewItem)
+{
+	Item = NewItem;
+
+	if (!Item.IsValid())
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return;
+	}
+
+	if (ItemImage != nullptr)
+	{
+		ItemImage->SetBrushFromTexture(Item->GetItemImage());
+	}
+
+	if (NameTextBlock != nullptr)
+	{
+		NameTextBlock->SetText(Item->GetItemName());
+	}
+
+	if (CountTextBlock != nullptr)
+	{
+		switch (Item->GetItemType())
+		{
+		case EItemType::Weapon:	// fallthough
+		case EItemType::Armor:
+			{
+				CountTextBlock->SetVisibility(ESlateVisibility::Hidden);
+			}
+			break;
+		case EItemType::Ammo:	// fallthough
+		case EItemType::HealingKit:
+			{
+				CountTextBlock->SetText(FText::FromString(FString::FromInt(Item->GetCount())));
+			}
+			break;
+		default:
+			AS_LOG_SCREEN_S(5.0f, FColor::Red);
+			break;
+		}
+	}
+}
+
+bool UASItemUserWidget::HasItem(const TWeakObjectPtr<UASItem>& InItem) const
+{
+	return Item == InItem;
+}
 
 void UASItemUserWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-
+	ItemImage = Cast<UImage>(GetWidgetFromName(TEXT("ItemImage")));
+	NameTextBlock = Cast<UTextBlock>(GetWidgetFromName(TEXT("NameTextBlock")));
+	CountTextBlock = Cast<UTextBlock>(GetWidgetFromName(TEXT("CountTextBlock")));
 }
 
 FReply UASItemUserWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -25,17 +79,14 @@ void UASItemUserWidget::NativeOnDragDetected(const FGeometry& InGeometry, const 
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
 	DraggedItemWidget = CreateWidget<UASDragItemUserWidget>(this, (DragItemWidgetClass != nullptr ? DragItemWidgetClass : UASDragItemUserWidget::StaticClass()));
-	if (DraggedItemWidget != nullptr)
+	if (DraggedItemWidget != nullptr && Item.IsValid())
 	{
-		DraggedItemWidget->SetItemWidget(this);
+		DraggedItemWidget->SetImageAndItemWidget(Item->GetItemImage(), this);
 	}
 
-	if (auto ItemDragDropOp = Cast<UASItemDragDropOperation>(UWidgetBlueprintLibrary::CreateDragDropOperation(UASItemDragDropOperation::StaticClass())))
+	if (auto ItemDragDropOp = NewObject<UASItemDragDropOperation>(GetTransientPackage(), UASItemDragDropOperation::StaticClass()))
 	{
-		ItemDragDropOp->SetItemWidget(this);
-		ItemDragDropOp->Pivot = EDragPivot::CenterCenter;
-		ItemDragDropOp->DefaultDragVisual = DraggedItemWidget;
-
+		ItemDragDropOp->SetItemData(Item, this, DraggedItemWidget);
 		OutOperation = ItemDragDropOp;
 	}
 }

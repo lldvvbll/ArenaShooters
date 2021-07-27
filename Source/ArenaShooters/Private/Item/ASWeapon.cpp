@@ -8,12 +8,27 @@
 #include "ItemActor/ASWeaponActor.h"
 #include "Character/ASCharacter.h"
 
-UASWeapon* UASWeapon::CreateFromDataAsset(UObject* Owner, UASWeaponDataAsset* DataAsset)
+UASWeapon* UASWeapon::CreateFromDataAsset(UWorld* World, AActor* NewOwner, UASWeaponDataAsset* DataAsset)
 {
 	if (DataAsset == nullptr)
+	{
+		AS_LOG_S(Error);
 		return nullptr;
+	}
+	if (World == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
 
-	UASWeapon* NewItem = ::NewObject<UASWeapon>(Owner, DataAsset->ItemClass);
+	UASWeapon* NewItem = ::NewObject<UASWeapon>(World->GetCurrentLevel(), DataAsset->ItemClass);
+	if (NewItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
+	
+	NewItem->SetOwner(NewOwner);
 	NewItem->SetDataAsset(DataAsset);
 
 	return NewItem;
@@ -53,7 +68,7 @@ const TWeakObjectPtr<AASWeaponActor>& UASWeapon::GetActor() const
 	return ASWeaponActor;
 }
 
-AASBullet* UASWeapon::Fire(AASCharacter* Owner, EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
+AASBullet* UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
 	if (WeaponDA == nullptr)
@@ -63,7 +78,7 @@ AASBullet* UASWeapon::Fire(AASCharacter* Owner, EShootingStanceType ShootingStan
 		return nullptr;
 
 	FActorSpawnParameters Param;
-	Param.Owner = Owner;
+	Param.Owner = GetOwner().Get();
 	Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
 	auto Bullet = GetWorld()->SpawnActor<AASBullet>(WeaponDA->ASBulletClass, MuzzleLocation, MuzzleRotation, Param);

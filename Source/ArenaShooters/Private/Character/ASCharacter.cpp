@@ -14,6 +14,7 @@
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
 #include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
+#include "Item/ASItem.h"
 #include "Item/ASWeapon.h"
 #include "Item/ASArmor.h"
 #include "ItemActor/ASWeaponActor.h"
@@ -189,10 +190,16 @@ void AASCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 	{
 		if (OtherActor->IsA(AASDroppedItemActor::StaticClass()))
 		{
-			auto DroppedItem = Cast<AASDroppedItemActor>(OtherActor);
-			if (DroppedItem != nullptr)
+			auto DroppedItemActor = Cast<AASDroppedItemActor>(OtherActor);
+			if (DroppedItemActor != nullptr)
 			{
-				AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("NotifyActorBeginOverlap"));
+				FDelegateHandle Handle = DroppedItemActor->OnRemoveItemEvent.AddUObject(this, &AASCharacter::OnRemoveGroundItem);
+				GroundItemActorSet.Emplace(TPair<TWeakObjectPtr<AASDroppedItemActor>, FDelegateHandle>(MakeWeakObjectPtr(DroppedItemActor), Handle));
+
+				if (OnGroundItemAddEvent.IsBound())
+				{
+					OnGroundItemAddEvent.Broadcast(DroppedItemActor->GetItems());
+				}
 			}
 		}
 	}	
@@ -209,10 +216,24 @@ void AASCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 	{
 		if (OtherActor->IsA(AASDroppedItemActor::StaticClass()))
 		{
-			auto DroppedItem = Cast<AASDroppedItemActor>(OtherActor);
-			if (DroppedItem != nullptr)
+			auto DroppedItemActor = Cast<AASDroppedItemActor>(OtherActor);
+			if (DroppedItemActor != nullptr)
 			{
-				AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("NotifyActorEndOverlap"));
+				for (auto Itr = GroundItemActorSet.CreateIterator(); Itr; ++Itr)
+				{
+					if ((Itr->Key).IsValid() && (Itr->Key).Get() == DroppedItemActor)
+					{
+						DroppedItemActor->OnRemoveItemEvent.Remove(Itr->Value);
+						Itr.RemoveCurrent();
+
+						if (OnGroundItemAddEvent.IsBound())
+						{
+							OnGroundItemRemoveEvent.Broadcast(DroppedItemActor->GetItems());
+						}
+
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -269,6 +290,76 @@ void AASCharacter::MulticastPlayShootMontage_Implementation()
 UASInventoryComponent* AASCharacter::GetInventoryComponent()
 {
 	return ASInventory;
+}
+
+TArray<TWeakObjectPtr<UASItem>> AASCharacter::GetGroundItems() const
+{
+	TArray<TWeakObjectPtr<UASItem>> GroundItems;
+
+	for (auto& Pair : GroundItemActorSet)
+	{
+		if (!(Pair.Key).IsValid())
+			continue;
+
+		GroundItems += (Pair.Key)->GetItems();
+	}
+
+	return GroundItems;
+}
+
+void AASCharacter::ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, UASWeapon* NewWeapon)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->IsSuitableWeaponSlot(SlotType, NewWeapon))
+		return;
+
+	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewWeapon->GetOwner());
+	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!DroppedItemActor->RemoveItem(NewWeapon))
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	UASItem* OldWeapon = nullptr;
+	if (ASInventory->InsertWeapon(SlotType, NewWeapon, OldWeapon))
+	{
+		DropItem(OldWeapon);
+	}
+	else
+	{
+		DroppedItemActor->AddItem(NewWeapon);
+		AS_LOG_S(Error);
+	}
+}
+
+void AASCharacter::ServerDropWeapon_Implementation(EWeaponSlotType SlotType)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	ItemBoolPair ResultPair = ASInventory->RemoveItemFromWeaponSlot(SlotType);
+	if (ResultPair.Value)
+	{
+		DropItem(ResultPair.Key);
+	}
+	else
+	{
+		AS_LOG_S(Error);
+	}
 }
 
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -462,9 +553,13 @@ void AASCharacter::SelectSubWeapon()
 
 void AASCharacter::PressedShootButton()
 {
-	const TWeakObjectPtr<UASWeapon>& Weapon = ASInventory->GetSelectedWeapon();
+	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
 	if (!Weapon.IsValid())
+	{
+		ConstItemPtrBoolPair Pair = ASInventory->FindItemFromWeaponSlot(EWeaponSlotType::Main);
+		AS_LOG_SCREEN(5.0f, FColor::Yellow, TEXT("Bool: %s, IsValid: %s"), (Pair.Value ? TEXT("t") : TEXT("f")), (Pair.Key.IsValid() ? TEXT("t") : TEXT("f")));
 		return;
+	}		
 
 	switch (Weapon->GetFireMode())
 	{
@@ -501,7 +596,7 @@ void AASCharacter::Shoot()
 	if (ASInventory == nullptr)
 		return;
 
-	const TWeakObjectPtr<UASWeapon>& Weapon = ASInventory->GetSelectedWeapon();
+	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
 	if (!Weapon.IsValid())
 		return;
 	if (!Weapon->CanFire())
@@ -618,10 +713,7 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType)
 		return;
 
-	if (ShootingStance != EShootingStanceType::None)
-	{
-		ServerChangeShootingStance(EShootingStanceType::None);
-	}
+	ServerChangeShootingStance(EShootingStanceType::None);
 
 	ConstItemPtrBoolPair ResultPair = ASInventory->FindItemFromWeaponSlot(WeaponSlotType);
 	if (!ResultPair.Value)
@@ -638,7 +730,7 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 		if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(WeaponAssetId))
 		{
 			UASItem* OldWeapon = nullptr;
-			if (ASInventory->InsertWeapon(WeaponSlotType, UASWeapon::CreateFromDataAsset(this, WeaponDataAsset), OldWeapon))
+			if (ASInventory->InsertWeapon(WeaponSlotType, UASWeapon::CreateFromDataAsset(GetWorld(), this, WeaponDataAsset), OldWeapon))
 			{
 				if (OldWeapon != nullptr)
 				{
@@ -646,28 +738,6 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 				}
 			}
 		}
-	}
-}
-
-void AASCharacter::ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, UASWeapon* NewWeapon)
-{
-	if (ASInventory == nullptr)
-	{
-		AS_LOG_S(Error);
-		return;
-	}
-
-	if (!ASInventory->IsSuitableWeaponSlot(SlotType, NewWeapon))
-		return;
-
-	UASItem* OldWeapon = nullptr;
-	if (ASInventory->InsertWeapon(SlotType, NewWeapon, OldWeapon))
-	{
-
-	}
-	else
-	{
-		AS_LOG_S(Error);
 	}
 }
 
@@ -856,11 +926,11 @@ void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, con
 	if (ASInventory == nullptr)
 		return;
 
-	const TWeakObjectPtr<UASWeapon>& SelectedWeapon = ASInventory->GetSelectedWeapon();
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
 	if (!SelectedWeapon.IsValid())
 		return;
 
-	AASBullet* SpawnedBullet = SelectedWeapon->Fire(this, ShootingStance, MuzzleLocation, ShootRotation);
+	AASBullet* SpawnedBullet = SelectedWeapon->Fire(ShootingStance, MuzzleLocation, ShootRotation);
 	if (SpawnedBullet != nullptr)
 	{
 		MulticastPlayShootMontage();
@@ -869,9 +939,25 @@ void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, con
 
 void AASCharacter::ServerChangeFireMode_Implementation()
 {
-	const TWeakObjectPtr<UASWeapon>& Weapon = ASInventory->GetSelectedWeapon();
+	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
 	if (!Weapon.IsValid())
 		return;
 
 	Weapon->ChangeToNextFireMode();
+}
+
+void AASCharacter::DropItem(UASItem* DroppingItem)
+{
+	if (DroppingItem == nullptr)
+		return;
+
+	if (auto DroppedItemActor = GetWorld()->SpawnActor<AASDroppedItemActor>(DroppingItem->GetDroppedItemActorClass(), GetActorLocation(), GetActorRotation()))
+	{
+		DroppedItemActor->AddItem(DroppingItem);
+	}
+}
+
+void AASCharacter::OnRemoveGroundItem(TWeakObjectPtr<UASItem>& Item)
+{
+	OnGroundItemRemoveEvent.Broadcast(TArray<TWeakObjectPtr<UASItem>>{ Item });
 }

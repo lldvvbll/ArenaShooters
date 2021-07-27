@@ -8,12 +8,17 @@
 
 class UScrollBox;
 class UASItem;
+class UASItemUserWidget;
 
 UCLASS()
 class ARENASHOOTERS_API UASItemScrollBoxWrapperUserWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+	void AddItemsToScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items);
+	void RemoveItemsFromScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items);
+
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeOnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
@@ -28,4 +33,7 @@ private:
 
 	UPROPERTY()
 	UScrollBox* ItemScrollBox;
+
+	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UASItemUserWidget> ItemWidgetClass;
 };

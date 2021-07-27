@@ -29,7 +29,7 @@ public:
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	const TWeakObjectPtr<UASWeapon>& GetSelectedWeapon() const;
+	TWeakObjectPtr<UASWeapon> GetSelectedWeapon() const;
 	TWeakObjectPtr<AASWeaponActor> GetSelectedWeaponActor();
 	const EWeaponType GetSelectedWeaponType() const;
 	const EWeaponSlotType GetSelectedWeaponSlotType() const;
@@ -72,6 +72,9 @@ private:
 	UFUNCTION()
 	void OnRep_ArmorSlots(TArray<UASItem*>& OldArmorSlots);
 
+	UFUNCTION()
+	void OnRep_SelectedWeapon(UASWeapon* OldWeapon);
+
 public:
 	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnInsertWeaponEvent, EWeaponSlotType, UASWeapon*);
 	FOnInsertWeaponEvent OnInsertWeapon;
@@ -93,8 +96,8 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_ArmorSlots)
 	TArray<UASItem*> ArmorSlots;
 
-	UPROPERTY(Replicated)
-	TWeakObjectPtr<UASWeapon> SelectedWeapon;
+	UPROPERTY(ReplicatedUsing = OnRep_SelectedWeapon)
+	UASWeapon* SelectedWeapon;
 
 	UPROPERTY(Replicated)
 	EWeaponSlotType SelectedWeaponSlotType;

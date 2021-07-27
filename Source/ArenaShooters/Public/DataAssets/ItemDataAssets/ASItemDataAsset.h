@@ -30,8 +30,14 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UASItem> ItemClass;
 
+	UPROPERTY(EditDefaultSOnly)
+	FText ItemName;
+
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AASDroppedItemActor> DroppedItemActorClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	UTexture2D* ItemImage;
 
 	UPROPERTY(EditDefaultsOnly)
 	UTexture2D* EquipmentSlotImage;

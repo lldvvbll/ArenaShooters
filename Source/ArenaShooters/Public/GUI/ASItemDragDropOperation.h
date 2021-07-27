@@ -6,7 +6,9 @@
 #include "Blueprint/DragDropOperation.h"
 #include "ASItemDragDropOperation.generated.h"
 
+class UASItem;
 class UASItemUserWidget;
+class UASDragItemUserWidget;
 
 UCLASS()
 class ARENASHOOTERS_API UASItemDragDropOperation : public UDragDropOperation
@@ -14,14 +16,15 @@ class ARENASHOOTERS_API UASItemDragDropOperation : public UDragDropOperation
 	GENERATED_BODY()
 
 public:
-	void SetItemWidget(UASItemUserWidget* InItemWidget);
-	UASItemUserWidget* GetItemWidget();
+	void SetItemData(const TWeakObjectPtr<UASItem>& InItem, UASItemUserWidget* InItemWidget, UASDragItemUserWidget* InDragItemUserWidget);
+
+	const TWeakObjectPtr<UASItem>& GetItem() const;
 	const UASItemUserWidget* GetItemWidget() const;
 
 private:
-	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
-	UASItemUserWidget* ItemWidget;
+	UPROPERTY()
+	TWeakObjectPtr<UASItem> Item;
 
-	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
-	FVector2D DragOffset;
+	UPROPERTY()
+	UASItemUserWidget* ItemWidget;
 };

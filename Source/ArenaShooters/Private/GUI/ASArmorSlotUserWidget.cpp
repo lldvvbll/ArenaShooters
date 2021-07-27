@@ -24,7 +24,7 @@ bool UASArmorSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 
 }
 
-bool UASArmorSlotUserWidget::IsSuitableSlot(UASItem* Item)
+bool UASArmorSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item)
 {
 	if (!Super::IsSuitableSlot(Item))
 		return false;

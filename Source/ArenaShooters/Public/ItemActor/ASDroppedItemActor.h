@@ -22,6 +22,22 @@ public:
 	void SetSkeletalMesh(USkeletalMesh* InSkelMesh);
 	void SetStaticMesh(UStaticMesh* InStaticMesh);
 
+	TArray<TWeakObjectPtr<UASItem>> GetItems() const;
+	void AddItem(UASItem* InItem);
+	bool RemoveItem(UASItem* InItem);
+
+	void SetSelfDestroy(float InLifeSpan);
+
+protected:
+	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void OnRep_ASItems(TArray<UASItem*>& OldItems);
+
+public:
+	DECLARE_EVENT_OneParam(AASCharacter, FOnRemoveItemEvent, TWeakObjectPtr<UASItem>&)
+	FOnRemoveItemEvent OnRemoveItemEvent;
+
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	USphereComponent* Collision;
@@ -32,6 +48,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* StaticMeshComp;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_ASItems)
 	TArray<UASItem*> ASItems;
+
+
+	UPROPERTY(EditInstanceOnly)
+	FPrimaryAssetId TestARAssetId;
 };

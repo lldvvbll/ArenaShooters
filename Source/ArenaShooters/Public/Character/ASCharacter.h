@@ -13,10 +13,12 @@ class UASActionComponent;
 class UASInventoryComponent;
 class UASStatusComponent;
 class UASAnimInstance;
+class UASItem;
 class UASWeapon;
 class UASArmor;
 class AASWeaponActor;
 class AASArmorActor;
+class AASDroppedItemActor;
 
 UCLASS()
 class ARENASHOOTERS_API AASCharacter : public ACharacter
@@ -49,6 +51,15 @@ public:
 	void MulticastPlayShootMontage_Implementation();
 
 	UASInventoryComponent* GetInventoryComponent();
+	TArray<TWeakObjectPtr<UASItem>> GetGroundItems() const;
+
+	UFUNCTION(Server, Reliable)
+	void ServerPickUpWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
+	void ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
+
+	UFUNCTION(Server, Reliable)
+	void ServerDropWeapon(EWeaponSlotType SlotType);
+	void ServerDropWeapon_Implementation(EWeaponSlotType SlotType);
 
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
@@ -102,10 +113,6 @@ protected:
 	void ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotType);
 
 	UFUNCTION(Server, Reliable)
-	void ServerPickUpWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
-	void ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
-
-	UFUNCTION(Server, Reliable)
 	void ServerChangeShootingStance(EShootingStanceType NewShootingStance);
 	void ServerChangeShootingStance_Implementation(EShootingStanceType NewShootingStance);
 
@@ -127,12 +134,21 @@ protected:
 	void ServerChangeFireMode();
 	void ServerChangeFireMode_Implementation();
 
+	void DropItem(UASItem* DroppingItem);
+	void OnRemoveGroundItem(TWeakObjectPtr<UASItem>& Item);
+
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
 	FOnScopeEvent OnScopeEvent;
 
 	DECLARE_EVENT(AASCharacter, FOnUnscopeEvent)
 	FOnUnscopeEvent OnUnscopeEvent;
+
+	DECLARE_EVENT_OneParam(AASCharacter, FOnGroundItemAddEvent, const TArray<TWeakObjectPtr<UASItem>>&)
+	FOnGroundItemAddEvent OnGroundItemAddEvent;
+
+	DECLARE_EVENT_OneParam(AASCharacter, FOnGroundItemRemoveEvent, const TArray<TWeakObjectPtr<UASItem>>&)
+	FOnGroundItemRemoveEvent OnGroundItemRemoveEvent;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
@@ -199,6 +215,8 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_ShootingStance)
 	EShootingStanceType ShootingStance;
+
+	TSet<TPair<TWeakObjectPtr<AASDroppedItemActor>, FDelegateHandle>> GroundItemActorSet;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))

@@ -3,6 +3,7 @@
 
 #include "GUI/ASEquipmentSlotUserWidget.h"
 #include "GUI/ASItemDragDropOperation.h"
+#include "GUI/ASDragItemUserWidget.h"
 #include "Components/Border.h"
 #include "Components/Image.h"
 #include "Item/ASItem.h"
@@ -42,6 +43,13 @@ void UASEquipmentSlotUserWidget::NativeOnDragEnter(const FGeometry& InGeometry, 
 	{
 		Highlight(true);
 	}
+	else
+	{
+		if (auto DraggedItemWidget = Cast<UASDragItemUserWidget>(InOperation->DefaultDragVisual))
+		{
+			DraggedItemWidget->SetSuitableBrush(false);
+		}
+	}
 }
 
 void UASEquipmentSlotUserWidget::NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
@@ -49,6 +57,11 @@ void UASEquipmentSlotUserWidget::NativeOnDragLeave(const FDragDropEvent& InDragD
 	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
 
 	Highlight(false);
+
+	if (auto DraggedItemWidget = Cast<UASDragItemUserWidget>(InOperation->DefaultDragVisual))
+	{
+		DraggedItemWidget->SetSuitableBrush(true);
+	}
 }
 
 void UASEquipmentSlotUserWidget::Highlight(bool bOn)
@@ -68,46 +81,37 @@ bool UASEquipmentSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const
 {
 	Highlight(false);
 
-	if (Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation))
-		return true;
-
-	UASItem* EquipItem = GetASItemFromDragDropOperation(InOperation);
-	if (!IsSuitableSlot(EquipItem))
-		return false;
-
-	return true;
+	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 }
 
-bool UASEquipmentSlotUserWidget::IsSuitableSlot(UASItem* Item)
+bool UASEquipmentSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item)
 {
-	if (Item == nullptr)
+	if (!Item.IsValid())
 	{
 		AS_LOG_SCREEN_S(5.0f, FColor::Red);
 		return false;
 	}
+
 	if (Item->GetItemType() != ItemType)
-	{
-		AS_LOG_SCREEN_S(5.0f, FColor::Red);
 		return false;
-	}
 
 	return true;
 }
 
-UASItem* UASEquipmentSlotUserWidget::GetASItemFromDragDropOperation(UDragDropOperation* InOperation)
+TWeakObjectPtr<UASItem> UASEquipmentSlotUserWidget::GetASItemFromDragDropOperation(UDragDropOperation* InOperation)
 {
 	if (InOperation == nullptr)
 	{
 		AS_LOG_SCREEN_S(5.0f, FColor::Red);
-		return nullptr;
+		return TWeakObjectPtr<UASItem>();
 	}
 
 	auto DragDropOp = Cast<UASItemDragDropOperation>(InOperation);
 	if (DragDropOp == nullptr)
 	{
 		AS_LOG_SCREEN_S(5.0f, FColor::Red);
-		return nullptr;
+		return TWeakObjectPtr<UASItem>();
 	}
 
-	return Cast<UASItem>(DragDropOp->Payload);
+	return DragDropOp->GetItem();
 }

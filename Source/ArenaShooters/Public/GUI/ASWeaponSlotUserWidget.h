@@ -20,7 +20,7 @@ protected:
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
-	virtual bool IsSuitableSlot(UASItem* Item) override;
+	virtual bool IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item) override;
 
 protected:
 	UPROPERTY(EditAnywhere)

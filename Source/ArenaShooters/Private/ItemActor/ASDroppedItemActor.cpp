@@ -5,6 +5,9 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/ActorChannel.h"
 #include "Item/ASItem.h"
+#include "Item/ASWeapon.h"
+#include "ASAssetManager.h"
+#include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
 
 AASDroppedItemActor::AASDroppedItemActor()
 {
@@ -64,5 +67,99 @@ void AASDroppedItemActor::SetStaticMesh(UStaticMesh* InStaticMesh)
 	if (StaticMeshComp != nullptr)
 	{
 		StaticMeshComp->SetStaticMesh(InStaticMesh);
+	}
+}
+
+TArray<TWeakObjectPtr<UASItem>> AASDroppedItemActor::GetItems() const
+{
+	TArray<TWeakObjectPtr<UASItem>> Result;
+
+	for (auto& ASItem : ASItems)
+	{
+		if (ASItem != nullptr && !ASItem->IsPendingKill())
+		{
+			Result.Emplace(ASItem);
+		}
+	}
+
+	return Result;
+}
+
+void AASDroppedItemActor::AddItem(UASItem* InItem)
+{
+	if (InItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	InItem->SetOwner(this);
+
+	if (GetLifeSpan() > 0.0f)
+	{
+		SetSelfDestroy(0.0f);		// Cancel self destory
+	}
+
+	ASItems.Emplace(InItem);
+}
+
+bool AASDroppedItemActor::RemoveItem(UASItem* InItem)
+{
+	if (InItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (ASItems.Remove(InItem) == 0)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	InItem->SetOwner(nullptr);
+
+	if (ASItems.Num() == 0)
+	{
+		SetSelfDestroy(3.0f);
+	}
+
+	return true;
+}
+
+void AASDroppedItemActor::SetSelfDestroy(float InLifeSpan)
+{
+	SetActorHiddenInGame(InLifeSpan > 0.0f);
+	SetLifeSpan(InLifeSpan);
+}
+
+void AASDroppedItemActor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		if (TestARAssetId.IsValid() && ASItems.Num() == 0)
+		{
+			if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(TestARAssetId))
+			{
+				ASItems.Emplace(UASWeapon::CreateFromDataAsset(GetWorld(), this, WeaponDataAsset));
+			}
+		}
+	}	
+}
+
+void AASDroppedItemActor::OnRep_ASItems(TArray<UASItem*>& OldItems)
+{
+	if (OnRemoveItemEvent.IsBound())
+	{
+		for (auto& Item : OldItems)
+		{
+			if (!ASItems.Contains(Item))
+			{
+				TWeakObjectPtr<UASItem> ItemPtr = MakeWeakObjectPtr(Item);
+				OnRemoveItemEvent.Broadcast(ItemPtr);
+			}
+		}
 	}
 }

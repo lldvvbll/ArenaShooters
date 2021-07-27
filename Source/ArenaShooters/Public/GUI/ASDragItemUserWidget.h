@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "ASDragItemUserWidget.generated.h"
 
+class UImage;
+class UBorder;
 class UASItemUserWidget;
 
 UCLASS()
@@ -14,12 +16,19 @@ class ARENASHOOTERS_API UASDragItemUserWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void SetItemWidget(UASItemUserWidget* InItemWidget);
+	void SetImageAndItemWidget(UTexture2D* InImage, UASItemUserWidget* InItemWidget);
+	void SetSuitableBrush(bool bShuitable);
 
 protected:
 	virtual void NativeConstruct() override;
 
 private:
-	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY()
+	UImage* ItemImage;
+
+	UPROPERTY()
+	UBorder* BackgroundBorder;
+
+	UPROPERTY()
 	UASItemUserWidget* ItemWidget;
 };

@@ -8,8 +8,10 @@
 #include "GUI/ASArmorSlotUserWidget.h"
 #include "GUI/ASItemScrollBoxWrapperUserWidget.h"
 #include "Character/ASInventoryComponent.h"
+#include "Item/ASItem.h"
 #include "Item/ASWeapon.h"
 #include "Item/ASArmor.h"
+#include "ItemActor/ASDroppedItemActor.h"
 
 void UASInventoryUserWidget::Bind()
 {
@@ -27,8 +29,11 @@ void UASInventoryUserWidget::Bind()
 		return;
 	}
 
-	ASInventoryComp->OnInsertWeapon.AddUObject(this, &UASInventoryUserWidget::OnChangedWeapon);
-	ASInventoryComp->OnInsertArmor.AddUObject(this, &UASInventoryUserWidget::OnChangedArmor);
+	OnGroundItemAddEventHandle = ASChar->OnGroundItemAddEvent.AddUObject(this, &UASInventoryUserWidget::AddItemsToGroundScrollBox);
+	OnGroundItemRemoveEventHandle = ASChar->OnGroundItemRemoveEvent.AddUObject(this, &UASInventoryUserWidget::RemoveItemsFromGroundScrollBox);
+
+	OnInsertWeaponHandle = ASInventoryComp->OnInsertWeapon.AddUObject(this, &UASInventoryUserWidget::OnChangedWeapon);
+	OnInsertArmorHandle = ASInventoryComp->OnInsertArmor.AddUObject(this, &UASInventoryUserWidget::OnChangedArmor);
 }
 
 void UASInventoryUserWidget::NativeConstruct()
@@ -39,15 +44,43 @@ void UASInventoryUserWidget::NativeConstruct()
 	SubWeaponSlotWidget = Cast<UASWeaponSlotUserWidget>(GetWidgetFromName(TEXT("SubWeaponSlot")));
 	HelmetSlotWidget = Cast<UASArmorSlotUserWidget>(GetWidgetFromName(TEXT("HelmetSlot")));
 	JacketSlotWidget = Cast<UASArmorSlotUserWidget>(GetWidgetFromName(TEXT("JacketSlot")));
-	InventoryScrollBoxWrapperWidget = Cast<UASItemScrollBoxWrapperUserWidget>(GetWidgetFromName(TEXT("InventoryScrollBoxWrapper")));
-	GroundScrollBoxWrapperWidget = Cast<UASItemScrollBoxWrapperUserWidget>(GetWidgetFromName(TEXT("GroundScrollBoxWrapper")));
+	InventoryItemScrollBoxWrapperWidget = Cast<UASItemScrollBoxWrapperUserWidget>(GetWidgetFromName(TEXT("InventoryItemScrollBoxWrapper")));
+	GroundItemScrollBoxWrapperWidget = Cast<UASItemScrollBoxWrapperUserWidget>(GetWidgetFromName(TEXT("GroundItemScrollBoxWrapper")));
 
-	OnChangedWeapon(EWeaponSlotType::Main, nullptr);
-	OnChangedWeapon(EWeaponSlotType::Sub, nullptr);
-	OnChangedArmor(EArmorSlotType::Helmet, nullptr);
-	OnChangedArmor(EArmorSlotType::Jacket, nullptr);
+	if (AASCharacter* ASChar = GetASCharacter())
+	{
+		OnChangedWeapon(EWeaponSlotType::Main, nullptr);
+		OnChangedWeapon(EWeaponSlotType::Sub, nullptr);
+		OnChangedArmor(EArmorSlotType::Helmet, nullptr);
+		OnChangedArmor(EArmorSlotType::Jacket, nullptr);
 
+		AddItemsToGroundScrollBox(ASChar->GetGroundItems());
+	}
+}
 
+void UASInventoryUserWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	if (AASCharacter* ASChar = GetASCharacter())
+	{
+		ASChar->OnGroundItemAddEvent.Remove(OnGroundItemAddEventHandle);
+		ASChar->OnGroundItemRemoveEvent.Remove(OnGroundItemRemoveEventHandle);
+	}
+	else
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+	}
+
+	if (ASInventoryComp != nullptr)
+	{
+		ASInventoryComp->OnInsertWeapon.Remove(OnInsertWeaponHandle);
+		ASInventoryComp->OnInsertArmor.Remove(OnInsertArmorHandle);
+	}
+	else
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+	}
 }
 
 FReply UASInventoryUserWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -67,6 +100,28 @@ AASCharacter* UASInventoryUserWidget::GetASCharacter() const
 	}
 
 	return Cast<AASCharacter>(PlayerController->GetCharacter());
+}
+
+void UASInventoryUserWidget::AddItemsToGroundScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items)
+{
+	if (GroundItemScrollBoxWrapperWidget == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return;
+	}
+
+	GroundItemScrollBoxWrapperWidget->AddItemsToScrollBox(Items);
+}
+
+void UASInventoryUserWidget::RemoveItemsFromGroundScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items)
+{
+	if (GroundItemScrollBoxWrapperWidget == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return;
+	}
+
+	GroundItemScrollBoxWrapperWidget->RemoveItemsFromScrollBox(Items);
 }
 
 void UASInventoryUserWidget::OnChangedWeapon(EWeaponSlotType SlotType, UASWeapon* RemovedWeapon)

@@ -7,12 +7,19 @@
 #include "ASItemUserWidget.generated.h"
 
 class UASDragItemUserWidget;
+class UASItem;
+class UImage;
+class UTextBlock;
 
 UCLASS()
 class ARENASHOOTERS_API UASItemUserWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+	void SetItem(const TWeakObjectPtr<UASItem>& NewItem);
+	bool HasItem(const TWeakObjectPtr<UASItem>& InItem) const;
+
 protected:
 	virtual void NativeConstruct() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -24,4 +31,16 @@ private:
 
 	UPROPERTY()
 	UASDragItemUserWidget* DraggedItemWidget;
+
+	UPROPERTY()
+	UImage* ItemImage;
+
+	UPROPERTY()
+	UTextBlock* NameTextBlock;
+
+	UPROPERTY()
+	UTextBlock* CountTextBlock;
+
+	UPROPERTY()
+	TWeakObjectPtr<UASItem> Item;
 };

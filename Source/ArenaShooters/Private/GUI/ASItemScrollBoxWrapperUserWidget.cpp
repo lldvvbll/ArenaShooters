@@ -8,6 +8,58 @@
 #include "Components/ScrollBox.h"
 #include "Item/ASItem.h"
 
+void UASItemScrollBoxWrapperUserWidget::AddItemsToScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items)
+{
+	if (ItemScrollBox == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return;
+	}
+
+	for (auto& Item : Items)
+	{
+		if (auto ItemWidget = CreateWidget<UASItemUserWidget>(ItemScrollBox, ItemWidgetClass))
+		{
+			ItemWidget->SetItem(Item);
+			ItemScrollBox->AddChild(ItemWidget);
+		}
+	}
+}
+
+void UASItemScrollBoxWrapperUserWidget::RemoveItemsFromScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items)
+{
+	if (ItemScrollBox == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return;
+	}
+
+	int32 ItemWidgetNum = ItemScrollBox->GetChildrenCount();
+
+	TArray<int32> RemoveItemIndices;
+	RemoveItemIndices.Reserve(ItemWidgetNum);
+	
+	for (auto& Item : Items)
+	{
+		for (int32 Idx = 0; Idx < ItemWidgetNum; ++Idx)
+		{
+			auto ItemWidget = Cast<UASItemUserWidget>(ItemScrollBox->GetChildAt(Idx));
+			if (ItemWidget == nullptr)
+				continue;
+
+			if (ItemWidget->HasItem(Item))
+			{
+				RemoveItemIndices.Emplace(Idx);
+			}
+		}
+	}
+
+	for (auto& Idx : RemoveItemIndices)
+	{
+		ItemScrollBox->RemoveChildAt(Idx);
+	}
+}
+
 void UASItemScrollBoxWrapperUserWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -28,7 +80,7 @@ void UASItemScrollBoxWrapperUserWidget::NativeOnDragEnter(const FGeometry& InGeo
 			{
 				if (auto DraggedItemWidget = Cast<UASDragItemUserWidget>(InOperation->DefaultDragVisual))
 				{
-					DraggedItemWidget->SetIsEnabled(false);
+					DraggedItemWidget->SetSuitableBrush(false);
 				}
 			}
 		}
@@ -48,7 +100,7 @@ void UASItemScrollBoxWrapperUserWidget::NativeOnDragLeave(const FDragDropEvent& 
 			{
 				if (auto DraggedItemWidget = Cast<UASDragItemUserWidget>(InOperation->DefaultDragVisual))
 				{
-					DraggedItemWidget->SetIsEnabled(true);
+					DraggedItemWidget->SetSuitableBrush(true);
 				}
 			}
 		}

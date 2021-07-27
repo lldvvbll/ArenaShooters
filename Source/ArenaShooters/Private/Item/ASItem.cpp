@@ -10,6 +10,8 @@ void UASItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UASItem, DataAsset);
+	DOREPLIFETIME(UASItem, Count);
+	DOREPLIFETIME(UASItem, Owner);
 }
 
 bool UASItem::IsSupportedForNetworking() const
@@ -32,7 +34,37 @@ EItemType UASItem::GetItemType() const
 	return (DataAsset != nullptr) ? DataAsset->ItemType : EItemType::None;
 }
 
+UTexture2D* UASItem::GetItemImage() const
+{
+	return (DataAsset != nullptr) ? DataAsset->ItemImage : nullptr;
+}
+
 UTexture2D* UASItem::GetEquipmentSlotImage() const
 {
 	return (DataAsset != nullptr) ? DataAsset->EquipmentSlotImage : nullptr;
+}
+
+const FText& UASItem::GetItemName() const
+{
+	return (DataAsset != nullptr) ? DataAsset->ItemName : FText::GetEmpty();
+}
+
+TSubclassOf<AASDroppedItemActor> UASItem::GetDroppedItemActorClass() const
+{
+	return (DataAsset != nullptr) ? DataAsset->DroppedItemActorClass : nullptr;
+}
+
+int32 UASItem::GetCount() const
+{
+	return Count;
+}
+
+void UASItem::SetOwner(AActor* NewOwner)
+{
+	Owner = MakeWeakObjectPtr(NewOwner);
+}
+
+TWeakObjectPtr<AActor>& UASItem::GetOwner()
+{
+	return Owner;
 }

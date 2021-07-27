@@ -63,14 +63,14 @@ void UASInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME(UASInventoryComponent, SelectedWeaponSlotType);	
 }
 
-const TWeakObjectPtr<UASWeapon>& UASInventoryComponent::GetSelectedWeapon() const
+TWeakObjectPtr<UASWeapon> UASInventoryComponent::GetSelectedWeapon() const
 {
-	return SelectedWeapon;
+	return MakeWeakObjectPtr(SelectedWeapon);
 }
 
 TWeakObjectPtr<AASWeaponActor> UASInventoryComponent::GetSelectedWeaponActor()
 {
-	if (!SelectedWeapon.IsValid())
+	if (SelectedWeapon == nullptr)
 		return TWeakObjectPtr<AASWeaponActor>();
 
 	return SelectedWeapon->GetActor();	
@@ -78,7 +78,7 @@ TWeakObjectPtr<AASWeaponActor> UASInventoryComponent::GetSelectedWeaponActor()
 
 const EWeaponType UASInventoryComponent::GetSelectedWeaponType() const
 {
-	return SelectedWeapon.IsValid() ? SelectedWeapon->GetWeaponType() : EWeaponType::None;
+	return (SelectedWeapon != nullptr) ? SelectedWeapon->GetWeaponType() : EWeaponType::None;
 }
 
 const EWeaponSlotType UASInventoryComponent::GetSelectedWeaponSlotType() const
@@ -184,7 +184,7 @@ bool UASInventoryComponent::InsertArmor(EArmorSlotType SlotType, UASArmor* NewAr
 	ConstItemPtrBoolPair SetResultPair = SetItemToArmorSlot(SlotType, NewArmor);
 	if (!SetResultPair.Value)
 	{
-		WeaponSlots[static_cast<int32>(SlotType)] = RemoveResultPair.Key;
+		ArmorSlots[static_cast<int32>(SlotType)] = RemoveResultPair.Key;
 
 		AS_LOG_S(Error);
 		return false;
@@ -211,7 +211,7 @@ void UASInventoryComponent::SelectWeapon(EWeaponSlotType SlotType)
 		return;
 
 	// 이미 선택된 슬롯을 또 선택하면 아무일도 없다.
-	UASWeapon* OldWeapon = SelectedWeapon.Get();
+	UASWeapon* OldWeapon = SelectedWeapon;
 	if (OldWeapon == NewWeapon)
 		return;
 
@@ -248,6 +248,10 @@ ConstItemPtrBoolPair UASInventoryComponent::SetItemToWeaponSlot(EWeaponSlotType 
 			int32 Idx = static_cast<int32>(SlotType);
 			if (WeaponSlots[Idx] == nullptr)
 			{
+				if (NewItem != nullptr)
+				{
+					NewItem->SetOwner(GetOwner());
+				}
 				WeaponSlots[Idx] = NewItem;
 
 				ResultPair.Key = WeaponSlots[Idx];
@@ -286,6 +290,11 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromWeaponSlot(EWeaponSlotType Slo
 
 		ResultPair.Key = WeaponSlots[Idx];
 		ResultPair.Value = true;
+
+		if (ResultPair.Key != nullptr)
+		{
+			ResultPair.Key->SetOwner(nullptr);
+		}
 
 		WeaponSlots[Idx] = nullptr;
 
@@ -327,6 +336,10 @@ ConstItemPtrBoolPair UASInventoryComponent::SetItemToArmorSlot(EArmorSlotType Sl
 			int32 Idx = static_cast<int32>(SlotType);
 			if (ArmorSlots[Idx] == nullptr)
 			{
+				if (NewItem != nullptr)
+				{
+					NewItem->SetOwner(GetOwner());
+				}
 				ArmorSlots[Idx] = NewItem;
 
 				ResultPair.Key = ArmorSlots[Idx];
@@ -365,6 +378,11 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromArmorSlot(EArmorSlotType SlotT
 
 		ResultPair.Key = ArmorSlots[Idx];
 		ResultPair.Value = true;
+
+		if (ResultPair.Key != nullptr)
+		{
+			ResultPair.Key->SetOwner(nullptr);
+		}
 
 		ArmorSlots[Idx] = nullptr;
 
@@ -423,7 +441,7 @@ void UASInventoryComponent::OnWeaponInserted(EWeaponSlotType SlotType, UASWeapon
 		return;
 	}
 
-	if (SelectedWeapon.IsValid())
+	if (SelectedWeapon != nullptr)
 	{
 		// 이미 들고 있는 무기가 있다.
 		SpawnWeaponActor(*InsertedWeapon, GetProperWeaponSocketName(InsertedWeapon->GetWeaponType(), false));
@@ -464,9 +482,9 @@ void UASInventoryComponent::OnWeaponRemoved(EWeaponSlotType SlotType, UASWeapon*
 
 	if (RemovedWeapon != nullptr)
 	{	
-		if (SelectedWeapon.Get() == RemovedWeapon)
+		if (SelectedWeapon == RemovedWeapon)
 		{
-			SelectedWeapon.Reset();
+			SelectedWeapon = nullptr;
 		}
 
 		TWeakObjectPtr<AASWeaponActor>& WeaponActor = RemovedWeapon->GetActor();
@@ -663,4 +681,8 @@ void UASInventoryComponent::OnRep_ArmorSlots(TArray<UASItem*>& OldArmorSlots)
 			OnInsertArmor.Broadcast(static_cast<EArmorSlotType>(Idx), Cast<UASArmor>(OldArmorSlots[Idx]));
 		}
 	}
+}
+
+void UASInventoryComponent::OnRep_SelectedWeapon(UASWeapon* OldWeapon)
+{
 }

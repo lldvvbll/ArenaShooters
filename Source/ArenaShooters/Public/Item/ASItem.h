@@ -9,6 +9,7 @@
 
 class UASItemDataAsset;
 class AASItemActor;
+class AASDroppedItemActor;
 
 UCLASS(Abstract)
 class ARENASHOOTERS_API UASItem : public UObject
@@ -16,6 +17,11 @@ class ARENASHOOTERS_API UASItem : public UObject
 	GENERATED_BODY()
 	
 public:
+	~UASItem()
+	{
+		AS_LOG_SA(Error);
+	}
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override;
 
@@ -23,11 +29,25 @@ public:
 	const UASItemDataAsset* GetDataAsset() const;
 
 	EItemType GetItemType() const;
+	UTexture2D* GetItemImage() const;
 	UTexture2D* GetEquipmentSlotImage() const;
+	const FText& GetItemName() const;
+	TSubclassOf<AASDroppedItemActor> GetDroppedItemActorClass() const;
+
+	int32 GetCount() const;
+
+	void SetOwner(AActor* NewOwner);
+	TWeakObjectPtr<AActor>& GetOwner();
 
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	UASItemDataAsset* DataAsset;
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	int32 Count;
+
+	UPROPERTY(Replicated)
+	TWeakObjectPtr<AActor> Owner;
 };
 
 using ItemBoolPair = TPair<UASItem*, bool>;

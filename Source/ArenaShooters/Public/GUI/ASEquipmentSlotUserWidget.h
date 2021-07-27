@@ -27,9 +27,9 @@ protected:
 
 	void Highlight(bool bOn);
 
-	virtual bool IsSuitableSlot(UASItem* Item);
+	virtual bool IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item);
 
-	UASItem* GetASItemFromDragDropOperation(UDragDropOperation* InOperation);
+	TWeakObjectPtr<UASItem> GetASItemFromDragDropOperation(UDragDropOperation* InOperation);
 
 protected:
 	UPROPERTY()

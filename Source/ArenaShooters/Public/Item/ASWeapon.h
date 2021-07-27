@@ -18,7 +18,7 @@ class ARENASHOOTERS_API UASWeapon : public UASItem
 	GENERATED_BODY()
 	
 public:
-	static UASWeapon* CreateFromDataAsset(UObject* Owner, UASWeaponDataAsset* DataAsset);
+	static UASWeapon* CreateFromDataAsset(UWorld* World, AActor* NewOwner, UASWeaponDataAsset* DataAsset);
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -29,7 +29,7 @@ public:
 	TWeakObjectPtr<AASWeaponActor>& GetActor();
 	const TWeakObjectPtr<AASWeaponActor>& GetActor() const;
 
-	AASBullet* Fire(AASCharacter* Owner, EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
+	AASBullet* Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
 
 	EFireMode GetFireMode() const;
 	void ChangeToNextFireMode();

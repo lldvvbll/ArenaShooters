@@ -4,7 +4,9 @@
 #include "GUI/ASWeaponSlotUserWidget.h"
 #include "Components/Border.h"
 #include "Item/ASWeapon.h"
+#include "Character/ASCharacter.h"
 #include "Character/ASInventoryComponent.h"
+
 
 void UASWeaponSlotUserWidget::SetASItem(TWeakObjectPtr<const UASItem>& Item)
 {
@@ -27,11 +29,29 @@ void UASWeaponSlotUserWidget::NativeOnMouseEnter(const FGeometry& InGeometry, co
 
 bool UASWeaponSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
-	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
+	if (Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation))
+		return true;
 
+	TWeakObjectPtr<UASItem> WeaponItem = GetASItemFromDragDropOperation(InOperation);
+	if (IsSuitableSlot(WeaponItem))
+	{
+		auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn());
+		if (ASChar != nullptr)
+		{
+
+			ASChar->ServerPickUpWeapon(WeaponSlotType, Cast<UASWeapon>(WeaponItem));
+			return true;
+		}
+		else
+		{
+			AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		}
+	}
+
+	return false;
 }
 
-bool UASWeaponSlotUserWidget::IsSuitableSlot(UASItem* Item)
+bool UASWeaponSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item)
 {
 	if (!Super::IsSuitableSlot(Item))
 		return false;

@@ -5,12 +5,27 @@
 #include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
 #include "Net/UnrealNetwork.h"
 
-UASArmor* UASArmor::CreateFromDataAsset(UObject* Owner, UASArmorDataAsset* DataAsset)
+UASArmor* UASArmor::CreateFromDataAsset(UWorld* World, AActor* NewOwner, UASArmorDataAsset* DataAsset)
 {
 	if (DataAsset == nullptr)
+	{
+		AS_LOG_S(Error);
 		return nullptr;
+	}
+	if (World == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
 
-	UASArmor* NewItem = ::NewObject<UASArmor>(Owner, DataAsset->ItemClass);
+	UASArmor* NewItem = ::NewObject<UASArmor>(World->GetCurrentLevel(), DataAsset->ItemClass);
+	if (NewItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
+
+	NewItem->SetOwner(NewOwner);
 	NewItem->SetDataAsset(DataAsset);
 
 	return NewItem;
