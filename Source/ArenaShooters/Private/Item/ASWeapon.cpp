@@ -8,32 +8,6 @@
 #include "ItemActor/ASWeaponActor.h"
 #include "Character/ASCharacter.h"
 
-UASWeapon* UASWeapon::CreateFromDataAsset(UWorld* World, AActor* NewOwner, UASWeaponDataAsset* DataAsset)
-{
-	if (DataAsset == nullptr)
-	{
-		AS_LOG_S(Error);
-		return nullptr;
-	}
-	if (World == nullptr)
-	{
-		AS_LOG_S(Error);
-		return nullptr;
-	}
-
-	UASWeapon* NewItem = ::NewObject<UASWeapon>(World->GetCurrentLevel(), DataAsset->ItemClass);
-	if (NewItem == nullptr)
-	{
-		AS_LOG_S(Error);
-		return nullptr;
-	}
-	
-	NewItem->SetOwner(NewOwner);
-	NewItem->SetDataAsset(DataAsset);
-
-	return NewItem;
-}
-
 void UASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

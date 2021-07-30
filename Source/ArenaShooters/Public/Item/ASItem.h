@@ -17,11 +17,6 @@ class ARENASHOOTERS_API UASItem : public UObject
 	GENERATED_BODY()
 	
 public:
-	~UASItem()
-	{
-		AS_LOG_SA(Error);
-	}
-
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override;
 
@@ -35,6 +30,7 @@ public:
 	TSubclassOf<AASDroppedItemActor> GetDroppedItemActorClass() const;
 
 	int32 GetCount() const;
+	void SetCount(int32 NewCount);
 
 	void SetOwner(AActor* NewOwner);
 	TWeakObjectPtr<AActor>& GetOwner();

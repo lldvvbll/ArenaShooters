@@ -16,7 +16,6 @@ class ARENASHOOTERS_API AASDroppedItemActor : public AActor
 public:	
 	AASDroppedItemActor();
 
-	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SetSkeletalMesh(USkeletalMesh* InSkelMesh);

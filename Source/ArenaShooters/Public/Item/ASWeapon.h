@@ -18,8 +18,6 @@ class ARENASHOOTERS_API UASWeapon : public UASItem
 	GENERATED_BODY()
 	
 public:
-	static UASWeapon* CreateFromDataAsset(UWorld* World, AActor* NewOwner, UASWeaponDataAsset* DataAsset);
-
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset) override;

@@ -24,6 +24,7 @@
 #include "GameFramework/PlayerInput.h"
 #include "Character/ASAnimInstance.h"
 #include "ASGameInstance.h"
+#include "ASItemFactory.h"
 
 AASCharacter::AASCharacter()
 {
@@ -730,7 +731,7 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 		if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(WeaponAssetId))
 		{
 			UASItem* OldWeapon = nullptr;
-			if (ASInventory->InsertWeapon(WeaponSlotType, UASWeapon::CreateFromDataAsset(GetWorld(), this, WeaponDataAsset), OldWeapon))
+			if (ASInventory->InsertWeapon(WeaponSlotType, AASItemFactory::NewASItem<UASWeapon>(GetWorld(), this, WeaponDataAsset), OldWeapon))
 			{
 				if (OldWeapon != nullptr)
 				{

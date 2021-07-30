@@ -8,6 +8,7 @@
 #include "Item/ASWeapon.h"
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
+#include "ASItemFactory.h"
 
 AASDroppedItemActor::AASDroppedItemActor()
 {
@@ -30,21 +31,6 @@ AASDroppedItemActor::AASDroppedItemActor()
 	RootComponent = Collision;
 	SkeletalMeshComp->SetupAttachment(RootComponent);
 	StaticMeshComp->SetupAttachment(RootComponent);
-}
-
-bool AASDroppedItemActor::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-	for (auto& ASItem : ASItems)
-	{
-		if (ASItem != nullptr && !ASItem->IsPendingKill())
-		{
-			WroteSomething |= Channel->ReplicateSubobject(ASItem, *Bunch, *RepFlags);
-		}
-	}
-
-	return WroteSomething;
 }
 
 void AASDroppedItemActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -143,7 +129,7 @@ void AASDroppedItemActor::BeginPlay()
 		{
 			if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(TestARAssetId))
 			{
-				ASItems.Emplace(UASWeapon::CreateFromDataAsset(GetWorld(), this, WeaponDataAsset));
+				ASItems.Emplace(AASItemFactory::NewASItem<UASWeapon>(GetWorld(), this, WeaponDataAsset));
 			}
 		}
 	}	

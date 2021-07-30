@@ -16,8 +16,6 @@ class ARENASHOOTERS_API UASArmor : public UASItem
 	GENERATED_BODY()
 
 public:
-	static UASArmor* CreateFromDataAsset(UWorld* World, AActor* NewOwner, UASArmorDataAsset* DataAsset);
-
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	const EArmorType GetArmorType() const;

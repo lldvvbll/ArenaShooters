@@ -26,7 +26,6 @@ class ARENASHOOTERS_API UASInventoryComponent : public UActorComponent
 public:	
 	UASInventoryComponent();
 
-	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	TWeakObjectPtr<UASWeapon> GetSelectedWeapon() const;

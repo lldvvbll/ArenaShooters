@@ -30,29 +30,6 @@ UASInventoryComponent::UASInventoryComponent()
 	ArmorSlots.SetNumZeroed(static_cast<int32>(EArmorSlotType::SlotNum));
 }
 
-bool UASInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-	
-	for (auto& SlotItem : WeaponSlots)
-	{
-		if (SlotItem != nullptr && !SlotItem->IsPendingKill())
-		{
-			WroteSomething |= Channel->ReplicateSubobject(SlotItem, *Bunch, *RepFlags);
-		}
-	}
-
-	for (auto& SlotItem : ArmorSlots)
-	{
-		if (SlotItem != nullptr && !SlotItem->IsPendingKill())
-		{
-			WroteSomething |= Channel->ReplicateSubobject(SlotItem, *Bunch, *RepFlags);
-		}
-	}
-
-	return WroteSomething;
-}
-
 void UASInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

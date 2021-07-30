@@ -59,6 +59,11 @@ int32 UASItem::GetCount() const
 	return Count;
 }
 
+void UASItem::SetCount(int32 NewCount)
+{
+	Count = NewCount;
+}
+
 void UASItem::SetOwner(AActor* NewOwner)
 {
 	Owner = MakeWeakObjectPtr(NewOwner);
