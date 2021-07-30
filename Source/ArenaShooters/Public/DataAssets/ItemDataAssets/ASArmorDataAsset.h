@@ -23,4 +23,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AASArmorActor> ASArmorActorClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MaxDurability;
 };

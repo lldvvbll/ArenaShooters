@@ -47,7 +47,7 @@ void UASItemUserWidget::SetItem(const TWeakObjectPtr<UASItem>& NewItem)
 			}
 			break;
 		default:
-			AS_LOG_SCREEN_S(5.0f, FColor::Red);
+			checkNoEntry();
 			break;
 		}
 	}

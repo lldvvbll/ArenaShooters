@@ -171,7 +171,7 @@ void UASInventoryUserWidget::OnChangedWeapon(EWeaponSlotType SlotType, UASWeapon
 		}
 		break;
 	default:
-		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		checkNoEntry();
 		break;
 	}
 }
@@ -193,7 +193,7 @@ void UASInventoryUserWidget::OnChangedArmor(EArmorSlotType SlotType, UASArmor* R
 		}
 		break;
 	default:
-		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		checkNoEntry();
 		break;
 	}
 }

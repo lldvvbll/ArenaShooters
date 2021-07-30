@@ -558,7 +558,6 @@ void AASCharacter::PressedShootButton()
 	if (!Weapon.IsValid())
 	{
 		ConstItemPtrBoolPair Pair = ASInventory->FindItemFromWeaponSlot(EWeaponSlotType::Main);
-		AS_LOG_SCREEN(5.0f, FColor::Yellow, TEXT("Bool: %s, IsValid: %s"), (Pair.Value ? TEXT("t") : TEXT("f")), (Pair.Key.IsValid() ? TEXT("t") : TEXT("f")));
 		return;
 	}		
 
@@ -575,7 +574,7 @@ void AASCharacter::PressedShootButton()
 		}
 		break;
 	default:
-		AS_LOG_S(Error);
+		checkNoEntry();
 		break;
 	}
 }
@@ -652,7 +651,7 @@ void AASCharacter::Shoot()
 		}
 		break;
 	default:
-		AS_LOG_SA(Error);
+		checkNoEntry();
 		break;
 	}
 }
@@ -762,7 +761,7 @@ void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType
 		}
 		break;
 	default:
-		AS_LOG_S(Error);
+		checkNoEntry();
 		break;
 	}
 
@@ -783,7 +782,7 @@ void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType
 		}		
 		break;
 	default:
-		AS_LOG_S(Error);
+		checkNoEntry();
 		break;
 	}
 }
@@ -805,7 +804,7 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 		}
 		break;
 	default:
-		AS_LOG_S(Error);
+		checkNoEntry();
 		break;
 	}
 
@@ -824,7 +823,7 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 		}
 		break;
 	default:
-		AS_LOG_S(Error);
+		checkNoEntry();
 		break;
 	}
 }

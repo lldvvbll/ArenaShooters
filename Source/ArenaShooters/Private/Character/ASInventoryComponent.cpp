@@ -84,7 +84,7 @@ bool UASInventoryComponent::IsSuitableWeaponSlot(EWeaponSlotType SlotType, UASWe
 	case EWeaponType::AssaultRifle:
 		return (SlotType == EWeaponSlotType::Main);
 	default:
-		AS_LOG_S(Error);
+		checkNoEntry();
 		return false;
 	}
 
@@ -112,7 +112,7 @@ bool UASInventoryComponent::IsSuitableArmorSlot(EArmorSlotType SlotType, UASArmo
 	case EArmorType::Jacket:
 		return (SlotType == EArmorSlotType::Jacket);
 	default:
-		AS_LOG_S(Error);
+		checkNoEntry();
 		return false;
 	}
 
@@ -251,7 +251,7 @@ ConstItemPtrBoolPair UASInventoryComponent::SetItemToWeaponSlot(EWeaponSlotType 
 	}
 	else
 	{
-		AS_LOG_S(Error);
+		checkNoEntry();
 	}
 
 	return ResultPair;
@@ -279,7 +279,7 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromWeaponSlot(EWeaponSlotType Slo
 	}
 	else
 	{
-		AS_LOG_S(Error);
+		checkNoEntry();
 	}
 
 	return ResultPair;
@@ -296,7 +296,7 @@ ConstItemPtrBoolPair UASInventoryComponent::GetItemFromArmorSlot(EArmorSlotType 
 	}
 	else
 	{
-		AS_LOG_S(Error);
+		checkNoEntry();
 	}
 
 	return ResultPair;
@@ -339,7 +339,7 @@ ConstItemPtrBoolPair UASInventoryComponent::SetItemToArmorSlot(EArmorSlotType Sl
 	}
 	else
 	{
-		AS_LOG_S(Error);
+		checkNoEntry();
 	}
 
 	return ResultPair;
@@ -367,7 +367,7 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromArmorSlot(EArmorSlotType SlotT
 	}
 	else
 	{
-		AS_LOG_S(Error);
+		checkNoEntry();
 	}
 
 	return ResultPair;
@@ -384,7 +384,7 @@ ItemBoolPair UASInventoryComponent::GetItemFromWeaponSlot(EWeaponSlotType SlotTy
 	}
 	else
 	{
-		AS_LOG_S(Error);
+		checkNoEntry();
 	}
 
 	return ResultPair;
@@ -401,7 +401,7 @@ ItemBoolPair UASInventoryComponent::GetItemFromArmorSlot(EArmorSlotType SlotType
 	}
 	else
 	{
-		AS_LOG_S(Error);
+		checkNoEntry();
 	}
 
 	return ResultPair;
@@ -414,7 +414,7 @@ void UASInventoryComponent::OnWeaponInserted(EWeaponSlotType SlotType, UASWeapon
 
 	if (SlotType == EWeaponSlotType::SlotNum)
 	{
-		AS_LOG_S(Error);
+		checkNoEntry();
 		return;
 	}
 
@@ -445,7 +445,7 @@ void UASInventoryComponent::OnArmorInserted(EArmorSlotType SlotType, UASArmor* I
 		SpawnArmorActor(*InsertedArmor, JacketSocketName);
 		break;
 	default:
-		AS_LOG_S(Error);
+		checkNoEntry();
 		break;
 	}
 }
@@ -615,7 +615,7 @@ const FName& UASInventoryComponent::GetProperWeaponSocketName(EWeaponType Weapon
 		case EWeaponType::AssaultRifle:
 			return UsingWeaponSocketName;
 		default:
-			AS_LOG_S(Error);
+			checkNoEntry();
 			break;
 		}
 
@@ -630,7 +630,7 @@ const FName& UASInventoryComponent::GetProperWeaponSocketName(EWeaponType Weapon
 		case EWeaponType::AssaultRifle:
 			return BackSocketName;
 		default:
-			AS_LOG_S(Error);
+			checkNoEntry();
 			break;
 		}
 

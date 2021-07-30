@@ -72,7 +72,7 @@ void UASAnimInstance::PlayShootMontage(EWeaponType WeaponType)
 		}
 		break;
 	default:
-		AS_LOG_SCREEN(1.0f, FColor::Red, TEXT("UASAnimInstance::PlayShootMontage() - Invalid WeaponType"));
+		checkNoEntry();
 		break;
 	}
 }
