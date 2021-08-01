@@ -16,7 +16,7 @@ class ARENASHOOTERS_API UASDragItemUserWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void SetImageAndItemWidget(UTexture2D* InImage, UASItemUserWidget* InItemWidget);
+	void SetItemImage(UTexture2D* InImage);
 	void SetSuitableBrush(bool bShuitable);
 
 protected:
@@ -28,7 +28,4 @@ private:
 
 	UPROPERTY()
 	UBorder* BackgroundBorder;
-
-	UPROPERTY()
-	UASItemUserWidget* ItemWidget;
 };

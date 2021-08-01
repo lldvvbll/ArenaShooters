@@ -58,12 +58,12 @@ public:
 	void ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
 
 	UFUNCTION(Server, Reliable)
-	void ServerDropWeapon(EWeaponSlotType SlotType);
-	void ServerDropWeapon_Implementation(EWeaponSlotType SlotType);
-
-	UFUNCTION(Server, Reliable)
 	void ServerPickUpArmor(EArmorSlotType SlotType, UASArmor* NewArmor);
 	void ServerPickUpArmor_Implementation(EArmorSlotType SlotType, UASArmor* NewArmor);
+
+	UFUNCTION(Server, Reliable)
+	void ServerDropItem(UASItem* InItem);
+	void ServerDropItem_Implementation(UASItem* InItem);
 
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
@@ -138,7 +138,7 @@ protected:
 	void ServerChangeFireMode();
 	void ServerChangeFireMode_Implementation();
 
-	void DropItem(UASItem* DroppingItem);
+	void SpawnDroppedItemActor(UASItem* DroppingItem);
 	void OnRemoveGroundItem(TWeakObjectPtr<UASItem>& Item);
 
 public:

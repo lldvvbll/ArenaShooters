@@ -25,7 +25,8 @@ protected:
 	virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
-	UASItem* GetASItemFromDragDropOperation(UDragDropOperation* InOperation);
+	TWeakObjectPtr<UASItem> GetASItemFromDragDropOperation(UDragDropOperation* InOperation);
+	UWidget* GetOperationParentWidget(UDragDropOperation* InOperation);
 
 private:
 	UPROPERTY(EditInstanceOnly, Meta = (AllowPrivateAccess = true))

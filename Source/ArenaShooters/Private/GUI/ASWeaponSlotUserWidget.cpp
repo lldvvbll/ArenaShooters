@@ -8,10 +8,10 @@
 #include "Character/ASCharacter.h"
 #include "Character/ASInventoryComponent.h"
 
-void UASWeaponSlotUserWidget::SetASItem(TWeakObjectPtr<const UASItem>& Item)
+void UASWeaponSlotUserWidget::SetASItem(TWeakObjectPtr<UASItem>& NewItem)
 {
-	Super::SetASItem(Item);
-	WeaponPtr = Item;
+	Super::SetASItem(NewItem);
+
 }
 
 void UASWeaponSlotUserWidget::NativeConstruct()
@@ -32,31 +32,34 @@ bool UASWeaponSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 	if (Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation))
 		return true;
 
-	TWeakObjectPtr<UASItem> WeaponItem = GetASItemFromDragDropOperation(InOperation);
-	if (IsSuitableSlot(WeaponItem))
+	if (GetOperationParentWidget(InOperation) != this)
 	{
-		auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn());
-		if (ASChar != nullptr)
+		TWeakObjectPtr<UASItem> WeaponItem = GetASItemFromDragDropOperation(InOperation);
+		if (IsSuitableSlot(WeaponItem))
 		{
+			auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn());
+			if (ASChar != nullptr)
+			{
 
-			ASChar->ServerPickUpWeapon(WeaponSlotType, Cast<UASWeapon>(WeaponItem));
-			return true;
-		}
-		else
-		{
-			AS_LOG_SCREEN_S(5.0f, FColor::Red);
+				ASChar->ServerPickUpWeapon(WeaponSlotType, Cast<UASWeapon>(WeaponItem));
+				return true;
+			}
+			else
+			{
+				AS_LOG_SCREEN_S(5.0f, FColor::Red);
+			}
 		}
 	}
 
 	return false;
 }
 
-bool UASWeaponSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item)
+bool UASWeaponSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& InItem)
 {
-	if (!Super::IsSuitableSlot(Item))
+	if (!Super::IsSuitableSlot(InItem))
 		return false;
 
-	auto Weapon = Cast<UASWeapon>(Item);
+	auto Weapon = Cast<UASWeapon>(InItem);
 	if (Weapon == nullptr)
 		return false;
 	

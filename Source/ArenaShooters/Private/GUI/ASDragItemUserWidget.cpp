@@ -5,7 +5,7 @@
 #include "Components/Image.h"
 #include "Components/Border.h"
 
-void UASDragItemUserWidget::SetImageAndItemWidget(UTexture2D* InImage, UASItemUserWidget* InItemWidget)
+void UASDragItemUserWidget::SetItemImage(UTexture2D* InImage)
 {
 	if (ItemImage != nullptr)
 	{
@@ -15,8 +15,6 @@ void UASDragItemUserWidget::SetImageAndItemWidget(UTexture2D* InImage, UASItemUs
 	{
 		AS_LOG_SCREEN_S(5.0f, FColor::Red);
 	}
-
-	ItemWidget = InItemWidget;
 }
 
 void UASDragItemUserWidget::SetSuitableBrush(bool bShuitable)

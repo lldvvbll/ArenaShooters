@@ -15,19 +15,16 @@ class ARENASHOOTERS_API UASWeaponSlotUserWidget : public UASEquipmentSlotUserWid
 	GENERATED_BODY()
 
 public:
-	virtual void SetASItem(TWeakObjectPtr<const UASItem>& Item) override;
+	virtual void SetASItem(TWeakObjectPtr<UASItem>& NewItem) override;
 
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
-	virtual bool IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item) override;
+	virtual bool IsSuitableSlot(const TWeakObjectPtr<UASItem>& InItem) override;
 
 protected:
 	UPROPERTY(EditAnywhere)
 	EWeaponSlotType WeaponSlotType;
-
-	UPROPERTY()
-	TWeakObjectPtr<const UASItem> WeaponPtr;
 };

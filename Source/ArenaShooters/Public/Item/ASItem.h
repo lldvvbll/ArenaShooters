@@ -45,6 +45,3 @@ protected:
 	UPROPERTY(Replicated)
 	TWeakObjectPtr<AActor> Owner;
 };
-
-using ItemBoolPair = TPair<UASItem*, bool>;
-using ConstItemBoolPair = TPair<const UASItem*, bool>;

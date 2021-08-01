@@ -8,14 +8,13 @@
 #include "Character/ASInventoryComponent.h"
 #include "Character/ASCharacter.h"
 
-void UASArmorSlotUserWidget::SetASItem(TWeakObjectPtr<const UASItem>& Item)
+void UASArmorSlotUserWidget::SetASItem(TWeakObjectPtr<UASItem>& NewItem)
 {
-	Super::SetASItem(Item);
-	ArmorPtr = Item;
+	Super::SetASItem(NewItem);
 
 	if (DurabilityTextBlock != nullptr)
 	{
-		const UASArmor* Armor = (Item.IsValid() ? Cast<const UASArmor>(Item) : nullptr);
+		UASArmor* Armor = (Item.IsValid() ? Cast<UASArmor>(Item) : nullptr);
 
 		if (Armor != nullptr)
 		{
@@ -40,31 +39,34 @@ bool UASArmorSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	if (Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation))
 		return true;
 
-	TWeakObjectPtr<UASItem> ArmorItem = GetASItemFromDragDropOperation(InOperation);
-	if (IsSuitableSlot(ArmorItem))
+	if (GetOperationParentWidget(InOperation) != nullptr)
 	{
-		auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn());
-		if (ASChar != nullptr)
+		TWeakObjectPtr<UASItem> ArmorItem = GetASItemFromDragDropOperation(InOperation);
+		if (IsSuitableSlot(ArmorItem))
 		{
+			auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn());
+			if (ASChar != nullptr)
+			{
 
-			ASChar->ServerPickUpArmor(ArmorSlotType, Cast<UASArmor>(ArmorItem));
-			return true;
-		}
-		else
-		{
-			AS_LOG_SCREEN_S(5.0f, FColor::Red);
+				ASChar->ServerPickUpArmor(ArmorSlotType, Cast<UASArmor>(ArmorItem));
+				return true;
+			}
+			else
+			{
+				AS_LOG_SCREEN_S(5.0f, FColor::Red);
+			}
 		}
 	}
 
 	return false;
 }
 
-bool UASArmorSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item)
+bool UASArmorSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& InItem)
 {
-	if (!Super::IsSuitableSlot(Item))
+	if (!Super::IsSuitableSlot(InItem))
 		return false;
 
-	auto Armor = Cast<UASArmor>(Item);
+	auto Armor = Cast<UASArmor>(InItem);
 	if (Armor == nullptr)
 		return false;
 

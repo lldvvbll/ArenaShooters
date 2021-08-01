@@ -5,9 +5,11 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GUI/ASDragItemUserWidget.h"
 #include "GUI/ASItemDragDropOperation.h"
+#include "GUI/ASItemScrollBoxWrapperUserWidget.h"
 #include "Item/ASItem.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Components/PanelWidget.h"
 #include "Common/ASEnums.h"
 
 void UASItemUserWidget::SetItem(const TWeakObjectPtr<UASItem>& NewItem)
@@ -70,6 +72,8 @@ void UASItemUserWidget::NativeConstruct()
 FReply UASItemUserWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+	if (Reply.IsEventHandled())
+		return Reply;
 
 	return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
 }
@@ -81,12 +85,12 @@ void UASItemUserWidget::NativeOnDragDetected(const FGeometry& InGeometry, const 
 	DraggedItemWidget = CreateWidget<UASDragItemUserWidget>(this, (DragItemWidgetClass != nullptr ? DragItemWidgetClass : UASDragItemUserWidget::StaticClass()));
 	if (DraggedItemWidget != nullptr && Item.IsValid())
 	{
-		DraggedItemWidget->SetImageAndItemWidget(Item->GetItemImage(), this);
+		DraggedItemWidget->SetItemImage(Item->GetItemImage());
 	}
 
 	if (auto ItemDragDropOp = NewObject<UASItemDragDropOperation>(GetTransientPackage(), UASItemDragDropOperation::StaticClass()))
 	{
-		ItemDragDropOp->SetItemData(Item, this, DraggedItemWidget);
+		ItemDragDropOp->SetItemData(Item, GetParent(), DraggedItemWidget);
 		OutOperation = ItemDragDropOp;
 	}
 }

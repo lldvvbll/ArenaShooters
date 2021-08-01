@@ -63,7 +63,39 @@ const EWeaponSlotType UASInventoryComponent::GetSelectedWeaponSlotType() const
 	return SelectedWeaponSlotType;
 }
 
-bool UASInventoryComponent::IsSuitableWeaponSlot(EWeaponSlotType SlotType, UASWeapon* Weapon)
+EWeaponSlotType UASInventoryComponent::GetSuitableWeaponSlotType(EWeaponType WeaponType)
+{
+	switch (WeaponType)
+	{
+	case EWeaponType::Pistol:
+		return EWeaponSlotType::Sub;
+	case EWeaponType::AssaultRifle:
+		return EWeaponSlotType::Main;
+	default:
+		checkNoEntry();
+		break;
+	}
+
+	return EWeaponSlotType::SlotNum;
+}
+
+EArmorSlotType UASInventoryComponent::GetSuitableArmorSlotType(EArmorType ArmorType)
+{
+	switch (ArmorType)
+	{
+	case EArmorType::Helmet:
+		return EArmorSlotType::Helmet;
+	case EArmorType::Jacket:
+		return EArmorSlotType::Jacket;
+	default:
+		checkNoEntry();
+		break;
+	}
+
+	return EArmorSlotType::SlotNum;
+}
+
+bool UASInventoryComponent::IsSuitableWeaponSlot(EWeaponSlotType SlotType, const UASWeapon* Weapon)
 {
 	if (Weapon == nullptr)
 	{
@@ -77,21 +109,11 @@ bool UASInventoryComponent::IsSuitableWeaponSlot(EWeaponSlotType SlotType, UASWe
 		return false;
 	}
 
-	switch (Weapon->GetWeaponType())
-	{
-	case EWeaponType::Pistol:
-		return (SlotType == EWeaponSlotType::Sub);
-	case EWeaponType::AssaultRifle:
-		return (SlotType == EWeaponSlotType::Main);
-	default:
-		checkNoEntry();
-		return false;
-	}
-
-	return false;
+	EWeaponSlotType WeaponSlotType = GetSuitableWeaponSlotType(Weapon->GetWeaponType());
+	return (WeaponSlotType == SlotType);
 }
 
-bool UASInventoryComponent::IsSuitableArmorSlot(EArmorSlotType SlotType, UASArmor* Armor)
+bool UASInventoryComponent::IsSuitableArmorSlot(EArmorSlotType SlotType, const UASArmor* Armor)
 {
 	if (Armor == nullptr)
 	{
@@ -105,18 +127,8 @@ bool UASInventoryComponent::IsSuitableArmorSlot(EArmorSlotType SlotType, UASArmo
 		return false;
 	}
 
-	switch (Armor->GetArmorType())
-	{
-	case EArmorType::Helmet:
-		return (SlotType == EArmorSlotType::Helmet);
-	case EArmorType::Jacket:
-		return (SlotType == EArmorSlotType::Jacket);
-	default:
-		checkNoEntry();
-		return false;
-	}
-
-	return false;
+	EArmorSlotType ArmorSlotType = GetSuitableArmorSlotType(Armor->GetArmorType());
+	return (ArmorSlotType == SlotType);
 }
 
 bool UASInventoryComponent::InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem)
@@ -131,7 +143,7 @@ bool UASInventoryComponent::InsertWeapon(EWeaponSlotType SlotType, UASWeapon* Ne
 		return false;
 	}
 
-	ConstItemPtrBoolPair SetResultPair = SetItemToWeaponSlot(SlotType, NewWeapon);
+	ItemPtrBoolPair SetResultPair = SetItemToWeaponSlot(SlotType, NewWeapon);
 	if (!SetResultPair.Value)
 	{
 		WeaponSlots[static_cast<int32>(SlotType)] = RemoveResultPair.Key;
@@ -158,7 +170,7 @@ bool UASInventoryComponent::InsertArmor(EArmorSlotType SlotType, UASArmor* NewAr
 		return false;
 	}
 
-	ConstItemPtrBoolPair SetResultPair = SetItemToArmorSlot(SlotType, NewArmor);
+	ItemPtrBoolPair SetResultPair = SetItemToArmorSlot(SlotType, NewArmor);
 	if (!SetResultPair.Value)
 	{
 		ArmorSlots[static_cast<int32>(SlotType)] = RemoveResultPair.Key;
@@ -197,9 +209,44 @@ void UASInventoryComponent::SelectWeapon(EWeaponSlotType SlotType)
 	OnSelectedWeaponChanged(OldWeapon, NewWeapon);
 }
 
-ConstItemPtrBoolPair UASInventoryComponent::FindItemFromWeaponSlot(EWeaponSlotType SlotType) const
+ItemBoolPair UASInventoryComponent::RemoveItem(UASItem* InItem)
 {
-	ConstItemPtrBoolPair ResultPair(nullptr, false);
+	ItemBoolPair ResultPair(nullptr, false);
+
+	if (InItem != nullptr)
+	{
+		switch (InItem->GetItemType())
+		{
+		case EItemType::Weapon:
+			if (auto Weapon = Cast<UASWeapon>(InItem))
+			{
+				ResultPair = RemoveItemFromWeaponSlot(GetWeaponSlotTypeFromWeapon(Weapon));
+			}			
+			break;
+		case EItemType::Armor:
+			if (auto Armor = Cast<UASArmor>(InItem))
+			{
+				ResultPair = RemoveItemFromArmorSlot(GetSuitableArmorSlotType(Armor->GetArmorType()));
+			}
+			break;
+		case EItemType::Ammo:			// fallthough
+		case EItemType::HealingKit:
+			{
+				// todo
+			}
+			break;
+		default:
+			checkNoEntry();
+			break;
+		}
+	}
+
+	return ResultPair;
+}
+
+ItemPtrBoolPair UASInventoryComponent::FindItemFromWeaponSlot(EWeaponSlotType SlotType) const
+{
+	ItemPtrBoolPair ResultPair(nullptr, false);
 
 	if (SlotType != EWeaponSlotType::SlotNum)
 	{
@@ -214,9 +261,9 @@ ConstItemPtrBoolPair UASInventoryComponent::FindItemFromWeaponSlot(EWeaponSlotTy
 	return ResultPair;
 }
 
-ConstItemPtrBoolPair UASInventoryComponent::SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem)
+ItemPtrBoolPair UASInventoryComponent::SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem)
 {
-	ConstItemPtrBoolPair ResultPair(nullptr, false);
+	ItemPtrBoolPair ResultPair(nullptr, false);
 
 	if (SlotType != EWeaponSlotType::SlotNum)
 	{
@@ -285,9 +332,9 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromWeaponSlot(EWeaponSlotType Slo
 	return ResultPair;
 }
 
-ConstItemPtrBoolPair UASInventoryComponent::FindItemFromArmorSlot(EArmorSlotType SlotType) const
+ItemPtrBoolPair UASInventoryComponent::FindItemFromArmorSlot(EArmorSlotType SlotType) const
 {
-	ConstItemPtrBoolPair ResultPair(nullptr, false);
+	ItemPtrBoolPair ResultPair(nullptr, false);
 
 	if (SlotType != EArmorSlotType::SlotNum)
 	{
@@ -302,9 +349,9 @@ ConstItemPtrBoolPair UASInventoryComponent::FindItemFromArmorSlot(EArmorSlotType
 	return ResultPair;
 }
 
-ConstItemPtrBoolPair UASInventoryComponent::SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem)
+ItemPtrBoolPair UASInventoryComponent::SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem)
 {
-	ConstItemPtrBoolPair ResultPair(nullptr, false);
+	ItemPtrBoolPair ResultPair(nullptr, false);
 
 	if (SlotType != EArmorSlotType::SlotNum)
 	{

@@ -335,30 +335,11 @@ void AASCharacter::ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, U
 	UASItem* OldWeapon = nullptr;
 	if (ASInventory->InsertWeapon(SlotType, NewWeapon, OldWeapon))
 	{
-		DropItem(OldWeapon);
+		SpawnDroppedItemActor(OldWeapon);
 	}
 	else
 	{
 		DroppedItemActor->AddItem(NewWeapon);
-		AS_LOG_S(Error);
-	}
-}
-
-void AASCharacter::ServerDropWeapon_Implementation(EWeaponSlotType SlotType)
-{
-	if (ASInventory == nullptr)
-	{
-		AS_LOG_S(Error);
-		return;
-	}
-
-	ItemBoolPair ResultPair = ASInventory->RemoveItemFromWeaponSlot(SlotType);
-	if (ResultPair.Value)
-	{
-		DropItem(ResultPair.Key);
-	}
-	else
-	{
 		AS_LOG_S(Error);
 	}
 }
@@ -390,13 +371,31 @@ void AASCharacter::ServerPickUpArmor_Implementation(EArmorSlotType SlotType, UAS
 	UASItem* OldArmor = nullptr;
 	if (ASInventory->InsertArmor(SlotType, NewArmor, OldArmor))
 	{
-		DropItem(OldArmor);
+		SpawnDroppedItemActor(OldArmor);
 	}
 	else
 	{
 		DroppedItemActor->AddItem(NewArmor);
 		AS_LOG_S(Error);
 	}
+}
+
+void AASCharacter::ServerDropItem_Implementation(UASItem* InItem)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	ItemBoolPair ResultPair = ASInventory->RemoveItem(InItem);
+	if (!ResultPair.Value)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	SpawnDroppedItemActor(ResultPair.Key);
 }
 
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -593,7 +592,7 @@ void AASCharacter::PressedShootButton()
 	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
 	if (!Weapon.IsValid())
 	{
-		ConstItemPtrBoolPair Pair = ASInventory->FindItemFromWeaponSlot(EWeaponSlotType::Main);
+		ItemPtrBoolPair Pair = ASInventory->FindItemFromWeaponSlot(EWeaponSlotType::Main);
 		return;
 	}		
 
@@ -751,7 +750,7 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 
 	ServerChangeShootingStance(EShootingStanceType::None);
 
-	ConstItemPtrBoolPair ResultPair = ASInventory->FindItemFromWeaponSlot(WeaponSlotType);
+	ItemPtrBoolPair ResultPair = ASInventory->FindItemFromWeaponSlot(WeaponSlotType);
 	if (!ResultPair.Value)
 		return;
 
@@ -982,12 +981,15 @@ void AASCharacter::ServerChangeFireMode_Implementation()
 	Weapon->ChangeToNextFireMode();
 }
 
-void AASCharacter::DropItem(UASItem* DroppingItem)
+void AASCharacter::SpawnDroppedItemActor(UASItem* DroppingItem)
 {
 	if (DroppingItem == nullptr)
 		return;
 
-	if (auto DroppedItemActor = GetWorld()->SpawnActor<AASDroppedItemActor>(DroppingItem->GetDroppedItemActorClass(), GetActorLocation(), GetActorRotation()))
+	USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
+	FVector Location = (SkeletalMeshComp != nullptr ? SkeletalMeshComp->GetComponentLocation() : GetActorLocation());
+
+	if (auto DroppedItemActor = GetWorld()->SpawnActor<AASDroppedItemActor>(DroppingItem->GetDroppedItemActorClass(), Location, GetActorRotation()))
 	{
 		DroppedItemActor->AddItem(DroppingItem);
 	}

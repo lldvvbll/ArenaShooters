@@ -4,10 +4,10 @@
 #include "GUI/ASItemDragDropOperation.h"
 #include "GUI/ASDragItemUserWidget.h"
 
-void UASItemDragDropOperation::SetItemData(const TWeakObjectPtr<UASItem>& InItem, UASItemUserWidget* InItemWidget, UASDragItemUserWidget* InDragItemUserWidget)
+void UASItemDragDropOperation::SetItemData(const TWeakObjectPtr<UASItem>& InItem, UWidget* InParentWidget, UASDragItemUserWidget* InDragItemUserWidget)
 {
 	Item = InItem;
-	ItemWidget = InItemWidget;
+	ParentWidget = InParentWidget;
 	DefaultDragVisual = InDragItemUserWidget;
 	Pivot = EDragPivot::CenterCenter;
 }
@@ -17,7 +17,7 @@ const TWeakObjectPtr<UASItem>& UASItemDragDropOperation::GetItem() const
 	return Item;
 }
 
-const UASItemUserWidget* UASItemDragDropOperation::GetItemWidget() const
+UWidget* UASItemDragDropOperation::GetParentWidget() const
 {
-	return ItemWidget;
+	return ParentWidget;
 }

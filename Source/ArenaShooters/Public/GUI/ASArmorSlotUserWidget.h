@@ -14,13 +14,13 @@ class ARENASHOOTERS_API UASArmorSlotUserWidget : public UASEquipmentSlotUserWidg
 	GENERATED_BODY()
 
 public:
-	virtual void SetASItem(TWeakObjectPtr<const UASItem>& Item) override;
+	virtual void SetASItem(TWeakObjectPtr<UASItem>& NewItem) override;
 
 protected:
 	virtual void NativeConstruct() override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
-	virtual bool IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item) override;
+	virtual bool IsSuitableSlot(const TWeakObjectPtr<UASItem>& InItem) override;
 
 protected:
 	UPROPERTY()
@@ -28,7 +28,4 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	EArmorSlotType ArmorSlotType;
-
-	UPROPERTY()
-	TWeakObjectPtr<const UASItem> ArmorPtr;
 };

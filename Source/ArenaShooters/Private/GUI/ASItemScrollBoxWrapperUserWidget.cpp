@@ -7,6 +7,7 @@
 #include "GUI/ASDragItemUserWidget.h"
 #include "Components/ScrollBox.h"
 #include "Item/ASItem.h"
+#include "Character/ASCharacter.h"
 
 void UASItemScrollBoxWrapperUserWidget::AddItemsToScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items)
 {
@@ -71,9 +72,13 @@ void UASItemScrollBoxWrapperUserWidget::NativeOnDragEnter(const FGeometry& InGeo
 {
 	Super::NativeOnDragEnter(InGeometry, InDragDropEvent, InOperation);
 
+	if (GetOperationParentWidget(InOperation) == ItemScrollBox)
+		return;
+
 	if (bInventoryScrollBoxWrapper)
 	{
-		if (auto Item = GetASItemFromDragDropOperation(InOperation))
+		TWeakObjectPtr<UASItem> Item = GetASItemFromDragDropOperation(InOperation);
+		if (Item.IsValid())
 		{
 			EItemType ItemType = Item->GetItemType();
 			if (ItemType == EItemType::Weapon || ItemType == EItemType::Armor)
@@ -91,9 +96,13 @@ void UASItemScrollBoxWrapperUserWidget::NativeOnDragLeave(const FDragDropEvent& 
 {
 	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
 
+	if (GetOperationParentWidget(InOperation) == ItemScrollBox)
+		return;
+
 	if (bInventoryScrollBoxWrapper)
 	{
-		if (auto Item = GetASItemFromDragDropOperation(InOperation))
+		TWeakObjectPtr<UASItem> Item = GetASItemFromDragDropOperation(InOperation);
+		if (Item.IsValid())
 		{
 			EItemType ItemType = Item->GetItemType();
 			if (ItemType == EItemType::Weapon || ItemType == EItemType::Armor)
@@ -109,35 +118,72 @@ void UASItemScrollBoxWrapperUserWidget::NativeOnDragLeave(const FDragDropEvent& 
 
 bool UASItemScrollBoxWrapperUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
-	bool Result = Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
+	if (Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation))
+		return true;
 
-	if (auto Item = GetASItemFromDragDropOperation(InOperation))
+	if (GetOperationParentWidget(InOperation) != ItemScrollBox)
 	{
-		if (bInventoryScrollBoxWrapper)
+		TWeakObjectPtr<UASItem> Item = GetASItemFromDragDropOperation(InOperation);
+		if (Item.IsValid())
 		{
-			EItemType ItemType = Item->GetItemType();
-			if (ItemType != EItemType::Weapon && ItemType != EItemType::Armor)
+			if (bInventoryScrollBoxWrapper)
 			{
-
+				EItemType ItemType = Item->GetItemType();
+				if (ItemType != EItemType::Weapon && ItemType != EItemType::Armor)
+				{
+					if (auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn()))
+					{
+						ASChar->ServerDropItem(Item.Get());
+						return true;
+					}
+				}
 			}
-		}
-		else
-		{
-
+			else
+			{
+				if (auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn()))
+				{
+					ASChar->ServerDropItem(Item.Get());
+					return true;
+				}
+			}
 		}
 	}
 
-	return Result;
+	return false;
 }
 
-UASItem* UASItemScrollBoxWrapperUserWidget::GetASItemFromDragDropOperation(UDragDropOperation* InOperation)
+TWeakObjectPtr<UASItem> UASItemScrollBoxWrapperUserWidget::GetASItemFromDragDropOperation(UDragDropOperation* InOperation)
 {
 	if (InOperation == nullptr)
-		return nullptr;
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return TWeakObjectPtr<UASItem>();
+	}
 
 	auto DragDropOp = Cast<UASItemDragDropOperation>(InOperation);
 	if (DragDropOp == nullptr)
-		return nullptr;
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return TWeakObjectPtr<UASItem>();
+	}
 
-	return Cast<UASItem>(DragDropOp->Payload);
+	return DragDropOp->GetItem();
+}
+
+UWidget* UASItemScrollBoxWrapperUserWidget::GetOperationParentWidget(UDragDropOperation* InOperation)
+{
+	if (InOperation == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return nullptr;
+	}
+
+	auto DragDropOp = Cast<UASItemDragDropOperation>(InOperation);
+	if (DragDropOp == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return nullptr;
+	}
+
+	return DragDropOp->GetParentWidget();
 }

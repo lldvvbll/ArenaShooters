@@ -137,7 +137,7 @@ void UASInventoryUserWidget::OnChangedWeapon(EWeaponSlotType SlotType, UASWeapon
 	case EWeaponSlotType::Main:
 		if (MainWeaponSlotWidget != nullptr)
 		{
-			ConstItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromWeaponSlot(SlotType);
+			ItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromWeaponSlot(SlotType);
 			if (ItemPair.Value)
 			{
 				MainWeaponSlotWidget->SetASItem(ItemPair.Key);
@@ -155,7 +155,7 @@ void UASInventoryUserWidget::OnChangedWeapon(EWeaponSlotType SlotType, UASWeapon
 	case EWeaponSlotType::Sub:
 		if (SubWeaponSlotWidget != nullptr)
 		{
-			ConstItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromWeaponSlot(SlotType);
+			ItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromWeaponSlot(SlotType);
 			if (ItemPair.Value)
 			{
 				SubWeaponSlotWidget->SetASItem(ItemPair.Key);
@@ -183,7 +183,7 @@ void UASInventoryUserWidget::OnChangedArmor(EArmorSlotType SlotType, UASArmor* R
 	case EArmorSlotType::Helmet:
 		if (HelmetSlotWidget != nullptr)
 		{
-			ConstItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromArmorSlot(SlotType);
+			ItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromArmorSlot(SlotType);
 			if (ItemPair.Value)
 			{
 				HelmetSlotWidget->SetASItem(ItemPair.Key);
@@ -201,7 +201,7 @@ void UASInventoryUserWidget::OnChangedArmor(EArmorSlotType SlotType, UASArmor* R
 	case EArmorSlotType::Jacket:
 		if (JacketSlotWidget != nullptr)
 		{
-			ConstItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromArmorSlot(SlotType);
+			ItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromArmorSlot(SlotType);
 			if (ItemPair.Value)
 			{
 				JacketSlotWidget->SetASItem(ItemPair.Key);

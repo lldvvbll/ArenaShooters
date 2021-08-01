@@ -16,7 +16,7 @@ class AASWeaponActor;
 class AASArmorActor;
 
 using ItemBoolPair = TPair<UASItem*, bool>;
-using ConstItemPtrBoolPair = TPair<TWeakObjectPtr<const UASItem>, bool>;
+using ItemPtrBoolPair = TPair<TWeakObjectPtr<UASItem>, bool>;
 
 UCLASS()
 class ARENASHOOTERS_API UASInventoryComponent : public UActorComponent
@@ -33,20 +33,24 @@ public:
 	const EWeaponType GetSelectedWeaponType() const;
 	const EWeaponSlotType GetSelectedWeaponSlotType() const;
 
-	static bool IsSuitableWeaponSlot(EWeaponSlotType SlotType, UASWeapon* Weapon);
-	static bool IsSuitableArmorSlot(EArmorSlotType SlotType, UASArmor* Armor);
+	static EWeaponSlotType GetSuitableWeaponSlotType(EWeaponType WeaponType);
+	static EArmorSlotType GetSuitableArmorSlotType(EArmorType ArmorType);
+	static bool IsSuitableWeaponSlot(EWeaponSlotType SlotType, const UASWeapon* Weapon);
+	static bool IsSuitableArmorSlot(EArmorSlotType SlotType, const UASArmor* Armor);
 
 	bool InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem);
 	bool InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem);
 
 	void SelectWeapon(EWeaponSlotType SlotType);
 
-	ConstItemPtrBoolPair FindItemFromWeaponSlot(EWeaponSlotType SlotType) const;
-	ConstItemPtrBoolPair SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem);
+	ItemBoolPair RemoveItem(UASItem* InItem);
+
+	ItemPtrBoolPair FindItemFromWeaponSlot(EWeaponSlotType SlotType) const;
+	ItemPtrBoolPair SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromWeaponSlot(EWeaponSlotType SlotType);
 
-	ConstItemPtrBoolPair FindItemFromArmorSlot(EArmorSlotType SlotType) const;
-	ConstItemPtrBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
+	ItemPtrBoolPair FindItemFromArmorSlot(EArmorSlotType SlotType) const;
+	ItemPtrBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromArmorSlot(EArmorSlotType SlotType);
 
 private:

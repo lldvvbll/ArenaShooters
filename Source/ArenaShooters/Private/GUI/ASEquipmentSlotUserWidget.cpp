@@ -8,9 +8,12 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Item/ASItem.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
-void UASEquipmentSlotUserWidget::SetASItem(TWeakObjectPtr<const UASItem>& Item)
+void UASEquipmentSlotUserWidget::SetASItem(TWeakObjectPtr<UASItem>& NewItem)
 {
+	Item = NewItem;
+
 	if (EquipmentImage != nullptr)
 	{
 		if (Item.IsValid())
@@ -27,7 +30,7 @@ void UASEquipmentSlotUserWidget::SetASItem(TWeakObjectPtr<const UASItem>& Item)
 
 	if (NameTextBlock != nullptr)
 	{
-		NameTextBlock->SetText((Item.IsValid() ?  Item->GetItemName() : FText::GetEmpty()));
+		NameTextBlock->SetText((Item.IsValid() ? Item->GetItemName() : FText::GetEmpty()));
 	}
 }
 
@@ -42,9 +45,38 @@ void UASEquipmentSlotUserWidget::NativeConstruct()
 	Highlight(false);
 }
 
+FReply UASEquipmentSlotUserWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+	if (Reply.IsEventHandled())
+		return Reply;
+
+	return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
+}
+
+void UASEquipmentSlotUserWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+{
+	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
+
+	DraggedItemWidget = CreateWidget<UASDragItemUserWidget>(this, (DragItemWidgetClass != nullptr ? DragItemWidgetClass : UASDragItemUserWidget::StaticClass()));
+	if (DraggedItemWidget != nullptr && Item.IsValid())
+	{
+		DraggedItemWidget->SetItemImage(Item->GetItemImage());
+	}
+
+	if (auto ItemDragDropOp = NewObject<UASItemDragDropOperation>(GetTransientPackage(), UASItemDragDropOperation::StaticClass()))
+	{
+		ItemDragDropOp->SetItemData(Item, this, DraggedItemWidget);
+		OutOperation = ItemDragDropOp;
+	}
+}
+
 void UASEquipmentSlotUserWidget::NativeOnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
 	Super::NativeOnDragEnter(InGeometry, InDragDropEvent, InOperation);
+	
+	if (GetOperationParentWidget(InOperation) == this)
+		return;
 
 	if (IsSuitableSlot(GetASItemFromDragDropOperation(InOperation)))
 	{
@@ -52,9 +84,9 @@ void UASEquipmentSlotUserWidget::NativeOnDragEnter(const FGeometry& InGeometry, 
 	}
 	else
 	{
-		if (auto DraggedItemWidget = Cast<UASDragItemUserWidget>(InOperation->DefaultDragVisual))
+		if (auto NewDraggedItemWidget = Cast<UASDragItemUserWidget>(InOperation->DefaultDragVisual))
 		{
-			DraggedItemWidget->SetSuitableBrush(false);
+			NewDraggedItemWidget->SetSuitableBrush(false);
 		}
 	}
 }
@@ -63,11 +95,14 @@ void UASEquipmentSlotUserWidget::NativeOnDragLeave(const FDragDropEvent& InDragD
 {
 	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
 
+	if (GetOperationParentWidget(InOperation) == this)
+		return;
+
 	Highlight(false);
 
-	if (auto DraggedItemWidget = Cast<UASDragItemUserWidget>(InOperation->DefaultDragVisual))
+	if (auto NewDraggedItemWidget = Cast<UASDragItemUserWidget>(InOperation->DefaultDragVisual))
 	{
-		DraggedItemWidget->SetSuitableBrush(true);
+		NewDraggedItemWidget->SetSuitableBrush(true);
 	}
 }
 
@@ -86,20 +121,26 @@ void UASEquipmentSlotUserWidget::Highlight(bool bOn)
 
 bool UASEquipmentSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
+	if (Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation))
+		return true;
+
 	Highlight(false);
 
-	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
+	if (GetOperationParentWidget(InOperation) == this)
+		return true;
+
+	return false;
 }
 
-bool UASEquipmentSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& Item)
+bool UASEquipmentSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& InItem)
 {
-	if (!Item.IsValid())
+	if (!InItem.IsValid())
 	{
 		AS_LOG_SCREEN_S(5.0f, FColor::Red);
 		return false;
 	}
 
-	if (Item->GetItemType() != ItemType)
+	if (InItem->GetItemType() != ItemType)
 		return false;
 
 	return true;
@@ -121,4 +162,22 @@ TWeakObjectPtr<UASItem> UASEquipmentSlotUserWidget::GetASItemFromDragDropOperati
 	}
 
 	return DragDropOp->GetItem();
+}
+
+UWidget* UASEquipmentSlotUserWidget::GetOperationParentWidget(UDragDropOperation* InOperation)
+{
+	if (InOperation == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return nullptr;
+	}
+
+	auto DragDropOp = Cast<UASItemDragDropOperation>(InOperation);
+	if (DragDropOp == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return nullptr;
+	}
+
+	return DragDropOp->GetParentWidget();
 }

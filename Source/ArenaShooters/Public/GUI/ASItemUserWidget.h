@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "ASItemUserWidget.generated.h"
 
+class UASItemScrollBoxWrapperUserWidget;
 class UASDragItemUserWidget;
 class UASItem;
 class UImage;
@@ -26,7 +27,10 @@ protected:
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 
 private:
-	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY()
+	UASItemScrollBoxWrapperUserWidget* ItemScrollBoxWrapperWidget;
+
+	UPROPERTY(EditAnywhere, Meta = (AllowPrivateAccess = true))
 	TSubclassOf<UASDragItemUserWidget> DragItemWidgetClass;
 
 	UPROPERTY()
