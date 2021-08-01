@@ -31,12 +31,12 @@ const TWeakObjectPtr<AASArmorActor>& UASArmor::GetActor() const
 	return ASArmorActor;
 }
 
-int32 UASArmor::GetCurrentDurability() const
+float UASArmor::GetCurrentDurability() const
 {
 	return CurrentDurability;
 }
 
-void UASArmor::SetCurrentDurability(int32 NewDurability)
+void UASArmor::SetCurrentDurability(float NewDurability)
 {
 	auto ArmorDA = Cast<UASArmorDataAsset>(DataAsset);
 	check(ArmorDA);
@@ -49,7 +49,7 @@ void UASArmor::SetCurrentDurability(int32 NewDurability)
 	}
 }
 
-void UASArmor::ModifyDurability(int32 Value)
+void UASArmor::ModifyDurability(float Value)
 {
 	SetCurrentDurability(CurrentDurability + Value);
 }

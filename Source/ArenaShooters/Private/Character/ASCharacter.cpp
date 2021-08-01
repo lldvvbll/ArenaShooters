@@ -363,6 +363,42 @@ void AASCharacter::ServerDropWeapon_Implementation(EWeaponSlotType SlotType)
 	}
 }
 
+void AASCharacter::ServerPickUpArmor_Implementation(EArmorSlotType SlotType, UASArmor* NewArmor)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->IsSuitableArmorSlot(SlotType, NewArmor))
+		return;
+
+	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewArmor->GetOwner());
+	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!DroppedItemActor->RemoveItem(NewArmor))
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	UASItem* OldArmor = nullptr;
+	if (ASInventory->InsertArmor(SlotType, NewArmor, OldArmor))
+	{
+		DropItem(OldArmor);
+	}
+	else
+	{
+		DroppedItemActor->AddItem(NewArmor);
+		AS_LOG_S(Error);
+	}
+}
+
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float ActualDamage = Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);

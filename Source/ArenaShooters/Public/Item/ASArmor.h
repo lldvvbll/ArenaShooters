@@ -23,9 +23,9 @@ public:
 	TWeakObjectPtr<AASArmorActor>& GetActor();
 	const TWeakObjectPtr<AASArmorActor>& GetActor() const;
 
-	int32 GetCurrentDurability() const;
-	void SetCurrentDurability(int32 NewDurability);
-	void ModifyDurability(int32 Value);
+	float GetCurrentDurability() const;
+	void SetCurrentDurability(float NewDurability);
+	void ModifyDurability(float Value);
 
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)

@@ -61,6 +61,10 @@ public:
 	void ServerDropWeapon(EWeaponSlotType SlotType);
 	void ServerDropWeapon_Implementation(EWeaponSlotType SlotType);
 
+	UFUNCTION(Server, Reliable)
+	void ServerPickUpArmor(EArmorSlotType SlotType, UASArmor* NewArmor);
+	void ServerPickUpArmor_Implementation(EArmorSlotType SlotType, UASArmor* NewArmor);
+
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
 		class AController* EventInstigator, AActor* DamageCauser) override;

@@ -50,7 +50,6 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_ASItems)
 	TArray<UASItem*> ASItems;
 
-
 	UPROPERTY(EditInstanceOnly)
-	FPrimaryAssetId TestARAssetId;
+	TArray<FPrimaryAssetId> DropItemDataAssetIds;
 };

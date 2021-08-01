@@ -45,7 +45,7 @@ public:
 	ConstItemPtrBoolPair SetItemToWeaponSlot(EWeaponSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromWeaponSlot(EWeaponSlotType SlotType);
 
-	ConstItemPtrBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType) const;
+	ConstItemPtrBoolPair FindItemFromArmorSlot(EArmorSlotType SlotType) const;
 	ConstItemPtrBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromArmorSlot(EArmorSlotType SlotType);
 

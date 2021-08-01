@@ -6,6 +6,7 @@
 #include "GUI/ASDragItemUserWidget.h"
 #include "Components/Border.h"
 #include "Components/Image.h"
+#include "Components/TextBlock.h"
 #include "Item/ASItem.h"
 
 void UASEquipmentSlotUserWidget::SetASItem(TWeakObjectPtr<const UASItem>& Item)
@@ -23,6 +24,11 @@ void UASEquipmentSlotUserWidget::SetASItem(TWeakObjectPtr<const UASItem>& Item)
 			EquipmentImage->SetOpacity(0.0f);
 		}		
 	}
+
+	if (NameTextBlock != nullptr)
+	{
+		NameTextBlock->SetText((Item.IsValid() ?  Item->GetItemName() : FText::GetEmpty()));
+	}
 }
 
 void UASEquipmentSlotUserWidget::NativeConstruct()
@@ -31,6 +37,7 @@ void UASEquipmentSlotUserWidget::NativeConstruct()
 
 	HighlightBorder = Cast<UBorder>(GetWidgetFromName(TEXT("HighlightBorder")));
 	EquipmentImage = Cast<UImage>(GetWidgetFromName(TEXT("EquipmentImage")));
+	NameTextBlock = Cast<UTextBlock>(GetWidgetFromName(TEXT("NameTextBlock")));
 
 	Highlight(false);
 }

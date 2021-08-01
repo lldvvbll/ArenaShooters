@@ -6,8 +6,10 @@
 #include "Engine/ActorChannel.h"
 #include "Item/ASItem.h"
 #include "Item/ASWeapon.h"
+#include "Item/ASArmor.h"
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
+#include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
 #include "ASItemFactory.h"
 
 AASDroppedItemActor::AASDroppedItemActor()
@@ -125,11 +127,24 @@ void AASDroppedItemActor::BeginPlay()
 
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		if (TestARAssetId.IsValid() && ASItems.Num() == 0)
+		for (auto& ItemDataAssetId : DropItemDataAssetIds)
 		{
-			if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(TestARAssetId))
+			if (!ItemDataAssetId.IsValid())
+				continue;
+
+			if (ItemDataAssetId.PrimaryAssetType == UASAssetManager::WeaponAssetType)
 			{
-				ASItems.Emplace(AASItemFactory::NewASItem<UASWeapon>(GetWorld(), this, WeaponDataAsset));
+				if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(ItemDataAssetId))
+				{
+					ASItems.Emplace(AASItemFactory::NewASItem<UASWeapon>(GetWorld(), this, WeaponDataAsset));
+				}
+			}
+			else if (ItemDataAssetId.PrimaryAssetType == UASAssetManager::ArmorAssetType)
+			{
+				if (auto ArmorDataAsset = UASAssetManager::Get().GetDataAsset<UASArmorDataAsset>(ItemDataAssetId))
+				{
+					ASItems.Emplace(AASItemFactory::NewASItem<UASArmor>(GetWorld(), this, ArmorDataAsset));
+				}
 			}
 		}
 	}	

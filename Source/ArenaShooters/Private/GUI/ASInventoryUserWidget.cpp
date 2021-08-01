@@ -183,13 +183,37 @@ void UASInventoryUserWidget::OnChangedArmor(EArmorSlotType SlotType, UASArmor* R
 	case EArmorSlotType::Helmet:
 		if (HelmetSlotWidget != nullptr)
 		{
-
+			ConstItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromArmorSlot(SlotType);
+			if (ItemPair.Value)
+			{
+				HelmetSlotWidget->SetASItem(ItemPair.Key);
+			}
+			else
+			{
+				AS_LOG_SCREEN_S(5.0f, FColor::Red);
+			}
+		}
+		else
+		{
+			AS_LOG_SCREEN_S(5.0f, FColor::Red);
 		}
 		break;
 	case EArmorSlotType::Jacket:
 		if (JacketSlotWidget != nullptr)
 		{
-
+			ConstItemPtrBoolPair ItemPair = ASInventoryComp->FindItemFromArmorSlot(SlotType);
+			if (ItemPair.Value)
+			{
+				JacketSlotWidget->SetASItem(ItemPair.Key);
+			}
+			else
+			{
+				AS_LOG_SCREEN_S(5.0f, FColor::Red);
+			}
+		}
+		else
+		{
+			AS_LOG_SCREEN_S(5.0f, FColor::Red);
 		}
 		break;
 	default:

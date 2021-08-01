@@ -3,10 +3,10 @@
 
 #include "GUI/ASWeaponSlotUserWidget.h"
 #include "Components/Border.h"
+#include "Components/TextBlock.h"
 #include "Item/ASWeapon.h"
 #include "Character/ASCharacter.h"
 #include "Character/ASInventoryComponent.h"
-
 
 void UASWeaponSlotUserWidget::SetASItem(TWeakObjectPtr<const UASItem>& Item)
 {

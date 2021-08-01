@@ -10,6 +10,7 @@
 class UBorder;
 class UImage;
 class UASItem;
+class UTextBlock;
 
 UCLASS(Abstract)
 class ARENASHOOTERS_API UASEquipmentSlotUserWidget : public UUserWidget
@@ -37,6 +38,9 @@ protected:
 
 	UPROPERTY()
 	UImage* EquipmentImage;
+
+	UPROPERTY()
+	UTextBlock* NameTextBlock;
 
 	UPROPERTY(EditAnywhere)
 	EItemType ItemType;

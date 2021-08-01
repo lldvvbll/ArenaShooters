@@ -285,7 +285,7 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromWeaponSlot(EWeaponSlotType Slo
 	return ResultPair;
 }
 
-ConstItemPtrBoolPair UASInventoryComponent::GetItemFromArmorSlot(EArmorSlotType SlotType) const
+ConstItemPtrBoolPair UASInventoryComponent::FindItemFromArmorSlot(EArmorSlotType SlotType) const
 {
 	ConstItemPtrBoolPair ResultPair(nullptr, false);
 

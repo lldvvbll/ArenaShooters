@@ -7,6 +7,8 @@
 #include "Common/ASEnums.h"
 #include "ASWeaponSlotUserWidget.generated.h"
 
+class UTextBlock;
+
 UCLASS()
 class ARENASHOOTERS_API UASWeaponSlotUserWidget : public UASEquipmentSlotUserWidget
 {
