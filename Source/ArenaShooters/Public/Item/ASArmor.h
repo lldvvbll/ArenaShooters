@@ -18,6 +18,8 @@ class ARENASHOOTERS_API UASArmor : public UASItem
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset) override;
+
 	const EArmorType GetArmorType() const;
 
 	TWeakObjectPtr<AASArmorActor>& GetActor();

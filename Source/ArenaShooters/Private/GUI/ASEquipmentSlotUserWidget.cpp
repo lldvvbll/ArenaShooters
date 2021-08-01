@@ -58,6 +58,9 @@ void UASEquipmentSlotUserWidget::NativeOnDragDetected(const FGeometry& InGeometr
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
+	if (!Item.IsValid())
+		return;
+
 	DraggedItemWidget = CreateWidget<UASDragItemUserWidget>(this, (DragItemWidgetClass != nullptr ? DragItemWidgetClass : UASDragItemUserWidget::StaticClass()));
 	if (DraggedItemWidget != nullptr && Item.IsValid())
 	{

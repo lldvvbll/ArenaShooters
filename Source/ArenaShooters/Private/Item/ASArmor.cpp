@@ -10,7 +10,21 @@ void UASArmor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UASArmor, ASArmorActor);
-	DOREPLIFETIME_CONDITION(UASArmor, CurrentDurability, COND_AutonomousOnly);
+	DOREPLIFETIME(UASArmor, CurrentDurability);
+}
+
+void UASArmor::SetDataAsset(UASItemDataAsset* NewDataAsset)
+{
+	Super::SetDataAsset(NewDataAsset);
+
+	auto ArmorDA = Cast<UASArmorDataAsset>(NewDataAsset);
+	if (ArmorDA == nullptr)
+	{
+		AS_LOG_SA(Error);
+		return;
+	}
+
+	SetCurrentDurability(ArmorDA->MaxDurability);
 }
 
 const EArmorType UASArmor::GetArmorType() const
