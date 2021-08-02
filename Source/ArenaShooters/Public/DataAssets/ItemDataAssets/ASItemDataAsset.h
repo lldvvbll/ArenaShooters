@@ -41,4 +41,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	UTexture2D* EquipmentSlotImage;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 MaxBundleCount;
 };

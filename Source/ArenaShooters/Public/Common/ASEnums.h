@@ -55,7 +55,6 @@ enum class EWeaponSlotType : uint8
 {
 	Main,
 	Sub,
-
 	SlotNum,	// => Invalid Slot Type
 };
 
@@ -64,7 +63,6 @@ enum class EArmorSlotType : uint8
 {
 	Helmet,
 	Jacket,
-
 	SlotNum,	// => Invalid Slot Type
 };
 
@@ -81,6 +79,13 @@ enum class EFireMode : uint8
 {
 	SemiAuto,		// 단발
 	FullAuto,		// 연사
-
 	ModeNum,
+};
+
+UENUM(BlueprintType)
+enum class EAmmoType : uint8
+{
+	None,
+	AR_Ammo,
+	Pistol_Ammo,
 };

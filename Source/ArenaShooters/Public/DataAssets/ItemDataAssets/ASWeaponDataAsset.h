@@ -39,4 +39,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	int32 MaxAmmoCount;
+
+	UPROPERTY(EditDefaultsOnly)
+	EAmmoType AmmoType;
 };

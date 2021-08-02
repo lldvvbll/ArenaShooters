@@ -14,6 +14,7 @@ class ARENASHOOTERS_API UASAssetManager : public UAssetManager
 public:
 	static const FPrimaryAssetType WeaponAssetType;
 	static const FPrimaryAssetType ArmorAssetType;
+	static const FPrimaryAssetType AmmoAssetType;
 
 public:
 	static UASAssetManager& Get();

@@ -5,6 +5,7 @@
 
 const FPrimaryAssetType	UASAssetManager::WeaponAssetType = TEXT("Weapon");
 const FPrimaryAssetType	UASAssetManager::ArmorAssetType = TEXT("Armor");
+const FPrimaryAssetType UASAssetManager::AmmoAssetType = TEXT("Ammo");
 
 UASAssetManager& UASAssetManager::Get()
 {
