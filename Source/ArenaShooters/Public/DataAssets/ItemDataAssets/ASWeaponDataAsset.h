@@ -36,4 +36,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	float Damage;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 MaxAmmoCount;
 };

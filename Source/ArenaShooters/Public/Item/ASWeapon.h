@@ -39,6 +39,19 @@ public:
 	UFUNCTION()
 	void OnRep_CurrentFireMode();
 
+	int32 GetMaxAmmoCount() const;
+	int32 GetCurrentAmmoCount() const;
+
+	UFUNCTION()
+	void OnRep_CurrentAmmoCount();
+
+public:
+	DECLARE_EVENT_OneParam(UASWeapon, FOnFireModeChangedEvent, EFireMode);
+	FOnFireModeChangedEvent OnFireModeChanged;
+
+	DECLARE_EVENT_OneParam(UASWeapon, FOnCurrentAmmoCountChangedEvent, int32);
+	FOnCurrentAmmoCountChangedEvent OnCurrentAmmoCountChanged;
+
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	TWeakObjectPtr<AASWeaponActor> ASWeaponActor;
@@ -48,4 +61,7 @@ protected:
 
 	UPROPERTY(Replicated)
 	int64 LastFireTick;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentAmmoCount)
+	int32 CurrentAmmoCount;
 };

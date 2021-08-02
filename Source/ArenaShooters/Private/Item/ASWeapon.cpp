@@ -15,6 +15,7 @@ void UASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(UASWeapon, ASWeaponActor);
 	DOREPLIFETIME(UASWeapon, CurrentFireMode);
 	DOREPLIFETIME(UASWeapon, LastFireTick);
+	DOREPLIFETIME(UASWeapon, CurrentAmmoCount);
 }
 
 void UASWeapon::SetDataAsset(UASItemDataAsset* NewDataAsset)
@@ -130,4 +131,23 @@ void UASWeapon::SetLastFireTick()
 void UASWeapon::OnRep_CurrentFireMode()
 {
 	AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("Current Fire Mode: %s"), (CurrentFireMode == EFireMode::SemiAuto ? TEXT("SemiAuto") : TEXT("FullAuto")));
+
+	OnFireModeChanged.Broadcast(CurrentFireMode);
+}
+
+int32 UASWeapon::GetMaxAmmoCount() const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+
+	return (WeaponDA != nullptr ? WeaponDA->MaxAmmoCount : 0);
+}
+
+int32 UASWeapon::GetCurrentAmmoCount() const
+{
+	return CurrentAmmoCount;
+}
+
+void UASWeapon::OnRep_CurrentAmmoCount()
+{
+	OnCurrentAmmoCountChanged.Broadcast(CurrentAmmoCount);
 }

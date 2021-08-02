@@ -10,14 +10,47 @@
 
 void UASWeaponSlotUserWidget::SetASItem(TWeakObjectPtr<UASItem>& NewItem)
 {
+	TWeakObjectPtr<UASItem> OldItem = Item;
+
 	Super::SetASItem(NewItem);
 
+	if (UASWeapon* OldWeapon = (OldItem.IsValid() ? Cast<UASWeapon>(OldItem) : nullptr))
+	{
+		OldWeapon->OnCurrentAmmoCountChanged.Remove(OnCurrentAmmoCountChangedEventHandle);
+		MaxAmmoCount = 0;
+	}
+
+	if (UASWeapon* NewWeapon = (Item.IsValid() ? Cast<UASWeapon>(Item) : nullptr))
+	{
+		NewWeapon->OnCurrentAmmoCountChanged.AddUObject(this, &UASWeaponSlotUserWidget::OnCurrentAmmoCountChanged);
+
+		MaxAmmoCount = NewWeapon->GetMaxAmmoCount();
+		OnCurrentAmmoCountChanged(NewWeapon->GetCurrentAmmoCount());
+	}
+	else
+	{
+		OnCurrentAmmoCountChanged(0);
+	}
 }
 
 void UASWeaponSlotUserWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	AmmoCountTextBlock = Cast<UTextBlock>(GetWidgetFromName(TEXT("AmmoCountTextBlock")));
+
+	MaxAmmoCount = 0;
+}
+
+void UASWeaponSlotUserWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	if (UASWeapon* Weapon = (Item.IsValid() ? Cast<UASWeapon>(Item) : nullptr))
+	{
+		Weapon->OnCurrentAmmoCountChanged.Remove(OnCurrentAmmoCountChangedEventHandle);
+		MaxAmmoCount = 0;
+	}
 }
 
 void UASWeaponSlotUserWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -67,4 +100,12 @@ bool UASWeaponSlotUserWidget::IsSuitableSlot(const TWeakObjectPtr<UASItem>& InIt
 		return false;
 
 	return true;
+}
+
+void UASWeaponSlotUserWidget::OnCurrentAmmoCountChanged(int32 NewAmmoCount)
+{
+	if (AmmoCountTextBlock != nullptr)
+	{
+		AmmoCountTextBlock->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), NewAmmoCount, MaxAmmoCount)));
+	}
 }
