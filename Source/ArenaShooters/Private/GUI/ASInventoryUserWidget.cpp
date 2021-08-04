@@ -29,11 +29,14 @@ void UASInventoryUserWidget::Bind()
 		return;
 	}
 
-	OnGroundItemAddEventHandle = ASChar->OnGroundItemAddEvent.AddUObject(this, &UASInventoryUserWidget::AddItemsToGroundScrollBox);
-	OnGroundItemRemoveEventHandle = ASChar->OnGroundItemRemoveEvent.AddUObject(this, &UASInventoryUserWidget::RemoveItemsFromGroundScrollBox);
+	ASChar->OnGroundItemAddEvent.AddUObject(this, &UASInventoryUserWidget::AddItemsToGroundScrollBox);
+	ASChar->OnGroundItemRemoveEvent.AddUObject(this, &UASInventoryUserWidget::RemoveItemsFromGroundScrollBox);
 
-	OnInsertWeaponHandle = ASInventoryComp->OnInsertWeapon.AddUObject(this, &UASInventoryUserWidget::OnChangedWeapon);
-	OnInsertArmorHandle = ASInventoryComp->OnInsertArmor.AddUObject(this, &UASInventoryUserWidget::OnChangedArmor);
+	ASInventoryComp->OnAddInventoryItem.AddUObject(this, &UASInventoryUserWidget::OnAddInventoryItem);
+	ASInventoryComp->OnRemoveInventoryItem.AddUObject(this, &UASInventoryUserWidget::OnRemoveInventoryItem);
+
+	ASInventoryComp->OnInsertWeapon.AddUObject(this, &UASInventoryUserWidget::OnChangedWeapon);
+	ASInventoryComp->OnInsertArmor.AddUObject(this, &UASInventoryUserWidget::OnChangedArmor);
 }
 
 void UASInventoryUserWidget::NativeConstruct()
@@ -56,30 +59,10 @@ void UASInventoryUserWidget::NativeConstruct()
 
 		AddItemsToGroundScrollBox(ASChar->GetGroundItems());
 	}
-}
-
-void UASInventoryUserWidget::NativeDestruct()
-{
-	Super::NativeDestruct();
-
-	if (AASCharacter* ASChar = GetASCharacter())
-	{
-		ASChar->OnGroundItemAddEvent.Remove(OnGroundItemAddEventHandle);
-		ASChar->OnGroundItemRemoveEvent.Remove(OnGroundItemRemoveEventHandle);
-	}
-	else
-	{
-		AS_LOG_SCREEN_S(5.0f, FColor::Red);
-	}
 
 	if (ASInventoryComp != nullptr)
 	{
-		ASInventoryComp->OnInsertWeapon.Remove(OnInsertWeaponHandle);
-		ASInventoryComp->OnInsertArmor.Remove(OnInsertArmorHandle);
-	}
-	else
-	{
-		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		AddItemsToInventoryScrollBox(ASInventoryComp->GetInventoryItems());
 	}
 }
 
@@ -122,6 +105,17 @@ void UASInventoryUserWidget::RemoveItemsFromGroundScrollBox(const TArray<TWeakOb
 	}
 
 	GroundItemScrollBoxWrapperWidget->RemoveItemsFromScrollBox(Items);
+}
+
+void UASInventoryUserWidget::AddItemsToInventoryScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items)
+{
+	if (InventoryItemScrollBoxWrapperWidget == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return;
+	}
+
+	InventoryItemScrollBoxWrapperWidget->AddItemsToScrollBox(Items);
 }
 
 void UASInventoryUserWidget::OnChangedWeapon(EWeaponSlotType SlotType, UASWeapon* RemovedWeapon)
@@ -220,4 +214,26 @@ void UASInventoryUserWidget::OnChangedArmor(EArmorSlotType SlotType, UASArmor* R
 		checkNoEntry();
 		break;
 	}
+}
+
+void UASInventoryUserWidget::OnAddInventoryItem(const TWeakObjectPtr<UASItem>& NewItem)
+{
+	if (InventoryItemScrollBoxWrapperWidget == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return;
+	}
+
+	InventoryItemScrollBoxWrapperWidget->AddItemsToScrollBox({ NewItem });
+}
+
+void UASInventoryUserWidget::OnRemoveInventoryItem(const TWeakObjectPtr<UASItem>& InItem)
+{
+	if (InventoryItemScrollBoxWrapperWidget == nullptr)
+	{
+		AS_LOG_SCREEN_S(5.0f, FColor::Red);
+		return;
+	}
+
+	InventoryItemScrollBoxWrapperWidget->RemoveItemsFromScrollBox({ InItem });
 }

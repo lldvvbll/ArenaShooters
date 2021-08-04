@@ -15,10 +15,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset) override;
-
-	int32 GetBundleCount() const;
-	void SetBundleCount(int32 NewCount);
-	void ModifyBundleCount(int32 Value);
+	virtual void SetCount(int32 NewCount) override;
 
 protected:
 	UPROPERTY(Replicated)

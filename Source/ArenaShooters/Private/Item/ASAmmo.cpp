@@ -17,25 +17,15 @@ void UASAmmo::SetDataAsset(UASItemDataAsset* NewDataAsset)
 	Super::SetDataAsset(NewDataAsset);
 }
 
-int32 UASAmmo::GetBundleCount() const
-{
-	return CurrentBundleCount;
-}
-
-void UASAmmo::SetBundleCount(int32 NewCount)
+void UASAmmo::SetCount(int32 NewCount)
 {
 	auto AmmoDA = Cast<UASAmmoDataAsset>(DataAsset);
 	check(AmmoDA);
 
-	CurrentBundleCount = FMath::Clamp<int32>(NewCount, 0, (AmmoDA != nullptr ? AmmoDA->MaxBundleCount : 100));
+	Super::SetCount(FMath::Clamp<int32>(NewCount, 0, (AmmoDA != nullptr ? AmmoDA->MaxBundleCount : 100)));
 
-	if (CurrentBundleCount <= 0)
+	if (Count <= 0)
 	{
 
 	}
-}
-
-void UASAmmo::ModifyBundleCount(int32 Value)
-{
-	SetBundleCount(CurrentBundleCount + Value);
 }

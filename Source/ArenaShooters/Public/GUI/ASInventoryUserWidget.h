@@ -26,16 +26,20 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
-	virtual void NativeDestruct() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 	AASCharacter* GetASCharacter() const;
 	
 	void AddItemsToGroundScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items);
 	void RemoveItemsFromGroundScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items);
+	
+	void AddItemsToInventoryScrollBox(const TArray<TWeakObjectPtr<UASItem>>& Items);
 
 	void OnChangedWeapon(EWeaponSlotType SlotType, UASWeapon* RemovedWeapon);
 	void OnChangedArmor(EArmorSlotType SlotType, UASArmor* RemovedArmor);
+
+	void OnAddInventoryItem(const TWeakObjectPtr<UASItem>& NewItem);
+	void OnRemoveInventoryItem(const TWeakObjectPtr<UASItem>& InItem);
 
 private:
 	UPROPERTY()
@@ -58,9 +62,4 @@ private:
 
 	UPROPERTY()
 	UASInventoryComponent* ASInventoryComp;
-
-	FDelegateHandle OnGroundItemAddEventHandle;
-	FDelegateHandle OnGroundItemRemoveEventHandle;
-	FDelegateHandle OnInsertWeaponHandle;
-	FDelegateHandle OnInsertArmorHandle;
 };

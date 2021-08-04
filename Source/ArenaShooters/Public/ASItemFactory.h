@@ -7,7 +7,13 @@
 #include "ASItemFactory.generated.h"
 
 class UASItem;
+class UASWeapon;
+class UASArmor;
+class UASAmmo;
 class UASItemDataAsset;
+class UASWeaponDataAsset;
+class UASArmorDataAsset;
+class UASAmmoDataAsset;
 
 UCLASS()
 class ARENASHOOTERS_API AASItemFactory : public AActor
@@ -18,19 +24,9 @@ public:
 	template <typename ItemT, typename ItemDataAssetT>
 	static ItemT* NewASItem(UWorld* World, AActor* NewOwner, ItemDataAssetT* DataAsset, int32 Count = 0)
 	{
-		if constexpr (TIsDerivedFrom<ItemDataAssetT, UASWeaponDataAsset>::IsDerived)
-		{
-			static_assert(TIsDerivedFrom<ItemT, UASWeapon>::IsDerived, "Invalid ItemDataAssetT! - UASWeapon");
-		}
-		else if constexpr (TIsDerivedFrom<ItemDataAssetT, UASArmorDataAsset>::IsDerived)
-		{
-			static_assert(TIsDerivedFrom<ItemT, UASArmor>::IsDerived, "Invalid ItemDataAssetT! - UASArmor");
-		}
-		else
-		{
-			static_assert(false, "Invalid ItemDataAssetT! - Unknown");
-		}
-
+		static_assert(TIsDerivedFrom<ItemDataAssetT, UASItemDataAsset>::IsDerived, "Invalid ItemDataAssetT!");
+		static_assert(TIsDerivedFrom<ItemT, ItemDataAssetT::ItemClassBaseT>::IsDerived, "Invalid ItemT!");
+		
 		return Cast<ItemT>(NewASItem(World, NewOwner, DataAsset, Count));
 	}
 

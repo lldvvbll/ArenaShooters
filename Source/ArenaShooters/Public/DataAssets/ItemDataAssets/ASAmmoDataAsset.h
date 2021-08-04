@@ -7,10 +7,15 @@
 #include "Common/ASEnums.h"
 #include "ASAmmoDataAsset.generated.h"
 
+class UASAmmo;
+
 UCLASS()
 class ARENASHOOTERS_API UASAmmoDataAsset : public UASItemDataAsset
 {
 	GENERATED_BODY()
+
+public:
+	using ItemClassBaseT = UASAmmo;
 
 public:
 	UASAmmoDataAsset();

@@ -7,9 +7,11 @@
 #include "Item/ASItem.h"
 #include "Item/ASWeapon.h"
 #include "Item/ASArmor.h"
+#include "Item/ASAmmo.h"
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
 #include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
+#include "DataAssets/ItemDataAssets/ASAmmoDataAsset.h"
 #include "ASItemFactory.h"
 
 AASDroppedItemActor::AASDroppedItemActor()
@@ -144,6 +146,13 @@ void AASDroppedItemActor::BeginPlay()
 				if (auto ArmorDataAsset = UASAssetManager::Get().GetDataAsset<UASArmorDataAsset>(ItemDataAssetId))
 				{
 					ASItems.Emplace(AASItemFactory::NewASItem<UASArmor>(GetWorld(), this, ArmorDataAsset));
+				}
+			}
+			else if (ItemDataAssetId.PrimaryAssetType == UASAssetManager::AmmoAssetType)
+			{
+				if (auto AmmoDataAsset = UASAssetManager::Get().GetDataAsset<UASAmmoDataAsset>(ItemDataAssetId))
+				{
+					ASItems.Emplace(AASItemFactory::NewASItem<UASAmmo>(GetWorld(), this, AmmoDataAsset, 10));
 				}
 			}
 		}

@@ -8,12 +8,16 @@
 #include "ASArmorDataAsset.generated.h"
 
 class AASArmorActor;
+class UASArmor;
 
 UCLASS()
 class ARENASHOOTERS_API UASArmorDataAsset : public UASItemDataAsset
 {
 	GENERATED_BODY()
-	
+
+public:
+	using ItemClassBaseT = UASArmor;
+
 public:
 	UASArmorDataAsset();
 

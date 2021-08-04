@@ -30,7 +30,9 @@ public:
 	TSubclassOf<AASDroppedItemActor> GetDroppedItemActorClass() const;
 
 	int32 GetCount() const;
-	void SetCount(int32 NewCount);
+	virtual void SetCount(int32 NewCount);
+	void ModifyCount(int32 Value);
+	int32 GetMaxCount() const;
 
 	void SetOwner(AActor* NewOwner);
 	TWeakObjectPtr<AActor>& GetOwner();

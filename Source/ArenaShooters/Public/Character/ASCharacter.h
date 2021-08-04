@@ -65,6 +65,10 @@ public:
 	void ServerDropItem(UASItem* InItem);
 	void ServerDropItem_Implementation(UASItem* InItem);
 
+	UFUNCTION(Server, Reliable)
+	void ServerPickUpInventoryItem(UASItem* NewItem);
+	void ServerPickUpInventoryItem_Implementation(UASItem* NewItem);
+
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
 		class AController* EventInstigator, AActor* DamageCauser) override;
@@ -139,7 +143,7 @@ protected:
 	void ServerChangeFireMode_Implementation();
 
 	void SpawnDroppedItemActor(UASItem* DroppingItem);
-	void OnRemoveGroundItem(TWeakObjectPtr<UASItem>& Item);
+	void OnRemoveGroundItem(const TWeakObjectPtr<UASItem>& Item);
 
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)

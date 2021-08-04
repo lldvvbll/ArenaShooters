@@ -36,6 +36,7 @@ void UASInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 	DOREPLIFETIME(UASInventoryComponent, WeaponSlots);
 	DOREPLIFETIME(UASInventoryComponent, ArmorSlots);
+	DOREPLIFETIME(UASInventoryComponent, InventoryItems);
 	DOREPLIFETIME(UASInventoryComponent, SelectedWeapon);
 	DOREPLIFETIME(UASInventoryComponent, SelectedWeaponSlotType);	
 }
@@ -231,8 +232,12 @@ ItemBoolPair UASInventoryComponent::RemoveItem(UASItem* InItem)
 			break;
 		case EItemType::Ammo:			// fallthough
 		case EItemType::HealingKit:
+			if (InventoryItems.RemoveSingleSwap(InItem) > 0)
 			{
-				// todo
+				ResultPair.Key = InItem;
+				ResultPair.Value = true;
+
+				OnRemoveInventoryItem.Broadcast(InItem);
 			}
 			break;
 		default:
@@ -418,6 +423,63 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromArmorSlot(EArmorSlotType SlotT
 	}
 
 	return ResultPair;
+}
+
+bool UASInventoryComponent::IsEnableToAddItemToInventory(UASItem* NewItem) const
+{
+	if (NewItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	switch (NewItem->GetItemType())
+	{
+	case EItemType::Ammo:		// fallthrough
+	case EItemType::HealingKit:
+		break;	// OK
+	default:
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	return (InventoryItems.Num() <= MaxInventoryItemCount);
+}
+
+bool UASInventoryComponent::AddItemToInventory(UASItem* NewItem)
+{
+	if (!IsEnableToAddItemToInventory(NewItem))
+		return false;
+
+	int32 NewItemCount = NewItem->GetCount();
+	UASItem* OldItem = FindItemFromInventory(NewItem->GetClass());
+
+	if (OldItem != nullptr && (OldItem->GetMaxCount() - OldItem->GetCount() >= NewItemCount))
+	{
+		OldItem->ModifyCount(NewItemCount);
+		NewItem->SetCount(0);
+	}
+	else
+	{
+		NewItem->SetOwner(GetOwner());
+		InventoryItems.Emplace(NewItem);
+
+		OnAddInventoryItem.Broadcast(NewItem);
+	}
+
+	return true;
+}
+
+TArray<TWeakObjectPtr<UASItem>> UASInventoryComponent::GetInventoryItems() const
+{
+	TArray<TWeakObjectPtr<UASItem>> InvenItems;
+
+	for (auto& Item : InventoryItems)
+	{
+		InvenItems.Emplace(Item);
+	}
+
+	return InvenItems;
 }
 
 ItemBoolPair UASInventoryComponent::GetItemFromWeaponSlot(EWeaponSlotType SlotType)
@@ -709,4 +771,37 @@ void UASInventoryComponent::OnRep_ArmorSlots(TArray<UASItem*>& OldArmorSlots)
 
 void UASInventoryComponent::OnRep_SelectedWeapon(UASWeapon* OldWeapon)
 {
+}
+
+UASItem* UASInventoryComponent::FindItemFromInventory(UClass* InClass) const
+{
+	for (auto& ASItem : InventoryItems)
+	{
+		if (ASItem == nullptr)
+			continue;
+
+		if (ASItem->GetClass() == InClass)
+			return ASItem;
+	}
+
+	return nullptr;
+}
+
+void UASInventoryComponent::OnRep_InventoryItems(TArray<UASItem*>& OldInventoryItems)
+{
+	for (auto& OldItem : OldInventoryItems)
+	{
+		if (!InventoryItems.Contains(OldItem))
+		{
+			OnRemoveInventoryItem.Broadcast(OldItem);
+		}
+	}
+
+	for (auto& NewItem : InventoryItems)
+	{
+		if (!OldInventoryItems.Contains(NewItem))
+		{
+			OnAddInventoryItem.Broadcast(NewItem);
+		}
+	}
 }

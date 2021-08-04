@@ -133,7 +133,7 @@ bool UASItemScrollBoxWrapperUserWidget::NativeOnDrop(const FGeometry& InGeometry
 				{
 					if (auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn()))
 					{
-						ASChar->ServerDropItem(Item.Get());
+						ASChar->ServerPickUpInventoryItem(Item.Get());
 						return true;
 					}
 				}

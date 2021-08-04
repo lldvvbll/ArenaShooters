@@ -72,11 +72,11 @@ UASItem* AASItemFactory::NewASItem(UWorld* World, AActor* NewOwner, UASItemDataA
 		return nullptr;
 	}
 
-	ItemFactory->AddASItem(NewItem);
-
-	NewItem->SetCount(Count);
-	NewItem->SetOwner(NewOwner);
 	NewItem->SetDataAsset(DataAsset);
+	NewItem->SetOwner(NewOwner);
+	NewItem->SetCount(Count);
+
+	ItemFactory->AddASItem(NewItem);
 
 	return NewItem;
 }

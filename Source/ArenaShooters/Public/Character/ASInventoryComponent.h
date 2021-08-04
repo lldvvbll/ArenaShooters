@@ -53,6 +53,10 @@ public:
 	ItemPtrBoolPair SetItemToArmorSlot(EArmorSlotType SlotType, UASItem* NewItem);
 	ItemBoolPair RemoveItemFromArmorSlot(EArmorSlotType SlotType);
 
+	bool IsEnableToAddItemToInventory(UASItem* NewItem) const;
+	bool AddItemToInventory(UASItem* NewItem);
+	TArray<TWeakObjectPtr<UASItem>> GetInventoryItems() const;
+
 private:
 	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);
 	ItemBoolPair GetItemFromArmorSlot(EArmorSlotType SlotType);
@@ -78,12 +82,23 @@ private:
 	UFUNCTION()
 	void OnRep_SelectedWeapon(UASWeapon* OldWeapon);
 
+	UASItem* FindItemFromInventory(UClass* InClass) const;
+
+	UFUNCTION()
+	void OnRep_InventoryItems(TArray<UASItem*>& OldInventoryItems);
+
 public:
 	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnInsertWeaponEvent, EWeaponSlotType, UASWeapon*);
 	FOnInsertWeaponEvent OnInsertWeapon;
 
 	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnInsertArmorEvent, EArmorSlotType, UASArmor*);
 	FOnInsertArmorEvent OnInsertArmor;
+
+	DECLARE_EVENT_OneParam(UASInventoryComponent, FOnAddInventoryItemEvent, const TWeakObjectPtr<UASItem>&);
+	FOnAddInventoryItemEvent OnAddInventoryItem;
+
+	DECLARE_EVENT_OneParam(UASInventoryComponent, FOnRemoveInventoryItemEvent, const TWeakObjectPtr<UASItem>&);
+	FOnRemoveInventoryItemEvent OnRemoveInventoryItem;
 
 	static const FName UsingWeaponSocketName;
 	static const FName UsingWeaponPistolSocketName;
@@ -99,9 +114,15 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_ArmorSlots)
 	TArray<UASItem*> ArmorSlots;
 
+	UPROPERTY(ReplicatedUsing = OnRep_InventoryItems)
+	TArray<UASItem*> InventoryItems;
+
 	UPROPERTY(ReplicatedUsing = OnRep_SelectedWeapon)
 	UASWeapon* SelectedWeapon;
 
 	UPROPERTY(Replicated)
 	EWeaponSlotType SelectedWeaponSlotType;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 MaxInventoryItemCount;
 };

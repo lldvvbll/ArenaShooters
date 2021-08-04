@@ -64,6 +64,16 @@ void UASItem::SetCount(int32 NewCount)
 	Count = NewCount;
 }
 
+void UASItem::ModifyCount(int32 Value)
+{
+	SetCount(Count + Value);
+}
+
+int32 UASItem::GetMaxCount() const
+{
+	return (DataAsset != nullptr) ? DataAsset->MaxBundleCount : -1;
+}
+
 void UASItem::SetOwner(AActor* NewOwner)
 {
 	Owner = MakeWeakObjectPtr(NewOwner);

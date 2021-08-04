@@ -9,12 +9,16 @@
 
 class AASWeaponActor;
 class AASBullet;
+class UASWeapon;
 
 UCLASS()
 class ARENASHOOTERS_API UASWeaponDataAsset : public UASItemDataAsset
 {
 	GENERATED_BODY()
 	
+public:
+	using ItemClassBaseT = UASWeapon;
+
 public:
 	UASWeaponDataAsset();
 

@@ -197,10 +197,7 @@ void AASCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 				FDelegateHandle Handle = DroppedItemActor->OnRemoveItemEvent.AddUObject(this, &AASCharacter::OnRemoveGroundItem);
 				GroundItemActorSet.Emplace(TPair<TWeakObjectPtr<AASDroppedItemActor>, FDelegateHandle>(MakeWeakObjectPtr(DroppedItemActor), Handle));
 
-				if (OnGroundItemAddEvent.IsBound())
-				{
-					OnGroundItemAddEvent.Broadcast(DroppedItemActor->GetItems());
-				}
+				OnGroundItemAddEvent.Broadcast(DroppedItemActor->GetItems());
 			}
 		}
 	}	
@@ -227,11 +224,7 @@ void AASCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 						DroppedItemActor->OnRemoveItemEvent.Remove(Itr->Value);
 						Itr.RemoveCurrent();
 
-						if (OnGroundItemAddEvent.IsBound())
-						{
-							OnGroundItemRemoveEvent.Broadcast(DroppedItemActor->GetItems());
-						}
-
+						OnGroundItemRemoveEvent.Broadcast(DroppedItemActor->GetItems());
 						break;
 					}
 				}
@@ -396,6 +389,37 @@ void AASCharacter::ServerDropItem_Implementation(UASItem* InItem)
 	}
 
 	SpawnDroppedItemActor(ResultPair.Key);
+}
+
+void AASCharacter::ServerPickUpInventoryItem_Implementation(UASItem* NewItem)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->IsEnableToAddItemToInventory(NewItem))
+		return;
+
+	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewItem->GetOwner());
+	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!DroppedItemActor->RemoveItem(NewItem))
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->AddItemToInventory(NewItem))
+	{
+		DroppedItemActor->AddItem(NewItem);
+		AS_LOG_S(Error);
+	}
 }
 
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -995,7 +1019,7 @@ void AASCharacter::SpawnDroppedItemActor(UASItem* DroppingItem)
 	}
 }
 
-void AASCharacter::OnRemoveGroundItem(TWeakObjectPtr<UASItem>& Item)
+void AASCharacter::OnRemoveGroundItem(const TWeakObjectPtr<UASItem>& Item)
 {
 	OnGroundItemRemoveEvent.Broadcast(TArray<TWeakObjectPtr<UASItem>>{ Item });
 }
