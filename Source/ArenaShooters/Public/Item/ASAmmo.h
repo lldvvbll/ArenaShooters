@@ -4,6 +4,7 @@
 
 #include "ArenaShooters.h"
 #include "Item/ASItem.h"
+#include "Common/ASEnums.h"
 #include "ASAmmo.generated.h"
 
 UCLASS()
@@ -17,7 +18,5 @@ public:
 	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset) override;
 	virtual void SetCount(int32 NewCount) override;
 
-protected:
-	UPROPERTY(Replicated)
-	int32 CurrentBundleCount;
+	EAmmoType GetAmmoType() const;
 };

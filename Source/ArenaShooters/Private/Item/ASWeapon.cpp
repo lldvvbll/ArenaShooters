@@ -7,6 +7,7 @@
 #include "ItemActor/ASBullet.h"
 #include "ItemActor/ASWeaponActor.h"
 #include "Character/ASCharacter.h"
+#include "Item/ASAmmo.h"
 
 void UASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -46,10 +47,13 @@ const TWeakObjectPtr<AASWeaponActor>& UASWeapon::GetActor() const
 AASBullet* UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
 	if (WeaponDA == nullptr)
 		return nullptr;
 
-	if (!CanFire())
+	if (!IsPassedFireInterval())
+		return nullptr;
+	if (CurrentAmmoCount <= 0)
 		return nullptr;
 
 	FActorSpawnParameters Param;
@@ -61,6 +65,7 @@ AASBullet* UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& Mu
 	{
 		Bullet->SetDamage(WeaponDA->Damage);
 
+		CurrentAmmoCount--;
 		LastFireTick = FDateTime::Now().GetTicks();
 	}
 
@@ -75,6 +80,8 @@ EFireMode UASWeapon::GetFireMode() const
 void UASWeapon::ChangeToNextFireMode()
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
+
 	if (WeaponDA == nullptr || WeaponDA->FireModes.Num() == 0)
 	{
 		AS_LOG_S(Error);
@@ -101,23 +108,15 @@ void UASWeapon::ChangeToNextFireMode()
 int64 UASWeapon::GetFireInterval() const
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
-	if (WeaponDA == nullptr)
-	{
-		AS_LOG_S(Error);
-		return -1;
-	}
+	check(WeaponDA);
 
-	return WeaponDA->FireInterval;
+	return (WeaponDA != nullptr ? WeaponDA->FireInterval : -1);
 }
 
-bool UASWeapon::CanFire() const
+bool UASWeapon::IsPassedFireInterval() const
 {
-	int64 FireInterval = GetFireInterval();
-	if (FireInterval < 0)
-		return false;
-
 	int64 DeltaTick = FDateTime::Now().GetTicks() - LastFireTick;
-	if (DeltaTick < (FireInterval * ETimespan::TicksPerMillisecond))
+	if (DeltaTick < (GetFireInterval() * ETimespan::TicksPerMillisecond))
 		return false;
 
 	return true;
@@ -138,6 +137,7 @@ void UASWeapon::OnRep_CurrentFireMode()
 int32 UASWeapon::GetMaxAmmoCount() const
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
 
 	return (WeaponDA != nullptr ? WeaponDA->MaxAmmoCount : 0);
 }
@@ -150,4 +150,63 @@ int32 UASWeapon::GetCurrentAmmoCount() const
 void UASWeapon::OnRep_CurrentAmmoCount()
 {
 	OnCurrentAmmoCountChanged.Broadcast(CurrentAmmoCount);
+}
+
+bool UASWeapon::CanReload() const
+{
+	return (GetMaxAmmoCount() > CurrentAmmoCount);
+}
+
+EAmmoType UASWeapon::GetAmmoType() const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
+
+	return (WeaponDA != nullptr ? WeaponDA->AmmoType : EAmmoType::None);
+}
+
+bool UASWeapon::Reload(UASAmmo* InAmmo)
+{
+	if (InAmmo == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	EAmmoType WeaponAmmoType = GetAmmoType();
+	EAmmoType AmmoType = InAmmo->GetAmmoType();
+	if (AmmoType == EAmmoType::None || WeaponAmmoType != AmmoType)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	int32 NeedfulAmmoCount = GetMaxAmmoCount() - CurrentAmmoCount;
+	if (NeedfulAmmoCount <= 0)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	int32 AmmoCnt = InAmmo->GetCount();
+	if (NeedfulAmmoCount >= AmmoCnt)
+	{
+		CurrentAmmoCount += AmmoCnt;
+		InAmmo->ModifyCount(-AmmoCnt);
+	}
+	else
+	{
+		CurrentAmmoCount += NeedfulAmmoCount;
+		InAmmo->ModifyCount(-NeedfulAmmoCount);
+	}
+
+	return true;
+}
+
+FTimespan UASWeapon::GetReloadTime() const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
+
+	return (WeaponDA != nullptr ? WeaponDA->ReloadTime : FTimespan::MaxValue());
 }

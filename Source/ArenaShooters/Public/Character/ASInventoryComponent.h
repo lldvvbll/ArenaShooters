@@ -10,6 +10,7 @@
 class UASItem;
 class UASWeapon;
 class UASArmor;
+class UASAmmo;
 class UASWeaponDataAsset;
 class UASArmorDataAsset;
 class AASWeaponActor;
@@ -56,6 +57,11 @@ public:
 	bool IsEnableToAddItemToInventory(UASItem* NewItem) const;
 	bool AddItemToInventory(UASItem* NewItem);
 	TArray<TWeakObjectPtr<UASItem>> GetInventoryItems() const;
+	bool Contains(UASItem* InItem) const;
+
+	TArray<UASAmmo*> GetAmmos(EAmmoType AmmoType) const;
+	void SetReloadingAmmo(UASAmmo* InAmmo);
+	UASAmmo* GetReloadingAmmo() const;
 
 private:
 	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);
@@ -125,4 +131,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	int32 MaxInventoryItemCount;
+
+	UPROPERTY()
+	UASAmmo* ReloadingAmmo;
 };

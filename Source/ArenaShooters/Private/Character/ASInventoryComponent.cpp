@@ -5,6 +5,7 @@
 #include "Item/ASItem.h"
 #include "Item/ASWeapon.h"
 #include "Item/ASArmor.h"
+#include "Item/ASAmmo.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/ActorChannel.h"
 #include "Character/ASCharacter.h"
@@ -480,6 +481,61 @@ TArray<TWeakObjectPtr<UASItem>> UASInventoryComponent::GetInventoryItems() const
 	}
 
 	return InvenItems;
+}
+
+bool UASInventoryComponent::Contains(UASItem* InItem) const
+{
+	if (WeaponSlots.Contains(InItem))
+		return true;
+	if (ArmorSlots.Contains(InItem))
+		return true;
+	if (InventoryItems.Contains(InItem))
+		return true;
+
+	return false;
+}
+
+TArray<UASAmmo*> UASInventoryComponent::GetAmmos(EAmmoType AmmoType) const
+{
+	TArray<UASAmmo*> Ammos;
+	
+	for (auto& Item : InventoryItems)
+	{
+		auto Ammo = Cast<UASAmmo>(Item);
+		if (Ammo == nullptr)
+			continue;
+
+		if (Ammo->GetAmmoType() == AmmoType)
+		{
+			Ammos.Emplace(Ammo);
+		}
+	}
+
+	if (Ammos.Num() > 1)
+	{
+		Algo::Sort(Ammos,
+			[](const UASAmmo* lhs, const UASAmmo* rhs)
+			{
+				if (lhs == nullptr)
+					return false;
+				if (rhs == nullptr)
+					return true;
+
+				return lhs->GetCount() > rhs->GetCount();
+			});
+	}	
+
+	return Ammos;
+}
+
+void UASInventoryComponent::SetReloadingAmmo(UASAmmo* InAmmo)
+{
+	ReloadingAmmo = InAmmo;
+}
+
+UASAmmo* UASInventoryComponent::GetReloadingAmmo() const
+{
+	return ReloadingAmmo;
 }
 
 ItemBoolPair UASInventoryComponent::GetItemFromWeaponSlot(EWeaponSlotType SlotType)

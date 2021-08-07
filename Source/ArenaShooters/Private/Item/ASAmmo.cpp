@@ -9,7 +9,6 @@ void UASAmmo::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UASAmmo, CurrentBundleCount);
 }
 
 void UASAmmo::SetDataAsset(UASItemDataAsset* NewDataAsset)
@@ -26,6 +25,14 @@ void UASAmmo::SetCount(int32 NewCount)
 
 	if (Count <= 0)
 	{
-
+		// todo: delete this
 	}
+}
+
+EAmmoType UASAmmo::GetAmmoType() const
+{
+	auto AmmoDA = Cast<UASAmmoDataAsset>(DataAsset);
+	check(AmmoDA);
+
+	return (AmmoDA != nullptr ? AmmoDA->AmmoType : EAmmoType::None);
 }

@@ -16,6 +16,7 @@ class UASAnimInstance;
 class UASItem;
 class UASWeapon;
 class UASArmor;
+class UASAmmo;
 class AASWeaponActor;
 class AASArmorActor;
 class AASDroppedItemActor;
@@ -91,6 +92,7 @@ protected:
 	void PressedShootButton();
 	void ReleasedShootButton();
 	void ChangeFireMode();
+	void Reload();
 
 	void Shoot();
 	void ResetAimKeyState();
@@ -144,6 +146,17 @@ protected:
 
 	void SpawnDroppedItemActor(UASItem* DroppingItem);
 	void OnRemoveGroundItem(const TWeakObjectPtr<UASItem>& Item);
+
+	UFUNCTION(Server, Reliable)
+	void ServerBeginReload(UASAmmo* InAmmo);
+	void ServerBeginReload_Implementation(UASAmmo* InAmmo);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerEndReload();
+	bool ServerEndReload_Validate();
+	void ServerEndReload_Implementation();
+
+	void CancelReload();
 
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
@@ -226,6 +239,10 @@ private:
 
 	TSet<TPair<TWeakObjectPtr<AASDroppedItemActor>, FDelegateHandle>> GroundItemActorSet;
 
+	UPROPERTY(Replicated)
+	bool bReloading;
+
+	FDateTime ReloadStartTime;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

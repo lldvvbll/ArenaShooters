@@ -11,6 +11,7 @@ class UASWeaponDataAsset;
 class AASWeaponActor;
 class AASBullet;
 class AASCharacter;
+class UASAmmo;
 
 UCLASS()
 class ARENASHOOTERS_API UASWeapon : public UASItem
@@ -33,7 +34,7 @@ public:
 	void ChangeToNextFireMode();
 
 	int64 GetFireInterval() const;
-	bool CanFire() const;
+	bool IsPassedFireInterval() const;
 	void SetLastFireTick();
 
 	UFUNCTION()
@@ -44,6 +45,11 @@ public:
 
 	UFUNCTION()
 	void OnRep_CurrentAmmoCount();
+
+	bool CanReload() const;
+	EAmmoType GetAmmoType() const;
+	bool Reload(UASAmmo* InAmmo);
+	FTimespan GetReloadTime() const;
 
 public:
 	DECLARE_EVENT_OneParam(UASWeapon, FOnFireModeChangedEvent, EFireMode);

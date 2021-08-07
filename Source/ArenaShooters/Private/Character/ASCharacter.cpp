@@ -17,6 +17,7 @@
 #include "Item/ASItem.h"
 #include "Item/ASWeapon.h"
 #include "Item/ASArmor.h"
+#include "Item/ASAmmo.h"
 #include "ItemActor/ASWeaponActor.h"
 #include "ItemActor/ASArmorActor.h"
 #include "ItemActor/ASBullet.h"
@@ -117,6 +118,7 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME_CONDITION(AASCharacter, TurnRateValue, COND_SimulatedOnly);
 	DOREPLIFETIME_CONDITION(AASCharacter, AimOffsetRotator, COND_SimulatedOnly); 
 	DOREPLIFETIME(AASCharacter, ShootingStance);
+	DOREPLIFETIME(AASCharacter, bReloading);
 }
 
 void AASCharacter::Jump()
@@ -189,16 +191,12 @@ void AASCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 
 	if (IsLocallyControlled())
 	{
-		if (OtherActor->IsA(AASDroppedItemActor::StaticClass()))
+		if (auto DroppedItemActor = Cast<AASDroppedItemActor>(OtherActor))
 		{
-			auto DroppedItemActor = Cast<AASDroppedItemActor>(OtherActor);
-			if (DroppedItemActor != nullptr)
-			{
-				FDelegateHandle Handle = DroppedItemActor->OnRemoveItemEvent.AddUObject(this, &AASCharacter::OnRemoveGroundItem);
-				GroundItemActorSet.Emplace(TPair<TWeakObjectPtr<AASDroppedItemActor>, FDelegateHandle>(MakeWeakObjectPtr(DroppedItemActor), Handle));
+			FDelegateHandle Handle = DroppedItemActor->OnRemoveItemEvent.AddUObject(this, &AASCharacter::OnRemoveGroundItem);
+			GroundItemActorSet.Emplace(TPair<TWeakObjectPtr<AASDroppedItemActor>, FDelegateHandle>(MakeWeakObjectPtr(DroppedItemActor), Handle));
 
-				OnGroundItemAddEvent.Broadcast(DroppedItemActor->GetItems());
-			}
+			OnGroundItemAddEvent.Broadcast(DroppedItemActor->GetItems());
 		}
 	}	
 }
@@ -212,21 +210,17 @@ void AASCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 
 	if (IsLocallyControlled())
 	{
-		if (OtherActor->IsA(AASDroppedItemActor::StaticClass()))
+		if (auto DroppedItemActor = Cast<AASDroppedItemActor>(OtherActor))
 		{
-			auto DroppedItemActor = Cast<AASDroppedItemActor>(OtherActor);
-			if (DroppedItemActor != nullptr)
+			for (auto Itr = GroundItemActorSet.CreateIterator(); Itr; ++Itr)
 			{
-				for (auto Itr = GroundItemActorSet.CreateIterator(); Itr; ++Itr)
+				if ((Itr->Key).IsValid() && (Itr->Key).Get() == DroppedItemActor)
 				{
-					if ((Itr->Key).IsValid() && (Itr->Key).Get() == DroppedItemActor)
-					{
-						DroppedItemActor->OnRemoveItemEvent.Remove(Itr->Value);
-						Itr.RemoveCurrent();
+					DroppedItemActor->OnRemoveItemEvent.Remove(Itr->Value);
+					Itr.RemoveCurrent();
 
-						OnGroundItemRemoveEvent.Broadcast(DroppedItemActor->GetItems());
-						break;
-					}
+					OnGroundItemRemoveEvent.Broadcast(DroppedItemActor->GetItems());
+					break;
 				}
 			}
 		}
@@ -454,6 +448,7 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &AASCharacter::PressedShootButton);
 	PlayerInputComponent->BindAction("Shoot", IE_Released, this, &AASCharacter::ReleasedShootButton);
 	PlayerInputComponent->BindAction("ChangeFireMode", IE_Pressed, this, &AASCharacter::ChangeFireMode);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AASCharacter::Reload);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AASCharacter::MoveRight);
@@ -648,6 +643,25 @@ void AASCharacter::ChangeFireMode()
 	ServerChangeFireMode();
 }
 
+void AASCharacter::Reload()
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
+	if (!CurWeapon.IsValid() || !CurWeapon->CanReload())
+		return;
+
+	TArray<UASAmmo*> Ammos = ASInventory->GetAmmos(CurWeapon->GetAmmoType());
+	if (Ammos.Num() <= 0)
+		return;
+
+	ServerBeginReload(Ammos[0]);
+}
+
 void AASCharacter::Shoot()
 {
 	if (ShootingStance == EShootingStanceType::None)
@@ -658,8 +672,15 @@ void AASCharacter::Shoot()
 	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
 	if (!Weapon.IsValid())
 		return;
-	if (!Weapon->CanFire())
+	if (!Weapon->IsPassedFireInterval())
 		return;
+
+	if (Weapon->GetCurrentAmmoCount() <= 0)
+	{
+		// todo: Reload
+
+		return;
+	}
 
 	const TWeakObjectPtr<AASWeaponActor>& WeaponActor = Weapon->GetActor();
 	if (!WeaponActor.IsValid())
@@ -780,6 +801,11 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 
 	if (ResultPair.Key != nullptr)
 	{
+		if (bReloading)
+		{
+			CancelReload();
+		}
+
 		ASInventory->SelectWeapon(WeaponSlotType);
 	}
 	else
@@ -1022,4 +1048,109 @@ void AASCharacter::SpawnDroppedItemActor(UASItem* DroppingItem)
 void AASCharacter::OnRemoveGroundItem(const TWeakObjectPtr<UASItem>& Item)
 {
 	OnGroundItemRemoveEvent.Broadcast(TArray<TWeakObjectPtr<UASItem>>{ Item });
+}
+
+void AASCharacter::ServerBeginReload_Implementation(UASAmmo* InAmmo)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (InAmmo == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (InAmmo->GetAmmoType() == EAmmoType::None)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (bReloading)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->Contains(InAmmo))
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
+	if (!CurWeapon.IsValid() || !CurWeapon->CanReload())
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (CurWeapon->GetAmmoType() != InAmmo->GetAmmoType())
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	ASInventory->SetReloadingAmmo(InAmmo);
+
+	bReloading = true;
+	ReloadStartTime = FDateTime::Now();
+}
+
+bool AASCharacter::ServerEndReload_Validate()
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (!bReloading)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	UASAmmo* ReloadingAmmo = ASInventory->GetReloadingAmmo();
+	if (ReloadingAmmo == nullptr || ReloadingAmmo->IsPendingKill())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+	if (!SelectedWeapon.IsValid())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (FDateTime::Now() - ReloadStartTime < SelectedWeapon->GetReloadTime())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	return true;
+}
+
+void AASCharacter::ServerEndReload_Implementation()
+{
+	UASAmmo* ReloadingAmmo = ASInventory->GetReloadingAmmo();
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+	if (SelectedWeapon->Reload(ReloadingAmmo))
+	{
+		ASInventory->SetReloadingAmmo(nullptr);
+		bReloading = false;
+	}
+}
+
+void AASCharacter::CancelReload()
+{
+	ASInventory->SetReloadingAmmo(nullptr);
+	bReloading = false;
 }

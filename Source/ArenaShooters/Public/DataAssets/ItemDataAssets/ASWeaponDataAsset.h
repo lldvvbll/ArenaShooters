@@ -46,4 +46,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	EAmmoType AmmoType;
+
+	UPROPERTY(EditDefaultsOnly)
+	FTimespan ReloadTime;
 };
