@@ -261,7 +261,7 @@ void AASCharacter::MulticastPlayShootMontage_Implementation()
 	{
 		if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
 		{
-			AnimInstance->PlayShootMontage(GetUsingWeaponType());
+			AnimInstance->PlayShootMontage();
 		}
 	}
 
@@ -375,6 +375,21 @@ void AASCharacter::ServerDropItem_Implementation(UASItem* InItem)
 		return;
 	}
 
+	if (InItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (bReloading)
+	{
+		TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+		if (SelectedWeapon.Get() == InItem || ASInventory->GetReloadingAmmo() == InItem)
+		{
+			MulticastCancelReload();
+		}
+	}	
+
 	ItemBoolPair ResultPair = ASInventory->RemoveItem(InItem);
 	if (!ResultPair.Value)
 	{
@@ -414,6 +429,73 @@ void AASCharacter::ServerPickUpInventoryItem_Implementation(UASItem* NewItem)
 		DroppedItemActor->AddItem(NewItem);
 		AS_LOG_S(Error);
 	}
+}
+
+bool AASCharacter::ServerEndReload_Validate()
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (!bReloading)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	UASAmmo* ReloadingAmmo = ASInventory->GetReloadingAmmo();
+	if (ReloadingAmmo == nullptr || ReloadingAmmo->IsPendingKill())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+	if (!SelectedWeapon.IsValid())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (FDateTime::Now() - ReloadStartTime < SelectedWeapon->GetReloadTime())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	return true;
+}
+
+void AASCharacter::ServerEndReload_Implementation()
+{
+	UASAmmo* ReloadingAmmo = ASInventory->GetReloadingAmmo();
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+	if (SelectedWeapon->Reload(ReloadingAmmo))
+	{
+		ASInventory->SetReloadingAmmo(nullptr);
+		bReloading = false;
+	}
+}
+
+void AASCharacter::MulticastCancelReload_Implementation()
+{
+	if (IsNetMode(NM_DedicatedServer))
+	{
+		ASInventory->SetReloadingAmmo(nullptr);
+		bReloading = false;
+	}
+	else
+	{
+		if (USkeletalMeshComponent* SkMesh = GetMesh())
+		{
+			if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
+			{
+				AnimInstance->Montage_Stop(0.1f);
+			}
+		}
+	}	
 }
 
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -803,7 +885,7 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 	{
 		if (bReloading)
 		{
-			CancelReload();
+			MulticastCancelReload();
 		}
 
 		ASInventory->SelectWeapon(WeaponSlotType);
@@ -1101,56 +1183,16 @@ void AASCharacter::ServerBeginReload_Implementation(UASAmmo* InAmmo)
 	ReloadStartTime = FDateTime::Now();
 }
 
-bool AASCharacter::ServerEndReload_Validate()
+void AASCharacter::OnRep_bReloading(bool OldbReloading)
 {
-	if (ASInventory == nullptr)
+	if (bReloading && !OldbReloading)
 	{
-		AS_LOG_S(Error);
-		return false;
+		if (USkeletalMeshComponent* SkMesh = GetMesh())
+		{
+			if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
+			{
+				AnimInstance->PlayReloadMontage();
+			}
+		}
 	}
-
-	if (!bReloading)
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	UASAmmo* ReloadingAmmo = ASInventory->GetReloadingAmmo();
-	if (ReloadingAmmo == nullptr || ReloadingAmmo->IsPendingKill())
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-	if (!SelectedWeapon.IsValid())
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	if (FDateTime::Now() - ReloadStartTime < SelectedWeapon->GetReloadTime())
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	return true;
-}
-
-void AASCharacter::ServerEndReload_Implementation()
-{
-	UASAmmo* ReloadingAmmo = ASInventory->GetReloadingAmmo();
-	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-	if (SelectedWeapon->Reload(ReloadingAmmo))
-	{
-		ASInventory->SetReloadingAmmo(nullptr);
-		bReloading = false;
-	}
-}
-
-void AASCharacter::CancelReload()
-{
-	ASInventory->SetReloadingAmmo(nullptr);
-	bReloading = false;
 }

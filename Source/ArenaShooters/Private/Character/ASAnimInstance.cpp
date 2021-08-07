@@ -57,9 +57,9 @@ bool UASAnimInstance::IsActualSprinted() const
 	return  bSprinted && !bInAir && (CurrentSpeed > 800.0f);
 }
 
-void UASAnimInstance::PlayShootMontage(EWeaponType WeaponType)
+void UASAnimInstance::PlayShootMontage()
 {
-	switch (WeaponType)
+	switch (CurrentWeaponType)
 	{
 	case EWeaponType::Pistol:
 		{
@@ -74,5 +74,33 @@ void UASAnimInstance::PlayShootMontage(EWeaponType WeaponType)
 	default:
 		checkNoEntry();
 		break;
+	}
+}
+
+void UASAnimInstance::PlayReloadMontage()
+{
+	switch (CurrentWeaponType)
+	{
+	case EWeaponType::Pistol:
+		{
+			Montage_Play(PistolReloadMontage);
+		}
+		break;
+	case EWeaponType::AssaultRifle:
+		{
+			Montage_Play(ARReloadMontage);
+		}
+		break;
+	default:
+		checkNoEntry();
+		break;
+	}
+}
+
+void UASAnimInstance::AnimNotify_EndReload()
+{
+	if (IsValid(ASChar))
+	{
+		ASChar->ServerEndReload();
 	}
 }

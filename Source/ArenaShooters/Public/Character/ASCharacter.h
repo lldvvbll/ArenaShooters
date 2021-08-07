@@ -70,6 +70,15 @@ public:
 	void ServerPickUpInventoryItem(UASItem* NewItem);
 	void ServerPickUpInventoryItem_Implementation(UASItem* NewItem);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerEndReload();
+	bool ServerEndReload_Validate();
+	void ServerEndReload_Implementation();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastCancelReload();
+	void MulticastCancelReload_Implementation();
+
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
 		class AController* EventInstigator, AActor* DamageCauser) override;
@@ -151,12 +160,8 @@ protected:
 	void ServerBeginReload(UASAmmo* InAmmo);
 	void ServerBeginReload_Implementation(UASAmmo* InAmmo);
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerEndReload();
-	bool ServerEndReload_Validate();
-	void ServerEndReload_Implementation();
-
-	void CancelReload();
+	UFUNCTION()
+	void OnRep_bReloading(bool OldbReloading);
 
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
@@ -239,10 +244,11 @@ private:
 
 	TSet<TPair<TWeakObjectPtr<AASDroppedItemActor>, FDelegateHandle>> GroundItemActorSet;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_bReloading)
 	bool bReloading;
 
 	FDateTime ReloadStartTime;
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

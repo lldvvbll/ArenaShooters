@@ -23,7 +23,11 @@ public:
 	UFUNCTION(BlueprintPure, Meta = (BlueprintThreadSafe))
 	bool IsActualSprinted() const;
 
-	void PlayShootMontage(EWeaponType WeaponType);
+	void PlayShootMontage();
+	void PlayReloadMontage();
+
+	UFUNCTION()
+	void AnimNotify_EndReload();
 
 private:
 	UPROPERTY()
@@ -34,6 +38,12 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* ARShootMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* PistolReloadMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* ARReloadMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	bool bInAir;
