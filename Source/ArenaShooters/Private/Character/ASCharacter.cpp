@@ -498,6 +498,17 @@ void AASCharacter::MulticastCancelReload_Implementation()
 	}	
 }
 
+bool AASCharacter::RemoveItem(UASItem* InItem)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_A_S(Error, 5.0f);
+		return false;
+	}
+
+	return ASInventory->RemoveItem(InItem).Value;
+}
+
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float ActualDamage = Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);

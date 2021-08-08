@@ -79,6 +79,8 @@ public:
 	void MulticastCancelReload();
 	void MulticastCancelReload_Implementation();
 
+	bool RemoveItem(UASItem* InItem);
+
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
 		class AController* EventInstigator, AActor* DamageCauser) override;

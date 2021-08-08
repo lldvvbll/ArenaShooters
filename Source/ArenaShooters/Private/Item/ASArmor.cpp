@@ -18,11 +18,7 @@ void UASArmor::SetDataAsset(UASItemDataAsset* NewDataAsset)
 	Super::SetDataAsset(NewDataAsset);
 
 	auto ArmorDA = Cast<UASArmorDataAsset>(NewDataAsset);
-	if (ArmorDA == nullptr)
-	{
-		AS_LOG_SA(Error);
-		return;
-	}
+	check(ArmorDA);
 
 	SetCurrentDurability(ArmorDA->MaxDurability);
 }

@@ -152,7 +152,7 @@ void AASDroppedItemActor::BeginPlay()
 			{
 				if (auto AmmoDataAsset = UASAssetManager::Get().GetDataAsset<UASAmmoDataAsset>(ItemDataAssetId))
 				{
-					ASItems.Emplace(AASItemFactory::NewASItem<UASAmmo>(GetWorld(), this, AmmoDataAsset, 10));
+					ASItems.Emplace(AASItemFactory::NewASItem<UASAmmo>(GetWorld(), this, AmmoDataAsset, 100));
 				}
 			}
 		}

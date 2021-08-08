@@ -233,12 +233,18 @@ ItemBoolPair UASInventoryComponent::RemoveItem(UASItem* InItem)
 			break;
 		case EItemType::Ammo:			// fallthough
 		case EItemType::HealingKit:
-			if (InventoryItems.RemoveSingleSwap(InItem) > 0)
 			{
-				ResultPair.Key = InItem;
-				ResultPair.Value = true;
+				int32 Idx = InventoryItems.Find(InItem);
+				if (Idx != INDEX_NONE)
+				{
+					ResultPair.Key = InItem;
+					ResultPair.Value = true;
 
-				OnRemoveInventoryItem.Broadcast(InItem);
+					InventoryItems[Idx] = nullptr;
+					InventoryItems.RemoveAtSwap(Idx);
+
+					OnRemoveInventoryItem.Broadcast(InItem);
+				}
 			}
 			break;
 		default:

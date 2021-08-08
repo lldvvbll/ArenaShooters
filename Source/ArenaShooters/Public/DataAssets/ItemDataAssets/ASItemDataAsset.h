@@ -44,4 +44,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	int32 MaxBundleCount;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bBundle;
 };

@@ -22,11 +22,6 @@ void UASAmmo::SetCount(int32 NewCount)
 	check(AmmoDA);
 
 	Super::SetCount(FMath::Clamp<int32>(NewCount, 0, (AmmoDA != nullptr ? AmmoDA->MaxBundleCount : 100)));
-
-	if (Count <= 0)
-	{
-		// todo: delete this
-	}
 }
 
 EAmmoType UASAmmo::GetAmmoType() const

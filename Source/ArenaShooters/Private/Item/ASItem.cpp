@@ -4,6 +4,14 @@
 #include "Item/ASItem.h"
 #include "DataAssets/ItemDataAssets/ASItemDataAsset.h"
 #include "Net/UnrealNetwork.h"
+#include "ASItemFactory.h"
+
+void UASItem::BeginDestroy()
+{
+	Super::BeginDestroy();
+
+	AS_LOG_A(Error, 5.0f, TEXT("ASItem Name: %s"), *GetName());
+}
 
 void UASItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -62,6 +70,11 @@ int32 UASItem::GetCount() const
 void UASItem::SetCount(int32 NewCount)
 {
 	Count = NewCount;
+
+	if (Count <= 0 && IsBundleItem())
+	{
+		AASItemFactory::DeleteItem(GetWorld(), this);
+	}
 }
 
 void UASItem::ModifyCount(int32 Value)
@@ -82,4 +95,9 @@ void UASItem::SetOwner(AActor* NewOwner)
 TWeakObjectPtr<AActor>& UASItem::GetOwner()
 {
 	return Owner;
+}
+
+bool UASItem::IsBundleItem() const
+{
+	return (DataAsset != nullptr) ? DataAsset->bBundle : false;
 }

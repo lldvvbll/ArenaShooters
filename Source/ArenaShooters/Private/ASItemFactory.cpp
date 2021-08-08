@@ -7,6 +7,80 @@
 #include "ASGameState.h"
 #include "Item/ASItem.h"
 #include "DataAssets/ItemDataAssets/ASItemDataAsset.h"
+#include "Character/ASCharacter.h"
+
+bool AASItemFactory::DeleteItem(UWorld* World, UASItem* InItem)
+{
+	if (InItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (!InItem->IsValidLowLevel())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (World == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	auto GameState = World->GetGameState<AASGameState>();
+	if (GameState == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	AASItemFactory* ItemFactory = GameState->GetASItemFactory();
+	if (ItemFactory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	int32 Idx = ItemFactory->ASItems.Find(InItem);
+	if (Idx == INDEX_NONE)
+		return false;
+
+	if (auto Owner = Cast<AASCharacter>(InItem->GetOwner()))
+	{
+		if (!Owner->RemoveItem(InItem))
+			return false;
+	}
+
+	ItemFactory->ASItems[Idx] = nullptr;
+	ItemFactory->ASItems.RemoveAtSwap(Idx);
+
+	InItem->MarkPendingKill();
+
+	UObject* Obj = InItem;
+	FReferencerInformationList Refs;
+	if (IsReferenced(Obj, RF_Public, EInternalObjectFlags::None, true, &Refs))
+	{
+		for (auto& Info : Refs.InternalReferences)
+		{
+			if (Info.Referencer != nullptr)
+			{
+				AS_LOG(Warning, TEXT("Int Ref: %s"), *Info.Referencer->GetName());
+			}
+		}
+
+		for (auto& Info : Refs.ExternalReferences)
+		{
+			if (Info.Referencer != nullptr)
+			{
+				AS_LOG(Warning, TEXT("Ext Ref: %s"), *Info.Referencer->GetName());
+			}
+		}
+	}
+
+	return true;
+}
 
 AASItemFactory::AASItemFactory()
 {
@@ -76,16 +150,7 @@ UASItem* AASItemFactory::NewASItem(UWorld* World, AActor* NewOwner, UASItemDataA
 	NewItem->SetOwner(NewOwner);
 	NewItem->SetCount(Count);
 
-	ItemFactory->AddASItem(NewItem);
+	ItemFactory->ASItems.Emplace(NewItem);
 
 	return NewItem;
-}
-
-void AASItemFactory::AddASItem(UASItem* NewItem)
-{
-	ASItems.Emplace(NewItem);
-}
-
-void AASItemFactory::OnRep_ASItems(TArray<UASItem*>& OldASItems)
-{
 }

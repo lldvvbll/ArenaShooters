@@ -17,6 +17,7 @@ class ARENASHOOTERS_API UASItem : public UObject
 	GENERATED_BODY()
 	
 public:
+	virtual void BeginDestroy() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override;
 
@@ -36,6 +37,8 @@ public:
 
 	void SetOwner(AActor* NewOwner);
 	TWeakObjectPtr<AActor>& GetOwner();
+
+	bool IsBundleItem() const;
 
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)

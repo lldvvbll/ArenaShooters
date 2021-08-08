@@ -30,6 +30,8 @@ public:
 		return Cast<ItemT>(NewASItem(World, NewOwner, DataAsset, Count));
 	}
 
+	static bool DeleteItem(UWorld* World, UASItem* InItem);
+
 public:	
 	AASItemFactory();
 
@@ -39,12 +41,7 @@ public:
 private:
 	static UASItem* NewASItem(UWorld* World, AActor* NewOwner, UASItemDataAsset* DataAsset, int32 Count = 0);
 
-	void AddASItem(UASItem* NewItem);
-
-	UFUNCTION()
-	void OnRep_ASItems(TArray<UASItem*>& OldASItems);
-
 private:
-	UPROPERTY(ReplicatedUsing = OnRep_ASItems)
+	UPROPERTY(Replicated)
 	TArray<UASItem*> ASItems;
 };
