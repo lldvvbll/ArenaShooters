@@ -11,13 +11,7 @@
 
 bool AASItemFactory::DeleteItem(UWorld* World, UASItem* InItem)
 {
-	if (InItem == nullptr)
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	if (!InItem->IsValidLowLevel())
+	if (!IsValid(InItem))
 	{
 		AS_LOG_S(Error);
 		return false;
@@ -47,7 +41,8 @@ bool AASItemFactory::DeleteItem(UWorld* World, UASItem* InItem)
 	if (Idx == INDEX_NONE)
 		return false;
 
-	if (auto Owner = Cast<AASCharacter>(InItem->GetOwner()))
+	auto Owner = Cast<AASCharacter>(InItem->GetOwner());
+	if (IsValid(Owner))
 	{
 		if (!Owner->RemoveItem(InItem))
 			return false;

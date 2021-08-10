@@ -71,6 +71,11 @@ void UASItem::SetCount(int32 NewCount)
 {
 	Count = NewCount;
 
+	if (Owner.IsValid() && Owner->GetLocalRole() == ROLE_Authority)
+	{
+		OnChangeCount.Broadcast(Count);
+	}
+
 	if (Count <= 0 && IsBundleItem())
 	{
 		AASItemFactory::DeleteItem(GetWorld(), this);
@@ -100,4 +105,9 @@ TWeakObjectPtr<AActor>& UASItem::GetOwner()
 bool UASItem::IsBundleItem() const
 {
 	return (DataAsset != nullptr) ? DataAsset->bBundle : false;
+}
+
+void UASItem::OnRep_Count()
+{
+	OnChangeCount.Broadcast(Count);
 }

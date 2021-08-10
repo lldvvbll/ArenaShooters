@@ -159,8 +159,8 @@ protected:
 	void OnRemoveGroundItem(const TWeakObjectPtr<UASItem>& Item);
 
 	UFUNCTION(Server, Reliable)
-	void ServerBeginReload(UASAmmo* InAmmo);
-	void ServerBeginReload_Implementation(UASAmmo* InAmmo);
+	void ServerBeginReload();
+	void ServerBeginReload_Implementation();
 
 	UFUNCTION()
 	void OnRep_bReloading(bool OldbReloading);

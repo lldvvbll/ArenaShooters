@@ -48,7 +48,7 @@ public:
 
 	bool CanReload() const;
 	EAmmoType GetAmmoType() const;
-	bool Reload(UASAmmo* InAmmo);
+	bool Reload(TArray<UASAmmo*>& InAmmos);
 	FTimespan GetReloadTime() const;
 
 public:

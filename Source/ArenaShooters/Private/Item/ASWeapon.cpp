@@ -165,39 +165,40 @@ EAmmoType UASWeapon::GetAmmoType() const
 	return (WeaponDA != nullptr ? WeaponDA->AmmoType : EAmmoType::None);
 }
 
-bool UASWeapon::Reload(UASAmmo* InAmmo)
+bool UASWeapon::Reload(TArray<UASAmmo*>& InAmmos)
 {
-	if (InAmmo == nullptr)
+	if (InAmmos.Num() <= 0)
 	{
 		AS_LOG_S(Error);
 		return false;
 	}
 
 	EAmmoType WeaponAmmoType = GetAmmoType();
-	EAmmoType AmmoType = InAmmo->GetAmmoType();
-	if (AmmoType == EAmmoType::None || WeaponAmmoType != AmmoType)
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
 
 	int32 NeedfulAmmoCount = GetMaxAmmoCount() - CurrentAmmoCount;
-	if (NeedfulAmmoCount <= 0)
+	for (int32 Idx = InAmmos.Num() - 1; Idx >= 0; --Idx)
 	{
-		AS_LOG_S(Error);
-		return false;
-	}
+		if (NeedfulAmmoCount <= 0)
+			break;
 
-	int32 AmmoCnt = InAmmo->GetCount();
-	if (NeedfulAmmoCount >= AmmoCnt)
-	{
-		CurrentAmmoCount += AmmoCnt;
-		InAmmo->ModifyCount(-AmmoCnt);
-	}
-	else
-	{
-		CurrentAmmoCount += NeedfulAmmoCount;
-		InAmmo->ModifyCount(-NeedfulAmmoCount);
+		UASAmmo* Ammo = InAmmos[Idx];
+		if (Ammo == nullptr)
+			continue;
+
+		if (Ammo->GetAmmoType() != WeaponAmmoType)
+			continue;
+
+		int32 AmmoCnt = Ammo->GetCount();
+		if (NeedfulAmmoCount >= AmmoCnt)
+		{
+			CurrentAmmoCount += AmmoCnt;
+			Ammo->ModifyCount(-AmmoCnt);
+		}
+		else
+		{
+			CurrentAmmoCount += NeedfulAmmoCount;
+			Ammo->ModifyCount(-NeedfulAmmoCount);
+		}
 	}
 
 	return true;

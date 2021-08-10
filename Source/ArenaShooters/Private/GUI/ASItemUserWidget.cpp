@@ -22,6 +22,8 @@ void UASItemUserWidget::SetItem(const TWeakObjectPtr<UASItem>& NewItem)
 		return;
 	}
 
+	Item->OnChangeCount.AddUObject(this, &UASItemUserWidget::OnChangeItemCount);
+
 	if (ItemImage != nullptr)
 	{
 		ItemImage->SetBrushFromTexture(Item->GetItemImage());
@@ -92,5 +94,13 @@ void UASItemUserWidget::NativeOnDragDetected(const FGeometry& InGeometry, const 
 	{
 		ItemDragDropOp->SetItemData(Item, GetParent(), DraggedItemWidget);
 		OutOperation = ItemDragDropOp;
+	}
+}
+
+void UASItemUserWidget::OnChangeItemCount(int32 NewCount)
+{
+	if (CountTextBlock != nullptr)
+	{
+		CountTextBlock->SetText(FText::FromString(FString::FromInt(Item->GetCount())));
 	}
 }

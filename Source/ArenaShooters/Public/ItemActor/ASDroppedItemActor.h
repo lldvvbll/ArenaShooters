@@ -51,5 +51,5 @@ protected:
 	TArray<UASItem*> ASItems;
 
 	UPROPERTY(EditInstanceOnly)
-	TArray<FPrimaryAssetId> DropItemDataAssetIds;
+	TMap<FPrimaryAssetId, int32> DropItemDataAssetMap;
 };

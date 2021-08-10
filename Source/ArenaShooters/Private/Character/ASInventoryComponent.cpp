@@ -434,7 +434,7 @@ ItemBoolPair UASInventoryComponent::RemoveItemFromArmorSlot(EArmorSlotType SlotT
 
 bool UASInventoryComponent::IsEnableToAddItemToInventory(UASItem* NewItem) const
 {
-	if (NewItem == nullptr)
+	if (!IsValid(NewItem))
 	{
 		AS_LOG_S(Error);
 		return false;
@@ -458,13 +458,23 @@ bool UASInventoryComponent::AddItemToInventory(UASItem* NewItem)
 	if (!IsEnableToAddItemToInventory(NewItem))
 		return false;
 
-	int32 NewItemCount = NewItem->GetCount();
-	UASItem* OldItem = FindItemFromInventory(NewItem->GetClass());
-
-	if (OldItem != nullptr && (OldItem->GetMaxCount() - OldItem->GetCount() >= NewItemCount))
+	if (NewItem->IsBundleItem())
 	{
-		OldItem->ModifyCount(NewItemCount);
-		NewItem->SetCount(0);
+		int32 NewItemCount = NewItem->GetCount();
+		UASItem* OldItem = FindItemFromInventory(NewItem->GetClass());
+
+		if (OldItem != nullptr && (OldItem->GetMaxCount() - OldItem->GetCount() >= NewItemCount))
+		{
+			NewItem->ModifyCount(-NewItemCount);
+			OldItem->ModifyCount(NewItemCount);
+		}
+		else
+		{
+			NewItem->SetOwner(GetOwner());
+			InventoryItems.Emplace(NewItem);
+
+			OnAddInventoryItem.Broadcast(NewItem);
+		}
 	}
 	else
 	{
@@ -517,31 +527,7 @@ TArray<UASAmmo*> UASInventoryComponent::GetAmmos(EAmmoType AmmoType) const
 		}
 	}
 
-	if (Ammos.Num() > 1)
-	{
-		Algo::Sort(Ammos,
-			[](const UASAmmo* lhs, const UASAmmo* rhs)
-			{
-				if (lhs == nullptr)
-					return false;
-				if (rhs == nullptr)
-					return true;
-
-				return lhs->GetCount() > rhs->GetCount();
-			});
-	}	
-
 	return Ammos;
-}
-
-void UASInventoryComponent::SetReloadingAmmo(UASAmmo* InAmmo)
-{
-	ReloadingAmmo = InAmmo;
-}
-
-UASAmmo* UASInventoryComponent::GetReloadingAmmo() const
-{
-	return ReloadingAmmo;
 }
 
 ItemBoolPair UASInventoryComponent::GetItemFromWeaponSlot(EWeaponSlotType SlotType)

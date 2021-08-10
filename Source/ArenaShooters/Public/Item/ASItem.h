@@ -40,11 +40,18 @@ public:
 
 	bool IsBundleItem() const;
 
+	UFUNCTION()
+	void OnRep_Count();
+
+public:
+	DECLARE_EVENT_OneParam(UASInventoryComponent, FOnChangeCountEvent, int32);
+	FOnChangeCountEvent OnChangeCount;
+
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	UASItemDataAsset* DataAsset;
 
-	UPROPERTY(Replicated, VisibleAnywhere)
+	UPROPERTY(ReplicatedUsing = OnRep_Count, VisibleAnywhere)
 	int32 Count;
 
 	UPROPERTY(Replicated)

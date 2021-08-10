@@ -60,8 +60,6 @@ public:
 	bool Contains(UASItem* InItem) const;
 
 	TArray<UASAmmo*> GetAmmos(EAmmoType AmmoType) const;
-	void SetReloadingAmmo(UASAmmo* InAmmo);
-	UASAmmo* GetReloadingAmmo() const;
 
 private:
 	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);

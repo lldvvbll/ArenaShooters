@@ -129,8 +129,11 @@ void AASDroppedItemActor::BeginPlay()
 
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		for (auto& ItemDataAssetId : DropItemDataAssetIds)
+		for (auto& ItemDataAssetPair : DropItemDataAssetMap)
 		{
+			FPrimaryAssetId& ItemDataAssetId = ItemDataAssetPair.Key;
+			int32 Count = ItemDataAssetPair.Value;
+
 			if (!ItemDataAssetId.IsValid())
 				continue;
 
@@ -152,7 +155,7 @@ void AASDroppedItemActor::BeginPlay()
 			{
 				if (auto AmmoDataAsset = UASAssetManager::Get().GetDataAsset<UASAmmoDataAsset>(ItemDataAssetId))
 				{
-					ASItems.Emplace(AASItemFactory::NewASItem<UASAmmo>(GetWorld(), this, AmmoDataAsset, 100));
+					ASItems.Emplace(AASItemFactory::NewASItem<UASAmmo>(GetWorld(), this, AmmoDataAsset, Count));
 				}
 			}
 		}

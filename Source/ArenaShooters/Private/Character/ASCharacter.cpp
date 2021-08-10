@@ -143,10 +143,18 @@ void AASCharacter::Falling()
 		{
 			UnCrouch(true);
 		}
+	}	
 
+	if (GetLocalRole() == ROLE_Authority)
+	{
 		if (ShootingStance != EShootingStanceType::None)
 		{
 			ServerChangeShootingStance(EShootingStanceType::None);
+		}
+
+		if (bReloading)
+		{
+			MulticastCancelReload();
 		}
 	}
 }
@@ -254,7 +262,7 @@ EShootingStanceType AASCharacter::GetShootingStance() const
 
 void AASCharacter::MulticastPlayShootMontage_Implementation()
 {
-	if (IsNetMode(NM_DedicatedServer))
+	if (!IsLocallyControlled())
 		return;
 
 	if (USkeletalMeshComponent* SkMesh = GetMesh())
@@ -384,9 +392,16 @@ void AASCharacter::ServerDropItem_Implementation(UASItem* InItem)
 	if (bReloading)
 	{
 		TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-		if (SelectedWeapon.Get() == InItem || ASInventory->GetReloadingAmmo() == InItem)
+		if (SelectedWeapon.IsValid() && SelectedWeapon.Get() == InItem)
 		{
 			MulticastCancelReload();
+		}
+		else if (auto Ammo = Cast<UASAmmo>(InItem))
+		{
+			if (Ammo->GetAmmoType() == SelectedWeapon->GetAmmoType())
+			{
+				MulticastCancelReload();
+			}
 		}
 	}	
 
@@ -445,15 +460,8 @@ bool AASCharacter::ServerEndReload_Validate()
 		return false;
 	}
 
-	UASAmmo* ReloadingAmmo = ASInventory->GetReloadingAmmo();
-	if (ReloadingAmmo == nullptr || ReloadingAmmo->IsPendingKill())
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
 	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-	if (!SelectedWeapon.IsValid())
+	if (!SelectedWeapon.IsValid() || !SelectedWeapon->CanReload())
 	{
 		AS_LOG_S(Error);
 		return false;
@@ -470,20 +478,19 @@ bool AASCharacter::ServerEndReload_Validate()
 
 void AASCharacter::ServerEndReload_Implementation()
 {
-	UASAmmo* ReloadingAmmo = ASInventory->GetReloadingAmmo();
 	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-	if (SelectedWeapon->Reload(ReloadingAmmo))
+	TArray<UASAmmo*> Ammos = ASInventory->GetAmmos(SelectedWeapon->GetAmmoType());
+
+	if (SelectedWeapon->Reload(Ammos))
 	{
-		ASInventory->SetReloadingAmmo(nullptr);
 		bReloading = false;
 	}
 }
 
 void AASCharacter::MulticastCancelReload_Implementation()
 {
-	if (IsNetMode(NM_DedicatedServer))
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		ASInventory->SetReloadingAmmo(nullptr);
 		bReloading = false;
 	}
 	else
@@ -630,7 +637,7 @@ void AASCharacter::LookUpAtRate(float Rate)
 
 void AASCharacter::Sprint()
 {
-	if (bSprinted || (ShootingStance != EShootingStanceType::None))
+	if (bSprinted || (ShootingStance != EShootingStanceType::None) || bReloading)
 		return;
 
 	ServerSprint();
@@ -744,6 +751,15 @@ void AASCharacter::Reload()
 		return;
 	}
 
+	if (bReloading)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (GetCharacterMovement()->IsFalling())
+		return;
+
 	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
 	if (!CurWeapon.IsValid() || !CurWeapon->CanReload())
 		return;
@@ -752,7 +768,7 @@ void AASCharacter::Reload()
 	if (Ammos.Num() <= 0)
 		return;
 
-	ServerBeginReload(Ammos[0]);
+	ServerBeginReload();
 }
 
 void AASCharacter::Shoot()
@@ -837,7 +853,7 @@ void AASCharacter::ResetAimKeyState()
 
 void AASCharacter::ServerSprint_Implementation()
 {
-	if (bSprinted || ShootingStance != EShootingStanceType::None)
+	if (bSprinted || ShootingStance != EShootingStanceType::None || bReloading)
 		return;
 
 	SetMaxWalkSpeedRate(SprintSpeedRate);
@@ -1143,21 +1159,9 @@ void AASCharacter::OnRemoveGroundItem(const TWeakObjectPtr<UASItem>& Item)
 	OnGroundItemRemoveEvent.Broadcast(TArray<TWeakObjectPtr<UASItem>>{ Item });
 }
 
-void AASCharacter::ServerBeginReload_Implementation(UASAmmo* InAmmo)
+void AASCharacter::ServerBeginReload_Implementation()
 {
 	if (ASInventory == nullptr)
-	{
-		AS_LOG_S(Error);
-		return;
-	}
-
-	if (InAmmo == nullptr)
-	{
-		AS_LOG_S(Error);
-		return;
-	}
-
-	if (InAmmo->GetAmmoType() == EAmmoType::None)
 	{
 		AS_LOG_S(Error);
 		return;
@@ -1169,26 +1173,21 @@ void AASCharacter::ServerBeginReload_Implementation(UASAmmo* InAmmo)
 		return;
 	}
 
-	if (!ASInventory->Contains(InAmmo))
-	{
-		AS_LOG_S(Error);
+	if (GetCharacterMovement()->IsFalling())
 		return;
-	}
 
 	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
 	if (!CurWeapon.IsValid() || !CurWeapon->CanReload())
-	{
-		AS_LOG_S(Error);
 		return;
-	}
 
-	if (CurWeapon->GetAmmoType() != InAmmo->GetAmmoType())
-	{
-		AS_LOG_S(Error);
+	TArray<UASAmmo*> Ammos = ASInventory->GetAmmos(CurWeapon->GetAmmoType());
+	if (Ammos.Num() <= 0)
 		return;
-	}
 
-	ASInventory->SetReloadingAmmo(InAmmo);
+	if (bSprinted)
+	{
+		ServerSprintEnd();
+	}	
 
 	bReloading = true;
 	ReloadStartTime = FDateTime::Now();
