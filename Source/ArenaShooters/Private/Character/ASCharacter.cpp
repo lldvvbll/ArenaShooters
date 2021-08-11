@@ -151,11 +151,6 @@ void AASCharacter::Falling()
 		{
 			ServerChangeShootingStance(EShootingStanceType::None);
 		}
-
-		if (bReloading)
-		{
-			MulticastCancelReload();
-		}
 	}
 }
 
@@ -773,7 +768,7 @@ void AASCharacter::Reload()
 
 void AASCharacter::Shoot()
 {
-	if (ShootingStance == EShootingStanceType::None)
+	if (ShootingStance == EShootingStanceType::None || bReloading)
 		return;
 	if (ASInventory == nullptr)
 		return;
@@ -786,8 +781,7 @@ void AASCharacter::Shoot()
 
 	if (Weapon->GetCurrentAmmoCount() <= 0)
 	{
-		// todo: Reload
-
+		Reload();
 		return;
 	}
 
@@ -1024,7 +1018,7 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 
 bool AASCharacter::CanAimOrScope() const
 {
-	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling();
+	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling() && !bReloading;
 }
 
 void AASCharacter::StartAiming()
@@ -1032,7 +1026,7 @@ void AASCharacter::StartAiming()
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		ShootingStance = EShootingStanceType::Aiming;
-		ServerSprintEnd_Implementation();
+		ServerSprintEnd();
 	}	
 
 	SetMaxWalkSpeedRate(AimingSpeedRate);
@@ -1063,7 +1057,7 @@ void AASCharacter::StartScoping()
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		ShootingStance = EShootingStanceType::Scoping;
-		ServerSprintEnd_Implementation();
+		ServerSprintEnd();
 	}
 
 	SetMaxWalkSpeedRate(AimingSpeedRate);
@@ -1115,7 +1109,7 @@ void AASCharacter::EndScoping()
 
 void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation)
 {
-	if (ShootingStance == EShootingStanceType::None)
+	if (ShootingStance == EShootingStanceType::None || bReloading)
 		return;
 	if (ASInventory == nullptr)
 		return;
@@ -1168,10 +1162,7 @@ void AASCharacter::ServerBeginReload_Implementation()
 	}
 
 	if (bReloading)
-	{
-		AS_LOG_S(Error);
 		return;
-	}
 
 	if (GetCharacterMovement()->IsFalling())
 		return;
@@ -1187,7 +1178,12 @@ void AASCharacter::ServerBeginReload_Implementation()
 	if (bSprinted)
 	{
 		ServerSprintEnd();
-	}	
+	}
+
+	if (GetShootingStance() != EShootingStanceType::None)
+	{
+		ServerChangeShootingStance(EShootingStanceType::None);
+	}
 
 	bReloading = true;
 	ReloadStartTime = FDateTime::Now();
