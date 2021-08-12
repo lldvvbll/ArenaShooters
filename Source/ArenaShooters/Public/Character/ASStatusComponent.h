@@ -34,6 +34,13 @@ public:
 	UFUNCTION()
 	void OnRep_CurrentStemina();
 
+public:
+	DECLARE_EVENT_OneParam(UASStatusComponent, FOnChangeCurrentHealthEvent, float);
+	FOnChangeCurrentHealthEvent OnChangeCurrentHealth;
+
+	DECLARE_EVENT(UASStatusComponent, FOnHealthZeroEvent);
+	FOnHealthZeroEvent OnHealthZero;
+
 private:
 	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
 	float MaxHealth;

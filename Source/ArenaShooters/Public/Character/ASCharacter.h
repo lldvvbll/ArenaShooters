@@ -165,6 +165,11 @@ protected:
 	UFUNCTION()
 	void OnRep_bReloading(bool OldbReloading);
 
+	void Die();
+
+	UFUNCTION()
+	void OnRep_bDead();
+
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
 	FOnScopeEvent OnScopeEvent;
@@ -250,6 +255,9 @@ private:
 	bool bReloading;
 
 	FDateTime ReloadStartTime;
+
+	UPROPERTY(ReplicatedUsing = OnRep_bDead)
+	bool bDead;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))

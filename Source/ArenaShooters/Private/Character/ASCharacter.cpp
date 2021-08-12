@@ -58,6 +58,7 @@ AASCharacter::AASCharacter()
 	ASAction = CreateDefaultSubobject<UASActionComponent>(TEXT("ASAction"));
 	ASInventory = CreateDefaultSubobject<UASInventoryComponent>(TEXT("ASInventory"));
 	ASStatus = CreateDefaultSubobject<UASStatusComponent>(TEXT("ASStatus"));
+	ASStatus->OnHealthZero.AddUObject(this, &AASCharacter::Die);
 
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
 	InteractionBox->SetCollisionProfileName(TEXT("Interaction"));
@@ -119,6 +120,7 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME_CONDITION(AASCharacter, AimOffsetRotator, COND_SimulatedOnly); 
 	DOREPLIFETIME(AASCharacter, ShootingStance);
 	DOREPLIFETIME(AASCharacter, bReloading);
+	DOREPLIFETIME(AASCharacter, bDead);
 }
 
 void AASCharacter::Jump()
@@ -632,7 +634,7 @@ void AASCharacter::LookUpAtRate(float Rate)
 
 void AASCharacter::Sprint()
 {
-	if (bSprinted || (ShootingStance != EShootingStanceType::None) || bReloading)
+	if (bSprinted || (ShootingStance != EShootingStanceType::None) || bReloading || bDead)
 		return;
 
 	ServerSprint();
@@ -685,7 +687,7 @@ void AASCharacter::SelectMainWeapon()
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Main)
+	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Main || bDead)
 		return;
 
 	ServerSelectWeapon(EWeaponSlotType::Main);
@@ -695,7 +697,7 @@ void AASCharacter::SelectSubWeapon()
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Sub)
+	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Sub || bDead)
 		return;
 
 	ServerSelectWeapon(EWeaponSlotType::Sub);
@@ -703,6 +705,9 @@ void AASCharacter::SelectSubWeapon()
 
 void AASCharacter::PressedShootButton()
 {
+	if (bReloading || bDead)
+		return;
+
 	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
 	if (!Weapon.IsValid())
 	{
@@ -735,6 +740,9 @@ void AASCharacter::ReleasedShootButton()
 
 void AASCharacter::ChangeFireMode()
 {
+	if (bDead)
+		return;
+
 	ServerChangeFireMode();
 }
 
@@ -752,7 +760,7 @@ void AASCharacter::Reload()
 		return;
 	}
 
-	if (GetCharacterMovement()->IsFalling())
+	if (GetCharacterMovement()->IsFalling() || bDead)
 		return;
 
 	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
@@ -768,7 +776,7 @@ void AASCharacter::Reload()
 
 void AASCharacter::Shoot()
 {
-	if (ShootingStance == EShootingStanceType::None || bReloading)
+	if (ShootingStance == EShootingStanceType::None || bReloading || bDead)
 		return;
 	if (ASInventory == nullptr)
 		return;
@@ -847,7 +855,7 @@ void AASCharacter::ResetAimKeyState()
 
 void AASCharacter::ServerSprint_Implementation()
 {
-	if (bSprinted || ShootingStance != EShootingStanceType::None || bReloading)
+	if (bSprinted || ShootingStance != EShootingStanceType::None || bReloading || bDead)
 		return;
 
 	SetMaxWalkSpeedRate(SprintSpeedRate);
@@ -893,7 +901,7 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType)
+	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType || bDead)
 		return;
 
 	ServerChangeShootingStance(EShootingStanceType::None);
@@ -1018,7 +1026,8 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 
 bool AASCharacter::CanAimOrScope() const
 {
-	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && !GetCharacterMovement()->IsFalling() && !bReloading;
+	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && 
+		!GetCharacterMovement()->IsFalling() && !bReloading && !bDead;
 }
 
 void AASCharacter::StartAiming()
@@ -1109,7 +1118,7 @@ void AASCharacter::EndScoping()
 
 void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation)
 {
-	if (ShootingStance == EShootingStanceType::None || bReloading)
+	if (ShootingStance == EShootingStanceType::None || bReloading || bDead)
 		return;
 	if (ASInventory == nullptr)
 		return;
@@ -1127,6 +1136,9 @@ void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, con
 
 void AASCharacter::ServerChangeFireMode_Implementation()
 {
+	if (bDead)
+		return;
+
 	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
 	if (!Weapon.IsValid())
 		return;
@@ -1199,6 +1211,52 @@ void AASCharacter::OnRep_bReloading(bool OldbReloading)
 			{
 				AnimInstance->PlayReloadMontage();
 			}
+		}
+	}
+}
+
+void AASCharacter::Die()
+{
+	if (bDead)
+		return;
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		bDead = true;
+		SetCanBeDamaged(false);
+
+		if (UCharacterMovementComponent* CharMoveComp = GetCharacterMovement())
+		{
+			CharMoveComp->SetMovementMode(EMovementMode::MOVE_None);
+		}
+
+		if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent())
+		{
+			CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+}
+
+void AASCharacter::OnRep_bDead()
+{
+	if (!bDead)
+		return;
+
+	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent())
+	{
+		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	if (USkeletalMeshComponent* SkeletalMeshComp = GetMesh())
+	{
+		SkeletalMeshComp->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
+		SkeletalMeshComp->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		SkeletalMeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
+		SkeletalMeshComp->SetAllBodiesBelowSimulatePhysics(FName(TEXT("pelvis")), true, true);
+
+		if (auto AnimInstance = Cast<UASAnimInstance>(SkeletalMeshComp->GetAnimInstance()))
+		{
+			AnimInstance->StopAllMontages(0.2f);
 		}
 	}
 }

@@ -41,10 +41,11 @@ void UASStatusComponent::SetCurrentHealth(float NewHealth)
 {
 	CurrentHealth = FMath::Clamp<float>(NewHealth, 0.0f, MaxHealth);
 
-	AS_LOG(Warning, TEXT("CurrentHealth: %f"), CurrentHealth);
+	OnChangeCurrentHealth.Broadcast(CurrentHealth);
 
 	if (CurrentHealth < KINDA_SMALL_NUMBER)
 	{
+		OnHealthZero.Broadcast();
 	}
 }
 
@@ -75,7 +76,7 @@ void UASStatusComponent::ModifyCurrentStemina(float Value)
 
 void UASStatusComponent::OnRep_CurrentHealth()
 {
-	AS_LOG_SCREEN(1.0f, FColor::Yellow, TEXT("CurrentHealth: %f"), CurrentHealth);
+	OnChangeCurrentHealth.Broadcast(CurrentHealth);
 }
 
 void UASStatusComponent::OnRep_CurrentStemina()
