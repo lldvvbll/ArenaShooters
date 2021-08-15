@@ -74,10 +74,13 @@ public:
 
 	bool RemoveItem(UASItem* InItem);
 
+	void OnShowInventoryWidget(bool bShown);
+	bool IsShownInventoryWidget() const;
+
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
-		class AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+		AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 
 	void MoveForward(float Value);
@@ -271,6 +274,7 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_bChangeWeapon)
 	bool bChangeWeapon;
 
+	bool bShownInventoryWidget;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

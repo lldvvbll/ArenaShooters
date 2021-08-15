@@ -44,6 +44,7 @@ AASCharacter::AASCharacter()
 	MaxAimKeyHoldTime = 0.3f;
 	ShootingStance = EShootingStanceType::None;
 	bPressedShootButton = false;
+	bShownInventoryWidget = false;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -469,6 +470,28 @@ bool AASCharacter::RemoveItem(UASItem* InItem)
 	return ASInventory->RemoveItem(InItem).Value;
 }
 
+void AASCharacter::OnShowInventoryWidget(bool bShown)
+{
+	if (bShown)
+	{
+		if (ShootingStance != EShootingStanceType::None)
+		{
+			ServerChangeShootingStance(EShootingStanceType::None);
+		}
+
+		bShownInventoryWidget = true;
+	}
+	else
+	{
+		bShownInventoryWidget = false;
+	}
+}
+
+bool AASCharacter::IsShownInventoryWidget() const
+{
+	return bShownInventoryWidget;
+}
+
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float ActualDamage = Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);
@@ -627,13 +650,31 @@ void AASCharacter::PressedAimButton()
 
 void AASCharacter::ReleasedAimButton()
 {
-	if (ShootingStance != EShootingStanceType::Aiming && bPressedAimButton)
+	switch (ShootingStance)
 	{
-		ServerChangeShootingStance((ShootingStance == EShootingStanceType::None) ? EShootingStanceType::Scoping : EShootingStanceType::None);
-	}
-	else
-	{
-		ServerChangeShootingStance(EShootingStanceType::None);
+	case EShootingStanceType::None:
+		if (bPressedAimButton)
+		{
+			if (!bReloading && !bChangeWeapon && !bShownInventoryWidget)
+			{
+				ServerChangeShootingStance(EShootingStanceType::Scoping);
+			}
+		}
+		break;
+	case EShootingStanceType::Scoping:
+		if (bPressedAimButton)
+		{
+			ServerChangeShootingStance(EShootingStanceType::None);
+		}
+		break;
+	case EShootingStanceType::Aiming:
+		{
+			ServerChangeShootingStance(EShootingStanceType::None);
+		}
+		break;
+	default:
+		checkNoEntry();
+		break;
 	}
 
 	ResetAimKeyState();
@@ -930,7 +971,7 @@ void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType
 	case EShootingStanceType::Aiming:
 		{
 			EndAiming();
-		}		
+		}
 		break;
 	case EShootingStanceType::Scoping:
 		{
@@ -950,13 +991,13 @@ void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType
 		if (CanAimOrScope())
 		{
 			StartAiming();
-		}		
+		}
 		break;
 	case EShootingStanceType::Scoping:
 		if (CanAimOrScope())
 		{
 			StartScoping();
-		}		
+		}
 		break;
 	default:
 		checkNoEntry();
@@ -1008,7 +1049,7 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 bool AASCharacter::CanAimOrScope() const
 {
 	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && 
-		!GetCharacterMovement()->IsFalling() && !bReloading && !bDead && !bChangeWeapon;
+		!GetCharacterMovement()->IsFalling() && !bReloading && !bDead && !bChangeWeapon && !bShownInventoryWidget;
 }
 
 void AASCharacter::StartAiming()

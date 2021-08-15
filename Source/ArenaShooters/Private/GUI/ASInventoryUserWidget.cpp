@@ -52,6 +52,8 @@ void UASInventoryUserWidget::NativeConstruct()
 
 	if (AASCharacter* ASChar = GetASCharacter())
 	{
+		ASChar->OnShowInventoryWidget(true);
+
 		OnChangedWeapon(EWeaponSlotType::Main, nullptr);
 		OnChangedWeapon(EWeaponSlotType::Sub, nullptr);
 		OnChangedArmor(EArmorSlotType::Helmet, nullptr);
@@ -64,6 +66,16 @@ void UASInventoryUserWidget::NativeConstruct()
 	{
 		AddItemsToInventoryScrollBox(ASInventoryComp->GetInventoryItems());
 	}
+}
+
+void UASInventoryUserWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	if (AASCharacter* ASChar = GetASCharacter())
+	{
+		ASChar->OnShowInventoryWidget(false);
+	}	
 }
 
 FReply UASInventoryUserWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
