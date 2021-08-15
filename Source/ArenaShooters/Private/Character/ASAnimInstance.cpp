@@ -105,18 +105,23 @@ void UASAnimInstance::PlayEquipMontage()
 	{
 	case EWeaponType::Pistol:
 		{
-			Montage_Play(PistolEquipMontage, 2.5f);
+			Montage_Play(PistolEquipMontage);
 		}
 		break;
 	case EWeaponType::AssaultRifle:
 		{
-			Montage_Play(AREquipMontage, 2.5f);
+			Montage_Play(AREquipMontage);
 		}
 		break;
 	default:
 		checkNoEntry();
 		break;
 	}
+}
+
+void UASAnimInstance::PlayPickUpItemMontage()
+{
+	Montage_Play(PickUpItemMontage);
 }
 
 void UASAnimInstance::OnMontageEnd(UAnimMontage* Montage, bool bInterrupted)

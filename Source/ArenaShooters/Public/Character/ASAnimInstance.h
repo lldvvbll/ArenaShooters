@@ -26,6 +26,7 @@ public:
 	void PlayShootMontage();
 	void PlayReloadMontage();
 	void PlayEquipMontage();
+	void PlayPickUpItemMontage();
 
 protected:
 	UFUNCTION()
@@ -59,6 +60,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* AREquipMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* PickUpItemMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	bool bInAir;

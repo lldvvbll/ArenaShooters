@@ -48,7 +48,7 @@ bool UASArmorSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 			if (ASChar != nullptr)
 			{
 
-				ASChar->ServerPickUpArmor(ArmorSlotType, Cast<UASArmor>(ArmorItem));
+				ASChar->PickUpArmor(ArmorSlotType, Cast<UASArmor>(ArmorItem));
 				return true;
 			}
 			else

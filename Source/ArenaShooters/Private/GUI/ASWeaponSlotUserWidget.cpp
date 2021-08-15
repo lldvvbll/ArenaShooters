@@ -73,8 +73,7 @@ bool UASWeaponSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 			auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn());
 			if (ASChar != nullptr)
 			{
-
-				ASChar->ServerPickUpWeapon(WeaponSlotType, Cast<UASWeapon>(WeaponItem));
+				ASChar->PickUpWeapon(WeaponSlotType, Cast<UASWeapon>(WeaponItem));
 				return true;
 			}
 			else

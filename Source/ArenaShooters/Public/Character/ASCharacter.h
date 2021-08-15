@@ -77,6 +77,14 @@ public:
 	void OnShowInventoryWidget(bool bShown);
 	bool IsShownInventoryWidget() const;
 
+	void PickUpWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
+	void PickUpArmor(EArmorSlotType SlotType, UASArmor* NewArmor);
+	void PickUpInventoryItem(UASItem* NewItem);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlayPickUpItemMontage();
+	void MulticastPlayPickUpItemMontage_Implementation();
+
 protected:
 	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
 		AController* EventInstigator, AActor* DamageCauser) override;
@@ -213,6 +221,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	UBoxComponent* InteractionBox;
+
+	UPROPERTY()
+	UASAnimInstance* ASAnimInstance;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
 	float BaseTurnRate;

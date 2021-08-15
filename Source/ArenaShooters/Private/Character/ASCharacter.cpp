@@ -89,10 +89,11 @@ void AASCharacter::PostInitializeComponents()
 
 	if (USkeletalMeshComponent* SkMesh = GetMesh())
 	{
-		if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
+		ASAnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance());
+		if (ASAnimInstance != nullptr)
 		{
-			AnimInstance->OnReloadEnd.AddUObject(this, &AASCharacter::ServerEndReload);
-			AnimInstance->OnChangeWeaponEnd.AddUObject(this, &AASCharacter::ServerEndSelectWeapon);
+			ASAnimInstance->OnReloadEnd.AddUObject(this, &AASCharacter::ServerEndReload);
+			ASAnimInstance->OnChangeWeaponEnd.AddUObject(this, &AASCharacter::ServerEndSelectWeapon);
 		}
 	}
 }
@@ -275,15 +276,12 @@ EShootingStanceType AASCharacter::GetShootingStance() const
 
 void AASCharacter::MulticastPlayShootMontage_Implementation()
 {
-	if (!IsLocallyControlled())
+	if (GetLocalRole() == ROLE_Authority)
 		return;
 
-	if (USkeletalMeshComponent* SkMesh = GetMesh())
+	if (ASAnimInstance != nullptr)
 	{
-		if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
-		{
-			AnimInstance->PlayShootMontage();
-		}
+		ASAnimInstance->PlayShootMontage();
 	}
 
 	if (ASInventory != nullptr)
@@ -327,6 +325,8 @@ void AASCharacter::ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, U
 	if (!ASInventory->IsSuitableWeaponSlot(SlotType, NewWeapon))
 		return;
 
+	MulticastPlayPickUpItemMontage();
+
 	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewWeapon->GetOwner());
 	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
 	{
@@ -362,6 +362,8 @@ void AASCharacter::ServerPickUpArmor_Implementation(EArmorSlotType SlotType, UAS
 
 	if (!ASInventory->IsSuitableArmorSlot(SlotType, NewArmor))
 		return;
+
+	MulticastPlayPickUpItemMontage();
 
 	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewArmor->GetOwner());
 	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
@@ -439,6 +441,8 @@ void AASCharacter::ServerPickUpInventoryItem_Implementation(UASItem* NewItem)
 	if (!ASInventory->IsEnableToAddItemToInventory(NewItem))
 		return;
 
+	MulticastPlayPickUpItemMontage();
+
 	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewItem->GetOwner());
 	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
 	{
@@ -490,6 +494,68 @@ void AASCharacter::OnShowInventoryWidget(bool bShown)
 bool AASCharacter::IsShownInventoryWidget() const
 {
 	return bShownInventoryWidget;
+}
+
+void AASCharacter::PickUpWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->IsSuitableWeaponSlot(SlotType, NewWeapon))
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	ServerPickUpWeapon(SlotType, NewWeapon);
+}
+
+void AASCharacter::PickUpArmor(EArmorSlotType SlotType, UASArmor* NewArmor)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->IsSuitableArmorSlot(SlotType, NewArmor))
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	ServerPickUpArmor(SlotType, NewArmor);
+}
+
+void AASCharacter::PickUpInventoryItem(UASItem* NewItem)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->IsEnableToAddItemToInventory(NewItem))
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	ServerPickUpInventoryItem(NewItem);
+}
+
+void AASCharacter::MulticastPlayPickUpItemMontage_Implementation()
+{
+	if (GetLocalRole() == ROLE_Authority)
+		return;
+
+	if (ASAnimInstance != nullptr)
+	{
+		ASAnimInstance->PlayPickUpItemMontage();
+	}
 }
 
 float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -946,12 +1012,9 @@ void AASCharacter::OnRep_bChangeWeapon()
 {
 	if (bChangeWeapon)
 	{
-		if (USkeletalMeshComponent* SkMesh = GetMesh())
+		if (ASAnimInstance != nullptr)
 		{
-			if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
-			{
-				AnimInstance->PlayEquipMontage();
-			}
+			ASAnimInstance->PlayEquipMontage();
 		}
 	}
 }
@@ -1269,12 +1332,9 @@ void AASCharacter::MulticastCancelReload_Implementation()
 	}
 	else
 	{
-		if (USkeletalMeshComponent* SkMesh = GetMesh())
+		if (ASAnimInstance != nullptr)
 		{
-			if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
-			{
-				AnimInstance->Montage_Stop(0.1f);
-			}
+			ASAnimInstance->Montage_Stop(0.1f);
 		}
 	}
 }
@@ -1283,12 +1343,9 @@ void AASCharacter::OnRep_bReloading(bool OldbReloading)
 {
 	if (bReloading && !OldbReloading)
 	{
-		if (USkeletalMeshComponent* SkMesh = GetMesh())
+		if (ASAnimInstance != nullptr)
 		{
-			if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
-			{
-				AnimInstance->PlayReloadMontage();
-			}
+			ASAnimInstance->PlayReloadMontage();
 		}
 	}
 }
