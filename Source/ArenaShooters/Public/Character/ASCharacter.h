@@ -29,6 +29,8 @@ class ARENASHOOTERS_API AASCharacter : public ACharacter
 public:
 	AASCharacter();
 
+	virtual void PostInitializeComponents() override;
+
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -69,15 +71,6 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerPickUpInventoryItem(UASItem* NewItem);
 	void ServerPickUpInventoryItem_Implementation(UASItem* NewItem);
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerEndReload();
-	bool ServerEndReload_Validate();
-	void ServerEndReload_Implementation();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastCancelReload();
-	void MulticastCancelReload_Implementation();
 
 	bool RemoveItem(UASItem* InItem);
 
@@ -134,6 +127,13 @@ protected:
 	void ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotType);
 
 	UFUNCTION(Server, Reliable)
+	void ServerEndSelectWeapon();
+	void ServerEndSelectWeapon_Implementation();
+
+	UFUNCTION()
+	void OnRep_bChangeWeapon();
+
+	UFUNCTION(Server, Reliable)
 	void ServerChangeShootingStance(EShootingStanceType NewShootingStance);
 	void ServerChangeShootingStance_Implementation(EShootingStanceType NewShootingStance);
 
@@ -161,6 +161,15 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerBeginReload();
 	void ServerBeginReload_Implementation();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerEndReload();
+	bool ServerEndReload_Validate();
+	void ServerEndReload_Implementation();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastCancelReload();
+	void MulticastCancelReload_Implementation();
 
 	UFUNCTION()
 	void OnRep_bReloading(bool OldbReloading);
@@ -258,6 +267,9 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_bDead)
 	bool bDead;
+
+	UPROPERTY(ReplicatedUsing = OnRep_bChangeWeapon)
+	bool bChangeWeapon;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))

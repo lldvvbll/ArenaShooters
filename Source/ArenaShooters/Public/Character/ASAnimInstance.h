@@ -25,9 +25,18 @@ public:
 
 	void PlayShootMontage();
 	void PlayReloadMontage();
+	void PlayEquipMontage();
 
+protected:
 	UFUNCTION()
-	void AnimNotify_EndReload();
+	void OnMontageEnd(UAnimMontage* Montage, bool bInterrupted);
+
+public:
+	DECLARE_EVENT(UASInventoryComponent, FOnReloadEndEvent);
+	FOnReloadEndEvent OnReloadEnd;
+
+	DECLARE_EVENT(UASInventoryComponent, FOnChangeWeaponEndEvent);
+	FOnChangeWeaponEndEvent OnChangeWeaponEnd;
 
 private:
 	UPROPERTY()
@@ -44,6 +53,12 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* ARReloadMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* PistolEquipMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* AREquipMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	bool bInAir;

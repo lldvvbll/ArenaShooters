@@ -187,28 +187,30 @@ bool UASInventoryComponent::InsertArmor(EArmorSlotType SlotType, UASArmor* NewAr
 	return true;
 }
 
-void UASInventoryComponent::SelectWeapon(EWeaponSlotType SlotType)
+bool UASInventoryComponent::SelectWeapon(EWeaponSlotType SlotType)
 {
 	ItemBoolPair ResultPair = GetItemFromWeaponSlot(SlotType);
 	if (!ResultPair.Value)
 	{
 		AS_LOG_S(Error);
-		return;
+		return false;
 	}
 
 	// 선택하려는 슬롯에 무기가 없다면 실패 처리
 	auto NewWeapon = Cast<UASWeapon>(ResultPair.Key);
 	if (NewWeapon == nullptr)
-		return;
+		return false;
 
 	// 이미 선택된 슬롯을 또 선택하면 아무일도 없다.
 	UASWeapon* OldWeapon = SelectedWeapon;
 	if (OldWeapon == NewWeapon)
-		return;
+		return false;
 
 	SelectedWeapon = NewWeapon;
 	SelectedWeaponSlotType = SlotType;
 	OnSelectedWeaponChanged(OldWeapon, NewWeapon);
+
+	return true;
 }
 
 ItemBoolPair UASInventoryComponent::RemoveItem(UASItem* InItem)

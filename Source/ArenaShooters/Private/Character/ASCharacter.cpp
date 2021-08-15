@@ -82,6 +82,20 @@ AASCharacter::AASCharacter()
 	//CharMoveComp->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 }
 
+void AASCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (USkeletalMeshComponent* SkMesh = GetMesh())
+	{
+		if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
+		{
+			AnimInstance->OnReloadEnd.AddUObject(this, &AASCharacter::ServerEndReload);
+			AnimInstance->OnChangeWeaponEnd.AddUObject(this, &AASCharacter::ServerEndSelectWeapon);
+		}
+	}
+}
+
 void AASCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -121,6 +135,7 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AASCharacter, ShootingStance);
 	DOREPLIFETIME(AASCharacter, bReloading);
 	DOREPLIFETIME(AASCharacter, bDead);
+	DOREPLIFETIME(AASCharacter, bChangeWeapon);
 }
 
 void AASCharacter::Jump()
@@ -443,65 +458,6 @@ void AASCharacter::ServerPickUpInventoryItem_Implementation(UASItem* NewItem)
 	}
 }
 
-bool AASCharacter::ServerEndReload_Validate()
-{
-	if (ASInventory == nullptr)
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	if (!bReloading)
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-	if (!SelectedWeapon.IsValid() || !SelectedWeapon->CanReload())
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	if (FDateTime::Now() - ReloadStartTime < SelectedWeapon->GetReloadTime())
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
-	return true;
-}
-
-void AASCharacter::ServerEndReload_Implementation()
-{
-	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-	TArray<UASAmmo*> Ammos = ASInventory->GetAmmos(SelectedWeapon->GetAmmoType());
-
-	if (SelectedWeapon->Reload(Ammos))
-	{
-		bReloading = false;
-	}
-}
-
-void AASCharacter::MulticastCancelReload_Implementation()
-{
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		bReloading = false;
-	}
-	else
-	{
-		if (USkeletalMeshComponent* SkMesh = GetMesh())
-		{
-			if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
-			{
-				AnimInstance->Montage_Stop(0.1f);
-			}
-		}
-	}	
-}
-
 bool AASCharacter::RemoveItem(UASItem* InItem)
 {
 	if (ASInventory == nullptr)
@@ -687,7 +643,7 @@ void AASCharacter::SelectMainWeapon()
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Main || bDead)
+	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Main || bDead || bReloading || bChangeWeapon)
 		return;
 
 	ServerSelectWeapon(EWeaponSlotType::Main);
@@ -697,7 +653,7 @@ void AASCharacter::SelectSubWeapon()
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Sub || bDead)
+	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Sub || bDead || bReloading || bChangeWeapon)
 		return;
 
 	ServerSelectWeapon(EWeaponSlotType::Sub);
@@ -705,7 +661,7 @@ void AASCharacter::SelectSubWeapon()
 
 void AASCharacter::PressedShootButton()
 {
-	if (bReloading || bDead)
+	if (bReloading || bDead || bChangeWeapon)
 		return;
 
 	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
@@ -789,7 +745,7 @@ void AASCharacter::Shoot()
 
 	if (Weapon->GetCurrentAmmoCount() <= 0)
 	{
-		Reload();
+		// todo: 탄약 없음 알림
 		return;
 	}
 
@@ -901,7 +857,7 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType || bDead)
+	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType || bDead || bReloading || bChangeWeapon)
 		return;
 
 	ServerChangeShootingStance(EShootingStanceType::None);
@@ -917,7 +873,10 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 			MulticastCancelReload();
 		}
 
-		ASInventory->SelectWeapon(WeaponSlotType);
+		if (ASInventory->SelectWeapon(WeaponSlotType))
+		{
+			bChangeWeapon = true;
+		}
 	}
 	else
 	{
@@ -937,9 +896,31 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 	}
 }
 
+void AASCharacter::ServerEndSelectWeapon_Implementation()
+{
+	bChangeWeapon = false;
+}
+
+void AASCharacter::OnRep_bChangeWeapon()
+{
+	if (bChangeWeapon)
+	{
+		if (USkeletalMeshComponent* SkMesh = GetMesh())
+		{
+			if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
+			{
+				AnimInstance->PlayEquipMontage();
+			}
+		}
+	}
+}
+
 void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType NewShootingStance)
 {
 	if (ShootingStance == NewShootingStance)
+		return;
+
+	if (NewShootingStance != EShootingStanceType::None && bChangeWeapon)
 		return;
 
 	switch (ShootingStance)
@@ -1027,7 +1008,7 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 bool AASCharacter::CanAimOrScope() const
 {
 	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && 
-		!GetCharacterMovement()->IsFalling() && !bReloading && !bDead;
+		!GetCharacterMovement()->IsFalling() && !bReloading && !bDead && !bChangeWeapon;
 }
 
 void AASCharacter::StartAiming()
@@ -1118,7 +1099,7 @@ void AASCharacter::EndScoping()
 
 void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation)
 {
-	if (ShootingStance == EShootingStanceType::None || bReloading || bDead)
+	if (ShootingStance == EShootingStanceType::None || bReloading || bDead || bChangeWeapon)
 		return;
 	if (ASInventory == nullptr)
 		return;
@@ -1136,7 +1117,7 @@ void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, con
 
 void AASCharacter::ServerChangeFireMode_Implementation()
 {
-	if (bDead)
+	if (bDead || bChangeWeapon)
 		return;
 
 	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
@@ -1173,10 +1154,7 @@ void AASCharacter::ServerBeginReload_Implementation()
 		return;
 	}
 
-	if (bReloading)
-		return;
-
-	if (GetCharacterMovement()->IsFalling())
+	if (GetCharacterMovement()->IsFalling() || bReloading || bChangeWeapon)
 		return;
 
 	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
@@ -1192,13 +1170,72 @@ void AASCharacter::ServerBeginReload_Implementation()
 		ServerSprintEnd();
 	}
 
-	if (GetShootingStance() != EShootingStanceType::None)
+	if (GetShootingStance() == EShootingStanceType::Scoping)
 	{
 		ServerChangeShootingStance(EShootingStanceType::None);
 	}
 
 	bReloading = true;
 	ReloadStartTime = FDateTime::Now();
+}
+
+bool AASCharacter::ServerEndReload_Validate()
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (!bReloading)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+	if (!SelectedWeapon.IsValid() || !SelectedWeapon->CanReload())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (FDateTime::Now() - ReloadStartTime < SelectedWeapon->GetReloadTime())
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	return true;
+}
+
+void AASCharacter::ServerEndReload_Implementation()
+{
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+	TArray<UASAmmo*> Ammos = ASInventory->GetAmmos(SelectedWeapon->GetAmmoType());
+
+	if (SelectedWeapon->Reload(Ammos))
+	{
+		bReloading = false;
+	}
+}
+
+void AASCharacter::MulticastCancelReload_Implementation()
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		bReloading = false;
+	}
+	else
+	{
+		if (USkeletalMeshComponent* SkMesh = GetMesh())
+		{
+			if (auto AnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance()))
+			{
+				AnimInstance->Montage_Stop(0.1f);
+			}
+		}
+	}
 }
 
 void AASCharacter::OnRep_bReloading(bool OldbReloading)

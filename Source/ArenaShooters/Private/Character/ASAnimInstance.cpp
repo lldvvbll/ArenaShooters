@@ -50,6 +50,8 @@ void UASAnimInstance::NativeBeginPlay()
 	}
 
 	bLocallyControlled = ASChar->IsLocallyControlled();
+
+	OnMontageEnded.AddDynamic(this, &UASAnimInstance::OnMontageEnd);
 }
 
 bool UASAnimInstance::IsActualSprinted() const
@@ -97,10 +99,37 @@ void UASAnimInstance::PlayReloadMontage()
 	}
 }
 
-void UASAnimInstance::AnimNotify_EndReload()
+void UASAnimInstance::PlayEquipMontage()
 {
-	if (IsValid(ASChar))
+	switch (CurrentWeaponType)
 	{
-		ASChar->ServerEndReload();
+	case EWeaponType::Pistol:
+		{
+			Montage_Play(PistolEquipMontage, 2.5f);
+		}
+		break;
+	case EWeaponType::AssaultRifle:
+		{
+			Montage_Play(AREquipMontage, 2.5f);
+		}
+		break;
+	default:
+		checkNoEntry();
+		break;
+	}
+}
+
+void UASAnimInstance::OnMontageEnd(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage == nullptr)
+		return;
+
+	if (Montage == PistolReloadMontage || Montage == ARReloadMontage)
+	{
+		OnReloadEnd.Broadcast();
+	}
+	else if (Montage == PistolEquipMontage || Montage == AREquipMontage)
+	{
+		OnChangeWeaponEnd.Broadcast();
 	}
 }

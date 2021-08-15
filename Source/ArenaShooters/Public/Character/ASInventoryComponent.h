@@ -42,7 +42,7 @@ public:
 	bool InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem);
 	bool InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem);
 
-	void SelectWeapon(EWeaponSlotType SlotType);
+	bool SelectWeapon(EWeaponSlotType SlotType);
 
 	ItemBoolPair RemoveItem(UASItem* InItem);
 
