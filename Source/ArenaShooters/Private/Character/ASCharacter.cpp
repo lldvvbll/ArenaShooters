@@ -328,7 +328,7 @@ void AASCharacter::ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, U
 	MulticastPlayPickUpItemMontage();
 
 	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewWeapon->GetOwner());
-	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
+	if (!IsValid(DroppedItemActor))
 	{
 		AS_LOG_S(Error);
 		return;
@@ -366,7 +366,7 @@ void AASCharacter::ServerPickUpArmor_Implementation(EArmorSlotType SlotType, UAS
 	MulticastPlayPickUpItemMontage();
 
 	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewArmor->GetOwner());
-	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
+	if (!IsValid(DroppedItemActor))
 	{
 		AS_LOG_S(Error);
 		return;
@@ -444,7 +444,7 @@ void AASCharacter::ServerPickUpInventoryItem_Implementation(UASItem* NewItem)
 	MulticastPlayPickUpItemMontage();
 
 	auto DroppedItemActor = Cast<AASDroppedItemActor>(NewItem->GetOwner());
-	if (DroppedItemActor == nullptr || DroppedItemActor->IsPendingKill())
+	if (!IsValid(DroppedItemActor))
 	{
 		AS_LOG_S(Error);
 		return;

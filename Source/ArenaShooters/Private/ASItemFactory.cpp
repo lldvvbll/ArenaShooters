@@ -91,7 +91,7 @@ bool AASItemFactory::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunc
 
 	for (auto& ASItem : ASItems)
 	{
-		if (ASItem != nullptr && !ASItem->IsPendingKill())
+		if (IsValid(ASItem))
 		{
 			WroteSomething |= Channel->ReplicateSubobject(ASItem, *Bunch, *RepFlags);
 		}

@@ -66,7 +66,7 @@ TArray<TWeakObjectPtr<UASItem>> AASDroppedItemActor::GetItems() const
 
 	for (auto& ASItem : ASItems)
 	{
-		if (ASItem != nullptr && !ASItem->IsPendingKill())
+		if (IsValid(ASItem))
 		{
 			Result.Emplace(ASItem);
 		}
