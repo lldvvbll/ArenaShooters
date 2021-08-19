@@ -89,3 +89,10 @@ enum class EAmmoType : uint8
 	AR_Ammo,
 	Pistol_Ammo,
 };
+
+UENUM(BlueprintType)
+enum class EHealingKitType : uint8
+{
+	None,
+	Small,
+};

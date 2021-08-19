@@ -13,9 +13,6 @@ class ARENASHOOTERS_API UASAmmo : public UASItem
 	GENERATED_BODY()
 
 public:
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	virtual void SetDataAsset(UASItemDataAsset* NewDataAsset) override;
 	virtual void SetCount(int32 NewCount) override;
 
 	EAmmoType GetAmmoType() const;

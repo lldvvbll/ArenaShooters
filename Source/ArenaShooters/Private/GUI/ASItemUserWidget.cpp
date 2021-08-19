@@ -31,7 +31,13 @@ void UASItemUserWidget::SetItem(const TWeakObjectPtr<UASItem>& NewItem)
 
 	if (NameTextBlock != nullptr)
 	{
-		NameTextBlock->SetText(Item->GetItemName());
+		const FText& ItemName = Item->GetItemName();
+
+		NameTextBlock->SetText(ItemName);
+		if (ItemName.ToString().Len() > 15)
+		{
+			NameTextBlock->Font.Size = 15;
+		}
 	}
 
 	if (CountTextBlock != nullptr)

@@ -9,6 +9,49 @@
 #include "DataAssets/ItemDataAssets/ASItemDataAsset.h"
 #include "Character/ASCharacter.h"
 
+UASItem* AASItemFactory::NewASItem(UWorld* World, AActor* NewOwner, UASItemDataAsset* DataAsset, int32 Count/* = 0*/)
+{
+	if (DataAsset == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
+	if (World == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
+
+	auto GameState = World->GetGameState<AASGameState>();
+	if (GameState == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
+
+	AASItemFactory* ItemFactory = GameState->GetASItemFactory();
+	if (ItemFactory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
+
+	auto NewItem = NewObject<UASItem>(World->GetCurrentLevel(), DataAsset->ItemClass);
+	if (NewItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return nullptr;
+	}
+
+	NewItem->SetDataAsset(DataAsset);
+	NewItem->SetOwner(NewOwner);
+	NewItem->SetCount(Count);
+
+	ItemFactory->ASItems.Emplace(NewItem);
+
+	return NewItem;
+}
+
 bool AASItemFactory::DeleteItem(UWorld* World, UASItem* InItem)
 {
 	if (!IsValid(InItem))
@@ -105,47 +148,4 @@ void AASItemFactory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AASItemFactory, ASItems);
-}
-
-UASItem* AASItemFactory::NewASItem(UWorld* World, AActor* NewOwner, UASItemDataAsset* DataAsset, int32 Count/* = 0*/)
-{
-	if (DataAsset == nullptr)
-	{
-		AS_LOG_S(Error);
-		return nullptr;
-	}
-	if (World == nullptr)
-	{
-		AS_LOG_S(Error);
-		return nullptr;
-	}
-
-	auto GameState = World->GetGameState<AASGameState>();
-	if (GameState == nullptr)
-	{
-		AS_LOG_S(Error);
-		return nullptr;
-	}
-
-	AASItemFactory* ItemFactory = GameState->GetASItemFactory();
-	if (ItemFactory == nullptr)
-	{
-		AS_LOG_S(Error);
-		return nullptr;
-	}
-
-	auto NewItem = NewObject<UASItem>(World->GetCurrentLevel(), DataAsset->ItemClass);
-	if (NewItem == nullptr)
-	{
-		AS_LOG_S(Error);
-		return nullptr;
-	}
-
-	NewItem->SetDataAsset(DataAsset);
-	NewItem->SetOwner(NewOwner);
-	NewItem->SetCount(Count);
-
-	ItemFactory->ASItems.Emplace(NewItem);
-
-	return NewItem;
 }

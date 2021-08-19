@@ -6,6 +6,8 @@
 #include "Engine/AssetManager.h"
 #include "ASAssetManager.generated.h"
 
+class UASItemDataAsset;
+
 UCLASS()
 class ARENASHOOTERS_API UASAssetManager : public UAssetManager
 {
@@ -15,9 +17,12 @@ public:
 	static const FPrimaryAssetType WeaponAssetType;
 	static const FPrimaryAssetType ArmorAssetType;
 	static const FPrimaryAssetType AmmoAssetType;
+	static const FPrimaryAssetType HealingKitAssetType;
 
 public:
 	static UASAssetManager& Get();
+
+	UASItemDataAsset* GetDataAsset(const FPrimaryAssetId& PrimaryAssetId, bool bLogWarning = true);
 
 	template <typename T>
 	T* GetDataAsset(const FPrimaryAssetId& PrimaryAssetId, bool bLogWarning = true)

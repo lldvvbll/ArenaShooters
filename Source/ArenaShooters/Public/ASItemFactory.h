@@ -21,6 +21,8 @@ class ARENASHOOTERS_API AASItemFactory : public AActor
 	GENERATED_BODY()
 	
 public:
+	static UASItem* NewASItem(UWorld* World, AActor* NewOwner, UASItemDataAsset* DataAsset, int32 Count = 0);
+
 	template <typename ItemT, typename ItemDataAssetT>
 	static ItemT* NewASItem(UWorld* World, AActor* NewOwner, ItemDataAssetT* DataAsset, int32 Count = 0)
 	{
@@ -37,9 +39,6 @@ public:
 
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-private:
-	static UASItem* NewASItem(UWorld* World, AActor* NewOwner, UASItemDataAsset* DataAsset, int32 Count = 0);
 
 private:
 	UPROPERTY(Replicated)

@@ -5,17 +5,6 @@
 #include "DataAssets/ItemDataAssets/ASAmmoDataAsset.h"
 #include "Net/UnrealNetwork.h"
 
-void UASAmmo::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-}
-
-void UASAmmo::SetDataAsset(UASItemDataAsset* NewDataAsset)
-{
-	Super::SetDataAsset(NewDataAsset);
-}
-
 void UASAmmo::SetCount(int32 NewCount)
 {
 	auto AmmoDA = Cast<UASAmmoDataAsset>(DataAsset);

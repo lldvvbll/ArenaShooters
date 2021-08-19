@@ -17,6 +17,7 @@ class UASItem;
 class UASWeapon;
 class UASArmor;
 class UASAmmo;
+class UASHealingKit;
 class AASWeaponActor;
 class AASArmorActor;
 class AASDroppedItemActor;
@@ -80,6 +81,7 @@ public:
 	void PickUpWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon);
 	void PickUpArmor(EArmorSlotType SlotType, UASArmor* NewArmor);
 	void PickUpInventoryItem(UASItem* NewItem);
+	void DropItem(UASItem* InItem);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastPlayPickUpItemMontage();
@@ -108,6 +110,8 @@ protected:
 	void ReleasedShootButton();
 	void ChangeFireMode();
 	void Reload();
+	void HealingKit();
+	void DoFunction();
 
 	void Shoot();
 	void ResetAimKeyState();
@@ -174,9 +178,15 @@ protected:
 	void ServerBeginReload_Implementation();
 
 	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerCompleteReload();
+	bool ServerCompleteReload_Validate();
+	void ServerCompleteReload_Implementation();
+
+	UFUNCTION(Server, Reliable)
 	void ServerEndReload();
-	bool ServerEndReload_Validate();
 	void ServerEndReload_Implementation();
+
+	void EndReload();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastCancelReload();
@@ -189,6 +199,28 @@ protected:
 
 	UFUNCTION()
 	void OnRep_bDead();
+
+	UFUNCTION(Server, Reliable)
+	void ServerBeginHealingKit(UASHealingKit* InHealingKit);
+	void ServerBeginHealingKit_Implementation(UASHealingKit* InHealingKit);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerCompleteHealingKit();
+	bool ServerCompleteHealingKit_Validate();
+	void ServerCompleteHealingKit_Implementation();
+
+	UFUNCTION(Server, Reliable)
+	void ServerEndHealingKit();
+	void ServerEndHealingKit_Implementation();
+
+	void EndHealingKit();
+
+	UFUNCTION()
+	void OnRep_bUseHealingKit(bool OldbUseHealingKit);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastCancelUseHealingKit();
+	void MulticastCancelUseHealingKit_Implementation();
 
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
@@ -246,8 +278,11 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_bSprinted)
 	bool bSprinted;
 
-	UPROPERTY(VisibleAnywhere, Category = Movement, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 	float SprintSpeedRate;
+
+	UPROPERTY(EditDefaultsOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
+	float UseHealingKitSpeedRate;
 
 	UPROPERTY(Replicated)
 	float TurnValue;
@@ -286,6 +321,15 @@ private:
 	bool bChangeWeapon;
 
 	bool bShownInventoryWidget;
+
+	UPROPERTY(ReplicatedUsing = OnRep_bUseHealingKit)
+	bool bUseHealingKit;
+
+	UPROPERTY()
+	UASHealingKit* UsingHealingKit;
+
+	FDateTime HealingKitStartTime;
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

@@ -18,6 +18,7 @@
 #include "Item/ASWeapon.h"
 #include "Item/ASArmor.h"
 #include "Item/ASAmmo.h"
+#include "Item/ASHealingKit.h"
 #include "ItemActor/ASWeaponActor.h"
 #include "ItemActor/ASArmorActor.h"
 #include "ItemActor/ASBullet.h"
@@ -38,7 +39,8 @@ AASCharacter::AASCharacter()
 	AimingCamOffset = FVector(0.0f, 45.0f, 75.0f);
 	AimingCamArmLength = 80.0f;
 	AimingSpeedRate = 0.5f;
-	SprintSpeedRate = 1.6f;
+	SprintSpeedRate = 1.4f;
+	UseHealingKitSpeedRate = 0.5f;
 	bPressedAimButton = false;
 	AimKeyHoldTime = 0.0f;
 	MaxAimKeyHoldTime = 0.3f;
@@ -75,7 +77,7 @@ AASCharacter::AASCharacter()
 	Capsule->SetCollisionProfileName(TEXT("ASCharacter"));
 
 	UCharacterMovementComponent* CharMoveComp = GetCharacterMovement();
-	CharMoveComp->JumpZVelocity = 600.f;
+	CharMoveComp->JumpZVelocity = 500.0f;
 	CharMoveComp->AirControl = 0.0f;
 	CharMoveComp->GetNavAgentPropertiesRef().bCanCrouch = true;
 	CharMoveComp->bCanWalkOffLedgesWhenCrouching = true;
@@ -92,8 +94,11 @@ void AASCharacter::PostInitializeComponents()
 		ASAnimInstance = Cast<UASAnimInstance>(SkMesh->GetAnimInstance());
 		if (ASAnimInstance != nullptr)
 		{
-			ASAnimInstance->OnReloadEnd.AddUObject(this, &AASCharacter::ServerEndReload);
+			ASAnimInstance->OnReloadComplete.AddUObject(this, &AASCharacter::ServerCompleteReload);
+			ASAnimInstance->OnReloadEnd.AddUObject(this, &AASCharacter::EndReload);
 			ASAnimInstance->OnChangeWeaponEnd.AddUObject(this, &AASCharacter::ServerEndSelectWeapon);
+			ASAnimInstance->OnUseHealingKitComplete.AddUObject(this, &AASCharacter::ServerCompleteHealingKit);
+			ASAnimInstance->OnUseHealingKitEnd.AddUObject(this, &AASCharacter::EndHealingKit);
 		}
 	}
 }
@@ -138,6 +143,7 @@ void AASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AASCharacter, bReloading);
 	DOREPLIFETIME(AASCharacter, bDead);
 	DOREPLIFETIME(AASCharacter, bChangeWeapon);
+	DOREPLIFETIME(AASCharacter, bUseHealingKit);
 }
 
 void AASCharacter::Jump()
@@ -169,6 +175,11 @@ void AASCharacter::Falling()
 		if (ShootingStance != EShootingStanceType::None)
 		{
 			ServerChangeShootingStance(EShootingStanceType::None);
+		}
+
+		if (bUseHealingKit)
+		{
+			MulticastCancelUseHealingKit();
 		}
 	}
 }
@@ -322,6 +333,12 @@ void AASCharacter::ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, U
 		return;
 	}
 
+	if (bUseHealingKit)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
 	if (!ASInventory->IsSuitableWeaponSlot(SlotType, NewWeapon))
 		return;
 
@@ -355,6 +372,12 @@ void AASCharacter::ServerPickUpWeapon_Implementation(EWeaponSlotType SlotType, U
 void AASCharacter::ServerPickUpArmor_Implementation(EArmorSlotType SlotType, UASArmor* NewArmor)
 {
 	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (bUseHealingKit)
 	{
 		AS_LOG_S(Error);
 		return;
@@ -404,6 +427,12 @@ void AASCharacter::ServerDropItem_Implementation(UASItem* InItem)
 		return;
 	}
 
+	if (bUseHealingKit)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
 	if (bReloading)
 	{
 		TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
@@ -433,6 +462,12 @@ void AASCharacter::ServerDropItem_Implementation(UASItem* InItem)
 void AASCharacter::ServerPickUpInventoryItem_Implementation(UASItem* NewItem)
 {
 	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (bUseHealingKit)
 	{
 		AS_LOG_S(Error);
 		return;
@@ -504,6 +539,12 @@ void AASCharacter::PickUpWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon)
 		return;
 	}
 
+	if (bUseHealingKit)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
 	if (!ASInventory->IsSuitableWeaponSlot(SlotType, NewWeapon))
 	{
 		AS_LOG_S(Error);
@@ -516,6 +557,12 @@ void AASCharacter::PickUpWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon)
 void AASCharacter::PickUpArmor(EArmorSlotType SlotType, UASArmor* NewArmor)
 {
 	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (bUseHealingKit)
 	{
 		AS_LOG_S(Error);
 		return;
@@ -538,6 +585,12 @@ void AASCharacter::PickUpInventoryItem(UASItem* NewItem)
 		return;
 	}
 
+	if (bUseHealingKit)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
 	if (!ASInventory->IsEnableToAddItemToInventory(NewItem))
 	{
 		AS_LOG_S(Error);
@@ -545,6 +598,29 @@ void AASCharacter::PickUpInventoryItem(UASItem* NewItem)
 	}
 
 	ServerPickUpInventoryItem(NewItem);
+}
+
+void AASCharacter::DropItem(UASItem* InItem)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (InItem == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (bUseHealingKit)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	ServerDropItem(InItem);
 }
 
 void AASCharacter::MulticastPlayPickUpItemMontage_Implementation()
@@ -591,6 +667,8 @@ void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Shoot", IE_Released, this, &AASCharacter::ReleasedShootButton);
 	PlayerInputComponent->BindAction("ChangeFireMode", IE_Pressed, this, &AASCharacter::ChangeFireMode);
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AASCharacter::Reload);
+	PlayerInputComponent->BindAction("HealingKit", IE_Pressed, this, &AASCharacter::HealingKit);
+	PlayerInputComponent->BindAction("Function", IE_Pressed, this, &AASCharacter::DoFunction);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AASCharacter::MoveRight);
@@ -721,7 +799,8 @@ void AASCharacter::ReleasedAimButton()
 	case EShootingStanceType::None:
 		if (bPressedAimButton)
 		{
-			if (!bReloading && !bChangeWeapon && !bShownInventoryWidget)
+			//if (!bReloading && !bChangeWeapon && !bShownInventoryWidget && !bUseHealingKit)
+			if (CanAimOrScope())
 			{
 				ServerChangeShootingStance(EShootingStanceType::Scoping);
 			}
@@ -750,7 +829,7 @@ void AASCharacter::SelectMainWeapon()
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Main || bDead || bReloading || bChangeWeapon)
+	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Main || bDead || bReloading || bChangeWeapon || bUseHealingKit)
 		return;
 
 	ServerSelectWeapon(EWeaponSlotType::Main);
@@ -760,7 +839,7 @@ void AASCharacter::SelectSubWeapon()
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Sub || bDead || bReloading || bChangeWeapon)
+	if (ASInventory->GetSelectedWeaponSlotType() == EWeaponSlotType::Sub || bDead || bReloading || bChangeWeapon || bUseHealingKit)
 		return;
 
 	ServerSelectWeapon(EWeaponSlotType::Sub);
@@ -768,7 +847,7 @@ void AASCharacter::SelectSubWeapon()
 
 void AASCharacter::PressedShootButton()
 {
-	if (bReloading || bDead || bChangeWeapon)
+	if (bReloading || bDead || bChangeWeapon || bUseHealingKit)
 		return;
 
 	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
@@ -803,7 +882,7 @@ void AASCharacter::ReleasedShootButton()
 
 void AASCharacter::ChangeFireMode()
 {
-	if (bDead)
+	if (bDead || bReloading || bChangeWeapon || bUseHealingKit)
 		return;
 
 	ServerChangeFireMode();
@@ -823,7 +902,7 @@ void AASCharacter::Reload()
 		return;
 	}
 
-	if (GetCharacterMovement()->IsFalling() || bDead)
+	if (GetCharacterMovement()->IsFalling() || bDead || bUseHealingKit)
 		return;
 
 	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
@@ -837,9 +916,47 @@ void AASCharacter::Reload()
 	ServerBeginReload();
 }
 
+void AASCharacter::HealingKit()
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (bUseHealingKit)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (GetCharacterMovement()->IsFalling() || bDead)
+		return;
+
+	//if (ASStatus != nullptr && ASStatus->GetCurrentHealth() >= ASStatus->GetMaxHealth())
+	//	return;
+
+	TArray<UASHealingKit*> HealingKits = ASInventory->GetHealingKits();
+	for (auto& HealingKit : HealingKits)
+	{
+		if (HealingKit == nullptr)
+			continue;
+
+		if (HealingKit->GetCount() <= 0)
+			continue;
+
+		ServerBeginHealingKit(HealingKit);
+		break;
+	}
+}
+
+void AASCharacter::DoFunction()
+{
+}
+
 void AASCharacter::Shoot()
 {
-	if (ShootingStance == EShootingStanceType::None || bReloading || bDead)
+	if (ShootingStance == EShootingStanceType::None || bReloading || bDead || bChangeWeapon || bUseHealingKit)
 		return;
 	if (ASInventory == nullptr)
 		return;
@@ -921,6 +1038,11 @@ void AASCharacter::ServerSprint_Implementation()
 	if (bSprinted || ShootingStance != EShootingStanceType::None || bReloading || bDead)
 		return;
 
+	if (bUseHealingKit)
+	{
+		MulticastCancelUseHealingKit();
+	}
+
 	SetMaxWalkSpeedRate(SprintSpeedRate);
 	bSprinted = true;
 }
@@ -964,7 +1086,7 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 {
 	if (ASInventory == nullptr)
 		return;
-	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType || bDead || bReloading || bChangeWeapon)
+	if (ASInventory->GetSelectedWeaponSlotType() == WeaponSlotType || bDead || bReloading || bChangeWeapon || bUseHealingKit)
 		return;
 
 	ServerChangeShootingStance(EShootingStanceType::None);
@@ -1021,7 +1143,7 @@ void AASCharacter::OnRep_bChangeWeapon()
 
 void AASCharacter::ServerChangeShootingStance_Implementation(EShootingStanceType NewShootingStance)
 {
-	if (ShootingStance == NewShootingStance)
+	if (ShootingStance == NewShootingStance || bUseHealingKit)
 		return;
 
 	if (NewShootingStance != EShootingStanceType::None && bChangeWeapon)
@@ -1112,7 +1234,8 @@ void AASCharacter::OnRep_ShootingStance(EShootingStanceType OldShootingStance)
 bool AASCharacter::CanAimOrScope() const
 {
 	return (ShootingStance == EShootingStanceType::None) && (GetUsingWeaponType() != EWeaponType::None) && 
-		!GetCharacterMovement()->IsFalling() && !bReloading && !bDead && !bChangeWeapon && !bShownInventoryWidget;
+		!GetCharacterMovement()->IsFalling() && !bReloading && !bDead && !bChangeWeapon && !bShownInventoryWidget &&
+		!bUseHealingKit;
 }
 
 void AASCharacter::StartAiming()
@@ -1203,7 +1326,7 @@ void AASCharacter::EndScoping()
 
 void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation)
 {
-	if (ShootingStance == EShootingStanceType::None || bReloading || bDead || bChangeWeapon)
+	if (ShootingStance == EShootingStanceType::None || bReloading || bDead || bChangeWeapon || bUseHealingKit)
 		return;
 	if (ASInventory == nullptr)
 		return;
@@ -1221,7 +1344,7 @@ void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, con
 
 void AASCharacter::ServerChangeFireMode_Implementation()
 {
-	if (bDead || bChangeWeapon)
+	if (bDead || bReloading || bChangeWeapon || bUseHealingKit)
 		return;
 
 	TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
@@ -1258,7 +1381,7 @@ void AASCharacter::ServerBeginReload_Implementation()
 		return;
 	}
 
-	if (GetCharacterMovement()->IsFalling() || bReloading || bChangeWeapon)
+	if (GetCharacterMovement()->IsFalling() || bReloading || bChangeWeapon || bUseHealingKit)
 		return;
 
 	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
@@ -1283,7 +1406,7 @@ void AASCharacter::ServerBeginReload_Implementation()
 	ReloadStartTime = FDateTime::Now();
 }
 
-bool AASCharacter::ServerEndReload_Validate()
+bool AASCharacter::ServerCompleteReload_Validate()
 {
 	if (ASInventory == nullptr)
 	{
@@ -1304,31 +1427,39 @@ bool AASCharacter::ServerEndReload_Validate()
 		return false;
 	}
 
-	if (FDateTime::Now() - ReloadStartTime < SelectedWeapon->GetReloadTime())
-	{
-		AS_LOG_S(Error);
-		return false;
-	}
-
 	return true;
+}
+
+void AASCharacter::ServerCompleteReload_Implementation()
+{
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+
+	if (FDateTime::Now() - ReloadStartTime >= SelectedWeapon->GetReloadTime())
+	{
+		TArray<UASAmmo*> Ammos = ASInventory->GetAmmos(SelectedWeapon->GetAmmoType());
+		SelectedWeapon->Reload(Ammos);
+	}
 }
 
 void AASCharacter::ServerEndReload_Implementation()
 {
-	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
-	TArray<UASAmmo*> Ammos = ASInventory->GetAmmos(SelectedWeapon->GetAmmoType());
+	bReloading = false;
+	ReloadStartTime = FDateTime::MaxValue();
+}
 
-	if (SelectedWeapon->Reload(Ammos))
-	{
-		bReloading = false;
-	}
+void AASCharacter::EndReload()
+{
+	if (!bReloading)
+		return;
+
+	ServerEndReload();
 }
 
 void AASCharacter::MulticastCancelReload_Implementation()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		bReloading = false;
+		ServerEndReload();
 	}
 	else
 	{
@@ -1357,6 +1488,26 @@ void AASCharacter::Die()
 
 	if (GetLocalRole() == ROLE_Authority)
 	{
+		if (bSprinted)
+		{
+			ServerSprintEnd();
+		}
+
+		if (ShootingStance != EShootingStanceType::None)
+		{
+			ServerChangeShootingStance(EShootingStanceType::None);
+		}
+
+		if (bReloading)
+		{
+			MulticastCancelReload();
+		}
+
+		if (bUseHealingKit)
+		{
+			MulticastCancelUseHealingKit();
+		}
+
 		bDead = true;
 		SetCanBeDamaged(false);
 
@@ -1392,6 +1543,185 @@ void AASCharacter::OnRep_bDead()
 		if (auto AnimInstance = Cast<UASAnimInstance>(SkeletalMeshComp->GetAnimInstance()))
 		{
 			AnimInstance->StopAllMontages(0.2f);
+		}
+	}
+}
+
+void AASCharacter::ServerBeginHealingKit_Implementation(UASHealingKit* InHealingKit)
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (bUseHealingKit)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (InHealingKit == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (InHealingKit->GetCount() <= 0)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (!ASInventory->Contains(InHealingKit))
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (GetCharacterMovement()->IsFalling() || bDead)
+		return;
+
+	//if (ASStatus != nullptr && ASStatus->GetCurrentHealth() >= ASStatus->GetMaxHealth())
+	//	return;
+
+	if (bSprinted)
+	{
+		ServerSprintEnd();
+	}
+
+	if (GetShootingStance() != EShootingStanceType::None)
+	{
+		ServerChangeShootingStance(EShootingStanceType::None);
+	}
+
+	if (bReloading)
+	{
+		MulticastCancelReload();
+	}
+
+	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
+	if (CurWeapon.IsValid())
+	{
+		ASInventory->ReattachWeaponActor(CurWeapon.Get(), UASInventoryComponent::GetProperWeaponSocketName(CurWeapon->GetWeaponType(), false));
+	}
+
+	SetMaxWalkSpeedRate(UseHealingKitSpeedRate);
+
+	bUseHealingKit = true;
+	UsingHealingKit = InHealingKit;
+	HealingKitStartTime = FDateTime::Now();
+}
+
+bool AASCharacter::ServerCompleteHealingKit_Validate()
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (!bUseHealingKit)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (!IsValid(UsingHealingKit))
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (UsingHealingKit->GetCount() <= 0)
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	if (!ASInventory->Contains(UsingHealingKit))
+	{
+		AS_LOG_S(Error);
+		return false;
+	}
+
+	return true;
+}
+
+void AASCharacter::ServerCompleteHealingKit_Implementation()
+{
+	if (ASInventory == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	if (FDateTime::Now() - HealingKitStartTime >= UsingHealingKit->GetUsingTime())
+	{
+		UsingHealingKit->ModifyCount(-1);
+
+		if (ASStatus != nullptr)
+		{
+			ASStatus->ModifyCurrentHealth(UsingHealingKit->GetRecoveryPoint());
+		}
+		else
+		{
+			AS_LOG_S(Error);
+		}
+	}
+}
+
+void AASCharacter::ServerEndHealingKit_Implementation()
+{
+	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
+	if (CurWeapon.IsValid())
+	{
+		ASInventory->ReattachWeaponActor(CurWeapon.Get(), UASInventoryComponent::GetProperWeaponSocketName(CurWeapon->GetWeaponType(), true));
+	}
+
+	SetMaxWalkSpeedRate(1.0f);
+
+	bUseHealingKit = false;
+	UsingHealingKit = nullptr;
+	HealingKitStartTime = FDateTime::MaxValue();
+}
+
+void AASCharacter::EndHealingKit()
+{
+	if (!bUseHealingKit)
+		return;
+
+	ServerEndHealingKit();
+}
+
+void AASCharacter::OnRep_bUseHealingKit(bool OldbUseHealingKit)
+{
+	if (bUseHealingKit && !OldbUseHealingKit)
+	{
+		if (ASAnimInstance != nullptr)
+		{
+			ASAnimInstance->PlayUseHealingKitMontage();
+		}
+
+		SetMaxWalkSpeedRate(UseHealingKitSpeedRate);
+	}
+	else if (!bUseHealingKit && OldbUseHealingKit)
+	{
+		SetMaxWalkSpeedRate(1.0f);
+	}
+}
+
+void AASCharacter::MulticastCancelUseHealingKit_Implementation()
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		ServerEndHealingKit();
+	}
+	else
+	{
+		if (ASAnimInstance != nullptr)
+		{
+			ASAnimInstance->Montage_Stop(0.1f);
 		}
 	}
 }

@@ -11,6 +11,7 @@ class UASItem;
 class UASWeapon;
 class UASArmor;
 class UASAmmo;
+class UASHealingKit;
 class UASWeaponDataAsset;
 class UASArmorDataAsset;
 class AASWeaponActor;
@@ -38,6 +39,7 @@ public:
 	static EArmorSlotType GetSuitableArmorSlotType(EArmorType ArmorType);
 	static bool IsSuitableWeaponSlot(EWeaponSlotType SlotType, const UASWeapon* Weapon);
 	static bool IsSuitableArmorSlot(EArmorSlotType SlotType, const UASArmor* Armor);
+	static const FName& GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing);
 
 	bool InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem);
 	bool InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem);
@@ -60,6 +62,9 @@ public:
 	bool Contains(UASItem* InItem) const;
 
 	TArray<UASAmmo*> GetAmmos(EAmmoType AmmoType) const;
+	TArray<UASHealingKit*> GetHealingKits() const;
+
+	void ReattachWeaponActor(UASWeapon* InWeapon, const FName& SocketName) const;
 
 private:
 	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);
@@ -75,7 +80,6 @@ private:
 	void SpawnArmorActor(UASArmor& Armor, const FName& AttachSocket);
 
 	EWeaponSlotType GetWeaponSlotTypeFromWeapon(UASWeapon* InWeapon);
-	const FName& GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing) const;
 
 	UFUNCTION()
 	void OnRep_WeaponSlots(TArray<UASItem*>& OldWeaponSlots);

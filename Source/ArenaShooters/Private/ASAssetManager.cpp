@@ -2,10 +2,12 @@
 
 
 #include "ASAssetManager.h"
+#include "DataAssets/ItemDataAssets/ASItemDataAsset.h"
 
 const FPrimaryAssetType	UASAssetManager::WeaponAssetType = TEXT("Weapon");
 const FPrimaryAssetType	UASAssetManager::ArmorAssetType = TEXT("Armor");
 const FPrimaryAssetType UASAssetManager::AmmoAssetType = TEXT("Ammo");
+const FPrimaryAssetType UASAssetManager::HealingKitAssetType = TEXT("HealingKit");
 
 UASAssetManager& UASAssetManager::Get()
 {
@@ -17,4 +19,15 @@ UASAssetManager& UASAssetManager::Get()
 	}
 
 	return *This;
+}
+
+UASItemDataAsset* UASAssetManager::GetDataAsset(const FPrimaryAssetId& PrimaryAssetId, bool bLogWarning/* = true*/)
+{
+	auto DataAsset = GetPrimaryAssetObject<UASItemDataAsset>(PrimaryAssetId);
+	if (DataAsset == nullptr)
+	{
+		DataAsset = ForceLoadDataAsset<UASItemDataAsset>(PrimaryAssetId, bLogWarning);
+	}
+
+	return DataAsset;
 }

@@ -8,10 +8,12 @@
 #include "Item/ASWeapon.h"
 #include "Item/ASArmor.h"
 #include "Item/ASAmmo.h"
+#include "Item/ASHealingKit.h"
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
 #include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
 #include "DataAssets/ItemDataAssets/ASAmmoDataAsset.h"
+#include "DataAssets/ItemDataAssets/ASHealingKitDataAsset.h"
 #include "ASItemFactory.h"
 
 AASDroppedItemActor::AASDroppedItemActor()
@@ -137,27 +139,11 @@ void AASDroppedItemActor::BeginPlay()
 			if (!ItemDataAssetId.IsValid())
 				continue;
 
-			if (ItemDataAssetId.PrimaryAssetType == UASAssetManager::WeaponAssetType)
-			{
-				if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(ItemDataAssetId))
-				{
-					ASItems.Emplace(AASItemFactory::NewASItem<UASWeapon>(GetWorld(), this, WeaponDataAsset));
-				}
-			}
-			else if (ItemDataAssetId.PrimaryAssetType == UASAssetManager::ArmorAssetType)
-			{
-				if (auto ArmorDataAsset = UASAssetManager::Get().GetDataAsset<UASArmorDataAsset>(ItemDataAssetId))
-				{
-					ASItems.Emplace(AASItemFactory::NewASItem<UASArmor>(GetWorld(), this, ArmorDataAsset));
-				}
-			}
-			else if (ItemDataAssetId.PrimaryAssetType == UASAssetManager::AmmoAssetType)
-			{
-				if (auto AmmoDataAsset = UASAssetManager::Get().GetDataAsset<UASAmmoDataAsset>(ItemDataAssetId))
-				{
-					ASItems.Emplace(AASItemFactory::NewASItem<UASAmmo>(GetWorld(), this, AmmoDataAsset, Count));
-				}
-			}
+			UASItemDataAsset* ItemDataAsset = UASAssetManager::Get().GetDataAsset(ItemDataAssetId);
+			if (ItemDataAsset == nullptr)
+				continue;
+
+			ASItems.Emplace(AASItemFactory::NewASItem(GetWorld(), this, ItemDataAsset, Count));
 		}
 	}	
 }

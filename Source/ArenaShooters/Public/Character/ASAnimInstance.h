@@ -27,17 +27,33 @@ public:
 	void PlayReloadMontage();
 	void PlayEquipMontage();
 	void PlayPickUpItemMontage();
+	void PlayUseHealingKitMontage();
 
 protected:
 	UFUNCTION()
 	void OnMontageEnd(UAnimMontage* Montage, bool bInterrupted);
 
+	UFUNCTION()
+	void AnimNotify_ReloadComplete();
+
+	UFUNCTION()
+	void AnimNotify_UseHealingKitComplete();
+
 public:
+	DECLARE_EVENT(UASInventoryComponent, FOnReloadCompleteEvent);
+	FOnReloadCompleteEvent OnReloadComplete;
+
 	DECLARE_EVENT(UASInventoryComponent, FOnReloadEndEvent);
 	FOnReloadEndEvent OnReloadEnd;
 
 	DECLARE_EVENT(UASInventoryComponent, FOnChangeWeaponEndEvent);
 	FOnChangeWeaponEndEvent OnChangeWeaponEnd;
+
+	DECLARE_EVENT(UASInventoryComponent, FOnUseHealingKitCompleteEvent);
+	FOnUseHealingKitCompleteEvent OnUseHealingKitComplete;
+
+	DECLARE_EVENT(UASInventoryComponent, FOnUseHealingKitEndEvent);
+	FOnUseHealingKitEndEvent OnUseHealingKitEnd;
 
 private:
 	UPROPERTY()
@@ -63,6 +79,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* PickUpItemMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* UseHealingKitMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	bool bInAir;

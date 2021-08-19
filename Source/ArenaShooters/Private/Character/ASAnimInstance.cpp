@@ -124,6 +124,11 @@ void UASAnimInstance::PlayPickUpItemMontage()
 	Montage_Play(PickUpItemMontage);
 }
 
+void UASAnimInstance::PlayUseHealingKitMontage()
+{
+	Montage_Play(UseHealingKitMontage);
+}
+
 void UASAnimInstance::OnMontageEnd(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (Montage == nullptr)
@@ -137,4 +142,18 @@ void UASAnimInstance::OnMontageEnd(UAnimMontage* Montage, bool bInterrupted)
 	{
 		OnChangeWeaponEnd.Broadcast();
 	}
+	else if (Montage == UseHealingKitMontage)
+	{
+		OnUseHealingKitEnd.Broadcast();
+	}
+}
+
+void UASAnimInstance::AnimNotify_ReloadComplete()
+{
+	OnReloadComplete.Broadcast();
+}
+
+void UASAnimInstance::AnimNotify_UseHealingKitComplete()
+{
+	OnUseHealingKitComplete.Broadcast();
 }
