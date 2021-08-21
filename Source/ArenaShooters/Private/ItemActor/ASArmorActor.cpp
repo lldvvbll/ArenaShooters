@@ -9,8 +9,11 @@ AASArmorActor::AASArmorActor()
 	bReplicates = true;
 	SetCanBeDamaged(false);
 
+	EmptyRootComp = CreateDefaultSubobject<USceneComponent>(TEXT("EmptyRootComp"));
+
 	ArmorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ArmorMesh"));
 	ArmorMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	ArmorMesh->SetupAttachment(EmptyRootComp);
 
-	RootComponent = ArmorMesh;
+	RootComponent = EmptyRootComp;
 }

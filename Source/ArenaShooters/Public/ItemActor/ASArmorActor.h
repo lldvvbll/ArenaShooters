@@ -16,5 +16,8 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
+	USceneComponent* EmptyRootComp;
+
+	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* ArmorMesh;
 };
