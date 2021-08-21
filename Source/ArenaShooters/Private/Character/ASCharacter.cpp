@@ -10,6 +10,7 @@
 #include "Character/ASActionComponent.h"
 #include "Character/ASInventoryComponent.h"
 #include "Character/ASStatusComponent.h"
+#include "Character/ASDamageComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ASAssetManager.h"
 #include "DataAssets/ItemDataAssets/ASWeaponDataAsset.h"
@@ -25,7 +26,6 @@
 #include "ItemActor/ASDroppedItemActor.h"
 #include "GameFramework/PlayerInput.h"
 #include "Character/ASAnimInstance.h"
-#include "ASGameInstance.h"
 #include "ASItemFactory.h"
 
 AASCharacter::AASCharacter()
@@ -67,6 +67,8 @@ AASCharacter::AASCharacter()
 	InteractionBox->SetCollisionProfileName(TEXT("Interaction"));
 	InteractionBox->SetBoxExtent(FVector(130.0f, 130.0f, 95.0f), false);
 	InteractionBox->SetupAttachment(RootComponent);
+
+	DamageComp = CreateDefaultSubobject<UASDamageComponent>(TEXT("DamageComp"));
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
@@ -199,17 +201,11 @@ void AASCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimit
 
 	if (MyComp == GetMesh())
 	{
-		if (Other != nullptr && Other->IsA(AASBullet::StaticClass()))
+		if (auto Bullet = Cast<AASBullet>(Other))
 		{
-			auto Bullet = Cast<AASBullet>(Other);
-			auto OtherChar = Cast<AASCharacter>(Other->GetOwner());
-			if (Bullet != nullptr && OtherChar != nullptr)
+			if (DamageComp != nullptr)
 			{
-				float Damage = Bullet->GetDamage();
-				FVector ShotDir = Bullet->GetActorForwardVector();
-				FPointDamageEvent DamageEvent(Damage, Hit, ShotDir, TSubclassOf<UDamageType>(UDamageType::StaticClass()));
-
-				TakeDamage(Damage, DamageEvent, OtherChar->GetController(), Bullet);
+				DamageComp->TakeBulletDamage(Bullet, Hit);
 			}
 		}
 	}
@@ -634,21 +630,14 @@ void AASCharacter::MulticastPlayPickUpItemMontage_Implementation()
 	}
 }
 
-float AASCharacter::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent, AController* EventInstigator, AActor* DamageCauser)
+UASStatusComponent* AASCharacter::GetStatusComponent()
 {
-	float ActualDamage = Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);
+	return ASStatus;
+}
 
-	if (auto GameInst = GetGameInstance<UASGameInstance>())
-	{
-		ActualDamage *= GameInst->GetDamageRateByBone(GetMesh(), PointDamageEvent.HitInfo.BoneName);
-	}
-
-	if (ASStatus != nullptr)
-	{
-		ASStatus->ModifyCurrentHealth(-ActualDamage);
-	}
-
-	return ActualDamage;
+bool AASCharacter::IsDead() const
+{
+	return bDead;
 }
 
 void AASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

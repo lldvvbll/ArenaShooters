@@ -12,6 +12,7 @@ class UCameraComponent;
 class UASActionComponent;
 class UASInventoryComponent;
 class UASStatusComponent;
+class UASDamageComponent;
 class UASAnimInstance;
 class UASItem;
 class UASWeapon;
@@ -87,9 +88,10 @@ public:
 	void MulticastPlayPickUpItemMontage();
 	void MulticastPlayPickUpItemMontage_Implementation();
 
+	UASStatusComponent* GetStatusComponent();
+	bool IsDead() const;
+
 protected:
-	virtual float InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent, 
-		AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 
@@ -253,6 +255,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	UBoxComponent* InteractionBox;
+
+	UPROPERTY(EditDefaultsOnly)
+	UASDamageComponent* DamageComp;
 
 	UPROPERTY()
 	UASAnimInstance* ASAnimInstance;
