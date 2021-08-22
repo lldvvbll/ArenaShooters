@@ -29,6 +29,7 @@ public:
 	void SetCurrentDurability(float NewDurability);
 	void ModifyDurability(float Value);
 	float TakeDamage(float InDamage);
+	bool IsCoveringBone(const FName& BoneName) const;
 
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)

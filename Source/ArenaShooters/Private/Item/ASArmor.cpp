@@ -79,9 +79,23 @@ float UASArmor::TakeDamage(float InDamage)
 			ModifyDurability(-ReducedDamage);
 
 			TakenDamage -= ReducedDamage;
+
+			AS_LOG(Warning, TEXT("%s was taken Damage. %f -> %f (-%f), durability: %f"), 
+				*(ArmorDA->ItemName.ToString()), InDamage, TakenDamage, ReducedDamage, CurrentDurability);
 		}
 	}
 
 	return TakenDamage;
+}
+
+bool UASArmor::IsCoveringBone(const FName& BoneName) const
+{
+	auto ArmorDA = Cast<UASArmorDataAsset>(DataAsset);
+	check(ArmorDA);
+
+	if (ArmorDA == nullptr)
+		return false;
+
+	return ArmorDA->CoveringBoneNames.Contains(BoneName);
 }
 

@@ -8,6 +8,7 @@
 #include "ItemActor/ASBullet.h"
 #include "ASAssetManager.h"
 #include "DataAssets/CharacterDataAssets/ASDamageDataAsset.h"
+#include "Item/ASArmor.h"
 
 UASDamageComponent::UASDamageComponent()
 {
@@ -47,15 +48,19 @@ void UASDamageComponent::TakeBulletDamage(AASBullet* InBullet, const FHitResult&
 	float Damage = InBullet->GetDamage();
 	float TakenDamage = Damage;
 
-
+	TArray<TWeakObjectPtr<UASArmor>> CoveringArmors = ASInventory->GetCoveringArmors(InHit.BoneName);
+	for (auto& Armor : CoveringArmors)
+	{
+		TakenDamage = Armor->TakeDamage(TakenDamage);
+	}
 
 	if (DamageDataAsset != nullptr)
 	{
-		Damage *= DamageDataAsset->GetDamageRateByBone(ASChar->GetMesh(), InHit.BoneName);
+		TakenDamage *= DamageDataAsset->GetDamageRateByBone(ASChar->GetMesh(), InHit.BoneName);
 	}
 
-	FPointDamageEvent DamageEvent(Damage, InHit, InBullet->GetActorForwardVector(), nullptr);
-	ASChar->TakeDamage(Damage, DamageEvent, ASChar->GetController(), InBullet);
+	FPointDamageEvent DamageEvent(TakenDamage, InHit, InBullet->GetActorForwardVector(), nullptr);
+	ASChar->TakeDamage(TakenDamage, DamageEvent, ASChar->GetController(), InBullet);
 }
 
 void UASDamageComponent::OnTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)

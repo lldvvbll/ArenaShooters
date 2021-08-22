@@ -43,6 +43,7 @@ public:
 	static bool IsSuitableArmorSlot(EArmorSlotType SlotType, const UASArmor* Armor);
 	
 	FName GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing);
+	FName GetProperArmorSocketName(EArmorType ArmorType);
 
 	bool InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem);
 	bool InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem);
@@ -68,6 +69,8 @@ public:
 	TArray<UASHealingKit*> GetHealingKits() const;
 
 	void ReattachWeaponActor(UASWeapon* InWeapon, const FName& SocketName) const;
+
+	TArray<TWeakObjectPtr<UASArmor>> GetCoveringArmors(const FName& BoneName);
 
 private:
 	ItemBoolPair GetItemFromWeaponSlot(EWeaponSlotType SlotType);

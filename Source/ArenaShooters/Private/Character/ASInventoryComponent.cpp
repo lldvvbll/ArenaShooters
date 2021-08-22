@@ -174,6 +174,26 @@ FName UASInventoryComponent::GetProperWeaponSocketName(EWeaponType WeaponType, b
 	}
 }
 
+FName UASInventoryComponent::GetProperArmorSocketName(EArmorType ArmorType)
+{
+	if (InventoryDataAsset != nullptr)
+	{
+		switch (ArmorType)
+		{
+		case EArmorType::Helmet:
+			return InventoryDataAsset->HelmetSocketName;
+		case EArmorType::Jacket:
+			return InventoryDataAsset->JacketSocketName;
+			break;
+		default:
+			checkNoEntry();
+			break;
+		}
+	}
+
+	return NAME_None;
+}
+
 bool UASInventoryComponent::InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem)
 {
 	if (!IsSuitableWeaponSlot(SlotType, NewWeapon))
@@ -616,6 +636,25 @@ void UASInventoryComponent::ReattachWeaponActor(UASWeapon* InWeapon, const FName
 	WeaponActor->AttachToComponent(ASChar->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, SocketName);
 }
 
+TArray<TWeakObjectPtr<UASArmor>> UASInventoryComponent::GetCoveringArmors(const FName& BoneName)
+{
+	TArray<TWeakObjectPtr<UASArmor>> Armors;
+
+	for (auto& Item : ArmorSlots)
+	{
+		auto Armor = Cast<UASArmor>(Item);
+		if (!IsValid(Armor))
+			continue;
+
+		if (Armor->IsCoveringBone(BoneName))
+		{
+			Armors.Emplace(MakeWeakObjectPtr(Armor));
+		}
+	}
+
+	return Armors;
+}
+
 ItemBoolPair UASInventoryComponent::GetItemFromWeaponSlot(EWeaponSlotType SlotType)
 {
 	ItemBoolPair ResultPair(nullptr, false);
@@ -679,21 +718,7 @@ void UASInventoryComponent::OnArmorInserted(EArmorSlotType SlotType, UASArmor* I
 	if (InsertedArmor == nullptr)
 		return;
 
-	if (InventoryDataAsset != nullptr)
-	{
-		switch (InsertedArmor->GetArmorType())
-		{
-		case EArmorType::Helmet:
-			SpawnArmorActor(*InsertedArmor, InventoryDataAsset->HelmetSocketName);
-			break;
-		case EArmorType::Jacket:
-			SpawnArmorActor(*InsertedArmor, InventoryDataAsset->JacketSocketName);
-			break;
-		default:
-			checkNoEntry();
-			break;
-		}
-	}
+	SpawnArmorActor(*InsertedArmor, GetProperArmorSocketName(InsertedArmor->GetArmorType()));
 }
 
 void UASInventoryComponent::OnWeaponRemoved(EWeaponSlotType SlotType, UASWeapon* RemovedWeapon)

@@ -33,4 +33,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	float DamageReduceRate;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSet<FName> CoveringBoneNames;
 };
