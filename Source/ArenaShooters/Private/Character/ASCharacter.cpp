@@ -68,7 +68,7 @@ AASCharacter::AASCharacter()
 	InteractionBox->SetBoxExtent(FVector(130.0f, 130.0f, 95.0f), false);
 	InteractionBox->SetupAttachment(RootComponent);
 
-	DamageComp = CreateDefaultSubobject<UASDamageComponent>(TEXT("DamageComp"));
+	ASDamageComp = CreateDefaultSubobject<UASDamageComponent>(TEXT("DamageComp"));
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
@@ -203,9 +203,9 @@ void AASCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimit
 	{
 		if (auto Bullet = Cast<AASBullet>(Other))
 		{
-			if (DamageComp != nullptr)
+			if (ASDamageComp != nullptr)
 			{
-				DamageComp->TakeBulletDamage(Bullet, Hit);
+				ASDamageComp->TakeBulletDamage(Bullet, Hit);
 			}
 		}
 	}

@@ -11,10 +11,4 @@ class ARENASHOOTERS_API UASGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 	
-public:
-	float GetDamageRateByBone(const USkinnedMeshComponent* MeshComp, const FName& BoneName) const;
-
-private:
-	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
-	TMap<FName, float> DamageRateByBoneMap;
 };

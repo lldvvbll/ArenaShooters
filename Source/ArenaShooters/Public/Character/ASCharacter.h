@@ -256,8 +256,8 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	UBoxComponent* InteractionBox;
 
-	UPROPERTY(EditDefaultsOnly)
-	UASDamageComponent* DamageComp;
+	UPROPERTY(EditDefaultsOnly, Category = Damage, Meta = (AllowPrivateAccess = true))
+	UASDamageComponent* ASDamageComp;
 
 	UPROPERTY()
 	UASAnimInstance* ASAnimInstance;

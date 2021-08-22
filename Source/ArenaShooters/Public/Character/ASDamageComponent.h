@@ -8,6 +8,7 @@
 
 class UASStatusComponent;
 class AASBullet;
+class UASDamageDataAsset;
 
 UCLASS()
 class ARENASHOOTERS_API UASDamageComponent : public UActorComponent
@@ -17,7 +18,8 @@ class ARENASHOOTERS_API UASDamageComponent : public UActorComponent
 public:	
 	UASDamageComponent();
 
-	virtual void BeginPlay() override;
+	virtual void InitializeComponent() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void TakeBulletDamage(AASBullet* InBullet, const FHitResult& InHit);
 
@@ -31,4 +33,10 @@ private:
 
 	UPROPERTY()
 	UASStatusComponent* ASStatusComp;
+
+	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
+	FPrimaryAssetId DamageAssetId;
+
+	UPROPERTY()
+	UASDamageDataAsset* DamageDataAsset;
 };
