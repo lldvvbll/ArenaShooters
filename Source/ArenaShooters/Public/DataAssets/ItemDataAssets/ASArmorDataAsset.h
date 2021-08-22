@@ -30,4 +30,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	float MaxDurability;
+
+	UPROPERTY(EditDefaultsOnly)
+	float DamageReduceRate;
 };

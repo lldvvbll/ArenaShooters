@@ -14,22 +14,25 @@
 #include "DataAssets/ItemDataAssets/ASArmorDataAsset.h"
 #include "ItemActor/ASWeaponActor.h"
 #include "ItemActor/ASArmorActor.h"
-
-const FName UASInventoryComponent::UsingWeaponSocketName = TEXT("weapon_rhand_socket");
-const FName UASInventoryComponent::UsingWeaponPistolSocketName = TEXT("weapon_rhand_socket_pistol");
-const FName UASInventoryComponent::BackSocketName = TEXT("weapon_back_socket");
-const FName UASInventoryComponent::SideSocketName = TEXT("weapon_side_socekt");
-const FName UASInventoryComponent::HelmetSocketName = TEXT("helmet_socket");
-const FName UASInventoryComponent::JacketSocketName = TEXT("jacket_socket");
+#include "ASAssetManager.h"
+#include "DataAssets/CharacterDataAssets/ASInventoryDataAsset.h"
 
 UASInventoryComponent::UASInventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	bWantsInitializeComponent = true;
 	SetIsReplicatedByDefault(true);
 
 	SelectedWeaponSlotType = EWeaponSlotType::SlotNum;
 	WeaponSlots.SetNumZeroed(static_cast<int32>(EWeaponSlotType::SlotNum));
 	ArmorSlots.SetNumZeroed(static_cast<int32>(EArmorSlotType::SlotNum));
+}
+
+void UASInventoryComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+
+	InventoryDataAsset = UASAssetManager::Get().GetDataAsset<UASInventoryDataAsset>(InventoryAssetId);
 }
 
 void UASInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -134,37 +137,40 @@ bool UASInventoryComponent::IsSuitableArmorSlot(EArmorSlotType SlotType, const U
 	return (ArmorSlotType == SlotType);
 }
 
-const FName& UASInventoryComponent::GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing)
+FName UASInventoryComponent::GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing)
 {
+	if (InventoryDataAsset == nullptr)
+		return NAME_None;
+
 	if (bUsing)
 	{
 		switch (WeaponType)
 		{
 		case EWeaponType::Pistol:
-			return UsingWeaponPistolSocketName;
+			return InventoryDataAsset->UsingWeaponPistolSocketName;
 		case EWeaponType::AssaultRifle:
-			return UsingWeaponSocketName;
+			return InventoryDataAsset->UsingWeaponSocketName;
 		default:
 			checkNoEntry();
 			break;
 		}
 
-		return UsingWeaponSocketName;
+		return InventoryDataAsset->UsingWeaponSocketName;
 	}
 	else
 	{
 		switch (WeaponType)
 		{
 		case EWeaponType::Pistol:
-			return SideSocketName;
+			return InventoryDataAsset->SideSocketName;
 		case EWeaponType::AssaultRifle:
-			return BackSocketName;
+			return InventoryDataAsset->BackSocketName;
 		default:
 			checkNoEntry();
 			break;
 		}
 
-		return BackSocketName;
+		return InventoryDataAsset->BackSocketName;
 	}
 }
 
@@ -673,17 +679,20 @@ void UASInventoryComponent::OnArmorInserted(EArmorSlotType SlotType, UASArmor* I
 	if (InsertedArmor == nullptr)
 		return;
 
-	switch (InsertedArmor->GetArmorType())
+	if (InventoryDataAsset != nullptr)
 	{
-	case EArmorType::Helmet:
-		SpawnArmorActor(*InsertedArmor, HelmetSocketName);
-		break;
-	case EArmorType::Jacket:
-		SpawnArmorActor(*InsertedArmor, JacketSocketName);
-		break;
-	default:
-		checkNoEntry();
-		break;
+		switch (InsertedArmor->GetArmorType())
+		{
+		case EArmorType::Helmet:
+			SpawnArmorActor(*InsertedArmor, InventoryDataAsset->HelmetSocketName);
+			break;
+		case EArmorType::Jacket:
+			SpawnArmorActor(*InsertedArmor, InventoryDataAsset->JacketSocketName);
+			break;
+		default:
+			checkNoEntry();
+			break;
+		}
 	}
 }
 

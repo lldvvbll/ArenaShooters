@@ -25,14 +25,17 @@ public:
 
 private:
 	UFUNCTION()
-	void OnTakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+	void OnTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
 
 private:
 	UPROPERTY()
 	AASCharacter* ASChar;
 
 	UPROPERTY()
-	UASStatusComponent* ASStatusComp;
+	UASStatusComponent* ASStatus;
+
+	UPROPERTY()
+	UASInventoryComponent* ASInventory;
 
 	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId DamageAssetId;

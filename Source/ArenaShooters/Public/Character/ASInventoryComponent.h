@@ -16,6 +16,7 @@ class UASWeaponDataAsset;
 class UASArmorDataAsset;
 class AASWeaponActor;
 class AASArmorActor;
+class UASInventoryDataAsset;
 
 using ItemBoolPair = TPair<UASItem*, bool>;
 using ItemPtrBoolPair = TPair<TWeakObjectPtr<UASItem>, bool>;
@@ -28,6 +29,7 @@ class ARENASHOOTERS_API UASInventoryComponent : public UActorComponent
 public:	
 	UASInventoryComponent();
 
+	virtual void InitializeComponent() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	TWeakObjectPtr<UASWeapon> GetSelectedWeapon() const;
@@ -39,7 +41,8 @@ public:
 	static EArmorSlotType GetSuitableArmorSlotType(EArmorType ArmorType);
 	static bool IsSuitableWeaponSlot(EWeaponSlotType SlotType, const UASWeapon* Weapon);
 	static bool IsSuitableArmorSlot(EArmorSlotType SlotType, const UASArmor* Armor);
-	static const FName& GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing);
+	
+	FName GetProperWeaponSocketName(EWeaponType WeaponType, bool bUsing);
 
 	bool InsertWeapon(EWeaponSlotType SlotType, UASWeapon* NewWeapon, UASItem*& Out_OldItem);
 	bool InsertArmor(EArmorSlotType SlotType, UASArmor* NewArmor, UASItem*& Out_OldItem);
@@ -108,14 +111,13 @@ public:
 	DECLARE_EVENT_OneParam(UASInventoryComponent, FOnRemoveInventoryItemEvent, const TWeakObjectPtr<UASItem>&);
 	FOnRemoveInventoryItemEvent OnRemoveInventoryItem;
 
-	static const FName UsingWeaponSocketName;
-	static const FName UsingWeaponPistolSocketName;
-	static const FName BackSocketName;
-	static const FName SideSocketName;
-	static const FName HelmetSocketName;
-	static const FName JacketSocketName;
-
 private:
+	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
+	FPrimaryAssetId InventoryAssetId;
+
+	UPROPERTY()
+	UASInventoryDataAsset* InventoryDataAsset;
+
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponSlots)
 	TArray<UASItem*> WeaponSlots;
 

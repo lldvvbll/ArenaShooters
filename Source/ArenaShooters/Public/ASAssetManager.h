@@ -19,6 +19,7 @@ public:
 	static const FPrimaryAssetType AmmoAssetType;
 	static const FPrimaryAssetType HealingKitAssetType;
 	static const FPrimaryAssetType DamageAssetType;
+	static const FPrimaryAssetType InventoryAssetType;
 
 public:
 	static UASAssetManager& Get();

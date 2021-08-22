@@ -63,3 +63,25 @@ void UASArmor::ModifyDurability(float Value)
 {
 	SetCurrentDurability(CurrentDurability + Value);
 }
+
+float UASArmor::TakeDamage(float InDamage)
+{
+	float TakenDamage = InDamage;
+
+	if (CurrentDurability > KINDA_SMALL_NUMBER)
+	{
+		auto ArmorDA = Cast<UASArmorDataAsset>(DataAsset);
+		check(ArmorDA);
+
+		if (ArmorDA != nullptr)
+		{
+			float ReducedDamage = TakenDamage * ArmorDA->DamageReduceRate;
+			ModifyDurability(-ReducedDamage);
+
+			TakenDamage -= ReducedDamage;
+		}
+	}
+
+	return TakenDamage;
+}
+

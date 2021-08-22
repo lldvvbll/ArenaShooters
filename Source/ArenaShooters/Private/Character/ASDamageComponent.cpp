@@ -4,6 +4,7 @@
 #include "Character/ASDamageComponent.h"
 #include "Character/ASCharacter.h"
 #include "Character/ASStatusComponent.h"
+#include "Character/ASInventoryComponent.h"
 #include "ItemActor/ASBullet.h"
 #include "ASAssetManager.h"
 #include "DataAssets/CharacterDataAssets/ASDamageDataAsset.h"
@@ -23,7 +24,8 @@ void UASDamageComponent::InitializeComponent()
 	ASChar = GetOwner<AASCharacter>();
 	ASChar->OnTakeAnyDamage.AddDynamic(this, &UASDamageComponent::OnTakeDamage);
 
-	ASStatusComp = ASChar->GetStatusComponent();
+	ASStatus = ASChar->GetStatusComponent();
+	ASInventory = ASChar->GetInventoryComponent();
 	
 	DamageDataAsset = UASAssetManager::Get().GetDataAsset<UASDamageDataAsset>(DamageAssetId);
 }
@@ -43,11 +45,9 @@ void UASDamageComponent::TakeBulletDamage(AASBullet* InBullet, const FHitResult&
 	}
 
 	float Damage = InBullet->GetDamage();
+	float TakenDamage = Damage;
 
-	//if (auto GameInst = ASChar->GetGameInstance<UASGameInstance>())
-	//{
-	//	Damage *= GameInst->GetDamageRateByBone(ASChar->GetMesh(), InHit.BoneName);
-	//}
+
 
 	if (DamageDataAsset != nullptr)
 	{
@@ -62,7 +62,7 @@ void UASDamageComponent::OnTakeDamage(AActor* DamagedActor, float Damage, const 
 {
 	bool bBeforeDead = ASChar->IsDead();
 
-	ASStatusComp->ModifyCurrentHealth(-Damage);
+	ASStatus->ModifyCurrentHealth(-Damage);
 
 	if (!bBeforeDead && ASChar->IsDead())
 	{

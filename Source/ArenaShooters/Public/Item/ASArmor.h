@@ -28,6 +28,7 @@ public:
 	float GetCurrentDurability() const;
 	void SetCurrentDurability(float NewDurability);
 	void ModifyDurability(float Value);
+	float TakeDamage(float InDamage);
 
 protected:
 	UPROPERTY(Replicated, VisibleAnywhere)

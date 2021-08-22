@@ -1571,6 +1571,7 @@ void AASCharacter::ServerBeginHealingKit_Implementation(UASHealingKit* InHealing
 	if (GetCharacterMovement()->IsFalling() || bDead)
 		return;
 
+	// todo: check currrent health
 	//if (ASStatus != nullptr && ASStatus->GetCurrentHealth() >= ASStatus->GetMaxHealth())
 	//	return;
 
@@ -1592,7 +1593,7 @@ void AASCharacter::ServerBeginHealingKit_Implementation(UASHealingKit* InHealing
 	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
 	if (CurWeapon.IsValid())
 	{
-		ASInventory->ReattachWeaponActor(CurWeapon.Get(), UASInventoryComponent::GetProperWeaponSocketName(CurWeapon->GetWeaponType(), false));
+		ASInventory->ReattachWeaponActor(CurWeapon.Get(), ASInventory->GetProperWeaponSocketName(CurWeapon->GetWeaponType(), false));
 	}
 
 	SetMaxWalkSpeedRate(UseHealingKitSpeedRate);
@@ -1665,7 +1666,7 @@ void AASCharacter::ServerEndHealingKit_Implementation()
 	TWeakObjectPtr<UASWeapon> CurWeapon = ASInventory->GetSelectedWeapon();
 	if (CurWeapon.IsValid())
 	{
-		ASInventory->ReattachWeaponActor(CurWeapon.Get(), UASInventoryComponent::GetProperWeaponSocketName(CurWeapon->GetWeaponType(), true));
+		ASInventory->ReattachWeaponActor(CurWeapon.Get(), ASInventory->GetProperWeaponSocketName(CurWeapon->GetWeaponType(), true));
 	}
 
 	SetMaxWalkSpeedRate(1.0f);
