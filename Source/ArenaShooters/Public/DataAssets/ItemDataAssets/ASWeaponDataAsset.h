@@ -36,7 +36,7 @@ public:
 	TArray<EFireMode> FireModes;
 
 	UPROPERTY(EditDefaultsOnly)
-	int64 FireInterval;
+	FTimespan FireInterval;
 
 	UPROPERTY(EditDefaultsOnly)
 	float Damage;
@@ -49,4 +49,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	FTimespan ReloadTime;
+
+	UPROPERTY(EditDefaultsOnly)
+	FVector2D RecoilPitch;
+
+	UPROPERTY(EditDefaultsOnly)
+	FVector2D RecoilYaw;
 };

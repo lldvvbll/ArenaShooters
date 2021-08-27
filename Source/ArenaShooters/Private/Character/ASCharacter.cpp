@@ -293,6 +293,17 @@ void AASCharacter::MulticastPlayShootMontage_Implementation()
 
 	if (ASInventory != nullptr)
 	{
+		TWeakObjectPtr<UASWeapon> Weapon = ASInventory->GetSelectedWeapon();
+		if (Weapon.IsValid())
+		{
+			FVector2D RecoilPitch;
+			FVector2D RecoilYaw;
+			Weapon->GetRecoil(RecoilPitch, RecoilYaw);
+
+			AddControllerPitchInput(-FMath::RandRange(RecoilPitch.X, RecoilPitch.Y));
+			AddControllerYawInput(FMath::RandRange(RecoilYaw.X, RecoilYaw.Y));
+		}
+
 		TWeakObjectPtr<AASWeaponActor> WeaponActor = ASInventory->GetSelectedWeaponActor();
 		if (WeaponActor.IsValid())
 		{
@@ -1284,34 +1295,41 @@ void AASCharacter::EndScoping()
 	OnUnscopeEvent.Broadcast();
 }
 
-//bool AASCharacter::ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation)
-//{
-//	constexpr float ValidLocDiff = 200.0f;
-//	constexpr float ValidRotDiff = 45.0f;
-//
-//	TWeakObjectPtr<AASWeaponActor> SelectedWeaponActor = ASInventory->GetSelectedWeaponActor();
-//	if (!SelectedWeaponActor.IsValid())
-//	{
-//		AS_LOG_S(Error);
-//		return false;
-//	}
-//
-//	FVector LocDiff = SelectedWeaponActor->GetMuzzleLocation() - MuzzleLocation;
-//	if (FMath::Abs(LocDiff.X) > ValidLocDiff || FMath::Abs(LocDiff.Y) > ValidLocDiff || FMath::Abs(LocDiff.Z) > ValidLocDiff)
-//	{
-//		AS_LOG(Error, TEXT("%s"), *LocDiff.ToString());
-//		return false;
-//	}
-//	
-//	FRotator RotDiff = (GetActorRotation() - ShootRotation).GetNormalized();
-//	if (FMath::Abs(RotDiff.Pitch) > ValidRotDiff || FMath::Abs(RotDiff.Yaw) > ValidRotDiff)
-//	{
-//		AS_LOG(Error, TEXT("%s"), *RotDiff.ToString());
-//		return false;
-//	}
-//
-//	return true;
-//}
+bool AASCharacter::ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation)
+{
+	//constexpr float ValidLocDiff = 200.0f;
+	//constexpr float ValidRotDiff = 45.0f;
+
+	//TWeakObjectPtr<AASWeaponActor> SelectedWeaponActor = ASInventory->GetSelectedWeaponActor();
+	//if (!SelectedWeaponActor.IsValid())
+	//{
+	//	AS_LOG_S(Error);
+	//	return false;
+	//}
+
+	//FVector LocDiff = SelectedWeaponActor->GetMuzzleLocation() - MuzzleLocation;
+	//if (FMath::Abs(LocDiff.X) > ValidLocDiff || FMath::Abs(LocDiff.Y) > ValidLocDiff || FMath::Abs(LocDiff.Z) > ValidLocDiff)
+	//{
+	//	AS_LOG(Error, TEXT("%s"), *LocDiff.ToString());
+	//	return false;
+	//}
+	//
+	//FRotator RotDiff = (GetActorRotation() - ShootRotation).GetNormalized();
+	//if (FMath::Abs(RotDiff.Pitch) > ValidRotDiff || FMath::Abs(RotDiff.Yaw) > ValidRotDiff)
+	//{
+	//	AS_LOG(Error, TEXT("%s"), *RotDiff.ToString());
+	//	return false;
+	//}
+
+	TWeakObjectPtr<UASWeapon> SelectedWeapon = ASInventory->GetSelectedWeapon();
+	if (!SelectedWeapon.IsValid())
+		return false;
+
+	if (!SelectedWeapon->IsPassedFireInterval())
+		return false;
+
+	return true;
+}
 
 void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation)
 {

@@ -15,7 +15,6 @@ void UASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 
 	DOREPLIFETIME(UASWeapon, ASWeaponActor);
 	DOREPLIFETIME(UASWeapon, CurrentFireMode);
-	DOREPLIFETIME(UASWeapon, LastFireTick);
 	DOREPLIFETIME(UASWeapon, CurrentAmmoCount);
 }
 
@@ -23,7 +22,7 @@ void UASWeapon::SetDataAsset(UASItemDataAsset* NewDataAsset)
 {
 	Super::SetDataAsset(NewDataAsset);
 
-	LastFireTick = 0;
+	SetLastFireTick();
 }
 
 const EWeaponType UASWeapon::GetWeaponType() const
@@ -51,8 +50,6 @@ AASBullet* UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& Mu
 	if (WeaponDA == nullptr)
 		return nullptr;
 
-	if (!IsPassedFireInterval())
-		return nullptr;
 	if (CurrentAmmoCount <= 0)
 		return nullptr;
 
@@ -66,7 +63,8 @@ AASBullet* UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& Mu
 		Bullet->SetDamage(WeaponDA->Damage);
 
 		CurrentAmmoCount--;
-		LastFireTick = FDateTime::Now().GetTicks();
+
+		SetLastFireTick();
 	}
 
 	return Bullet;
@@ -105,18 +103,18 @@ void UASWeapon::ChangeToNextFireMode()
 	}
 }
 
-int64 UASWeapon::GetFireInterval() const
+FTimespan UASWeapon::GetFireInterval() const
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
 	check(WeaponDA);
 
-	return (WeaponDA != nullptr ? WeaponDA->FireInterval : -1);
+	return (WeaponDA != nullptr ? WeaponDA->FireInterval : FTimespan::MaxValue());
 }
 
 bool UASWeapon::IsPassedFireInterval() const
 {
-	int64 DeltaTick = FDateTime::Now().GetTicks() - LastFireTick;
-	if (DeltaTick < (GetFireInterval() * ETimespan::TicksPerMillisecond))
+	FTimespan DeltaTime = FDateTime::Now() - LastFireTime;
+	if (DeltaTime < GetFireInterval())
 		return false;
 
 	return true;
@@ -124,7 +122,7 @@ bool UASWeapon::IsPassedFireInterval() const
 
 void UASWeapon::SetLastFireTick()
 {
-	LastFireTick = FDateTime::Now().GetTicks();
+	LastFireTime = FDateTime::Now();
 }
 
 void UASWeapon::OnRep_CurrentFireMode()
@@ -152,17 +150,17 @@ void UASWeapon::OnRep_CurrentAmmoCount()
 	OnCurrentAmmoCountChanged.Broadcast(CurrentAmmoCount);
 }
 
-bool UASWeapon::CanReload() const
-{
-	return (GetMaxAmmoCount() > CurrentAmmoCount);
-}
-
 EAmmoType UASWeapon::GetAmmoType() const
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
 	check(WeaponDA);
 
 	return (WeaponDA != nullptr ? WeaponDA->AmmoType : EAmmoType::None);
+}
+
+bool UASWeapon::CanReload() const
+{
+	return (GetMaxAmmoCount() > CurrentAmmoCount);
 }
 
 bool UASWeapon::Reload(TArray<UASAmmo*>& InAmmos)
@@ -193,11 +191,15 @@ bool UASWeapon::Reload(TArray<UASAmmo*>& InAmmos)
 		{
 			CurrentAmmoCount += AmmoCnt;
 			Ammo->ModifyCount(-AmmoCnt);
+
+			NeedfulAmmoCount -= AmmoCnt;
 		}
 		else
 		{
 			CurrentAmmoCount += NeedfulAmmoCount;
 			Ammo->ModifyCount(-NeedfulAmmoCount);
+
+			NeedfulAmmoCount = 0;
 		}
 	}
 
@@ -210,4 +212,16 @@ FTimespan UASWeapon::GetReloadTime() const
 	check(WeaponDA);
 
 	return (WeaponDA != nullptr ? WeaponDA->ReloadTime : FTimespan::MaxValue());
+}
+
+void UASWeapon::GetRecoil(FVector2D& OutPitch, FVector2D& OutYaw) const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
+
+	if (WeaponDA != nullptr)
+	{
+		OutPitch = WeaponDA->RecoilPitch;
+		OutYaw = WeaponDA->RecoilYaw;
+	}
 }

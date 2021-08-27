@@ -165,7 +165,7 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerShoot(const FVector& MuzzleLocation, const FRotator& ShootRotation);
-	//bool ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation);
+	bool ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation);
 	void ServerShoot_Implementation(const FVector& MuzzleLocation, const FRotator& ShootRotation);
 
 	UFUNCTION(Server, Reliable)

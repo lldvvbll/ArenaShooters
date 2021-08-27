@@ -33,7 +33,7 @@ public:
 	EFireMode GetFireMode() const;
 	void ChangeToNextFireMode();
 
-	int64 GetFireInterval() const;
+	FTimespan GetFireInterval() const;
 	bool IsPassedFireInterval() const;
 	void SetLastFireTick();
 
@@ -46,10 +46,13 @@ public:
 	UFUNCTION()
 	void OnRep_CurrentAmmoCount();
 
-	bool CanReload() const;
 	EAmmoType GetAmmoType() const;
+
+	bool CanReload() const;
 	bool Reload(TArray<UASAmmo*>& InAmmos);
 	FTimespan GetReloadTime() const;
+
+	void GetRecoil(FVector2D& OutPitch, FVector2D& OutYaw) const;
 
 public:
 	DECLARE_EVENT_OneParam(UASWeapon, FOnFireModeChangedEvent, EFireMode);
@@ -65,8 +68,7 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentFireMode, EditDefaultsOnly)
 	EFireMode CurrentFireMode;
 
-	UPROPERTY(Replicated)
-	int64 LastFireTick;
+	FDateTime LastFireTime;
 
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentAmmoCount)
 	int32 CurrentAmmoCount;
