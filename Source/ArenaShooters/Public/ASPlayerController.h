@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "ASPlayerController.generated.h"
 
-class UUserWidget;
+class UASCrossHairUserWidget;
 class UASWeapon;
 class UASInventoryUserWidget;
 
@@ -34,10 +34,10 @@ protected:
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = UI, Meta = (AllowPrivateAccess = true))
-	TSubclassOf<UUserWidget> SimpleCrossHairClass;
+	TSubclassOf<UASCrossHairUserWidget> CrossHairClass;
 
 	UPROPERTY()
-	UUserWidget* SimpleCrossHair;
+	UASCrossHairUserWidget* CrossHair;
 
 	UPROPERTY(EditDefaultsOnly, Category = UI, Meta = (AllowPrivateAccess = true))
 	TSubclassOf<UASInventoryUserWidget> InventoryWidgetClass;

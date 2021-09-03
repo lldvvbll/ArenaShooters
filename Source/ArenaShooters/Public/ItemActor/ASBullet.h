@@ -32,8 +32,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	UParticleSystemComponent* TraceParticle;
 
+	float Damage;
+
 	UPROPERTY(EditDefaultsOnly)
 	UParticleSystem* DefaultSparkParticle;
 
-	float Damage;
+	UPROPERTY(EditDefaultsOnly)
+	UMaterial* DefaultBulletHoleDecal;
 };

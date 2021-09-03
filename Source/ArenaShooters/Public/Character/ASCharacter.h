@@ -335,6 +335,9 @@ private:
 
 	FDateTime HealingKitStartTime;
 
+	UPROPERTY(EditDefaultsOnly)
+	UParticleSystem* BloodParticle;
+	
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

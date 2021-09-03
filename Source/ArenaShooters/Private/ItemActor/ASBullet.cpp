@@ -21,7 +21,6 @@ AASBullet::AASBullet()
 	Projectile->MaxSpeed = 15000.0f;
 
 	TraceParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TraceParticle"));
-	DefaultSparkParticle = CreateDefaultSubobject<UParticleSystem>(TEXT("SparkParticle"));
 	
 	RootComponent = Collision;
 	TraceParticle->SetupAttachment(RootComponent);
@@ -43,10 +42,13 @@ void AASBullet::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitive
 			TraceParticle->Deactivate();
 		}
 
+		// todo: 대상에 맞게 동작하도록
 		if (Other == nullptr || !Other->IsA(AASCharacter::StaticClass()))
 		{
-			// 임시
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), DefaultSparkParticle, Hit.ImpactPoint);
+			
+			UGameplayStatics::SpawnDecalAttached(DefaultBulletHoleDecal, FVector(15.0f, 3.0f, 3.0f), OtherComp, NAME_None, HitLocation,
+				HitNormal.ToOrientationRotator(), EAttachLocation::KeepWorldPosition, 30.0f);
 		}		
 	}
 }

@@ -7,16 +7,10 @@
 #include "Item/ASWeapon.h"
 #include "ItemActor/ASWeaponActor.h"
 #include "GUI/ASInventoryUserWidget.h"
+#include "GUI/ASCrossHairUserWidget.h"
 
 AASPlayerController::AASPlayerController()
 {
-	static ConstructorHelpers::FClassFinder<UUserWidget> SimpleCrossHairClassFinder(
-		TEXT("/Game/ArenaShooters/Blueprints/GUI/SimpleCrossHair.SimpleCrossHair_C"));
-	if (SimpleCrossHairClassFinder.Succeeded())
-	{
-		SimpleCrossHairClass = SimpleCrossHairClassFinder.Class;
-	}
-
 	UIInputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
 }
 
@@ -51,8 +45,11 @@ void AASPlayerController::BeginPlay()
 
 	if (IsLocalPlayerController())
 	{
-		SimpleCrossHair = CreateWidget<UUserWidget>(this, SimpleCrossHairClass);
-		SimpleCrossHair->AddToViewport();
+		CrossHair = CreateWidget<UASCrossHairUserWidget>(this, CrossHairClass);
+		if (CrossHair != nullptr)
+		{
+			CrossHair->AddToViewport();
+		}	
 	}
 }
 
@@ -97,9 +94,9 @@ void AASPlayerController::OnUnscope()
 
 void AASPlayerController::ShowCrossHair(bool bShow)
 {
-	if (SimpleCrossHair != nullptr)
+	if (CrossHair != nullptr)
 	{
-		SimpleCrossHair->SetVisibility(bShow ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+		CrossHair->SetVisibility(bShow ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 	}
 }
 

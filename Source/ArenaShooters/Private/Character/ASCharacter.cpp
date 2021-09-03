@@ -207,6 +207,9 @@ void AASCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimit
 			{
 				ASDamageComp->TakeBulletDamage(Bullet, Hit);
 			}
+
+			UGameplayStatics::SpawnEmitterAttached(BloodParticle, MyComp, NAME_None, HitLocation, HitNormal.ToOrientationRotator(),
+				EAttachLocation::KeepWorldPosition);
 		}
 	}
 }
