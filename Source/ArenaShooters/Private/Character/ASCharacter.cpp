@@ -214,17 +214,30 @@ void AASCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimit
 {
 	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 
-	if (MyComp == GetMesh())
+	auto Bullet = Cast<AASBullet>(Other);
+	bool bHitByBullet = (MyComp == GetMesh() && Bullet != nullptr);
+
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		if (auto Bullet = Cast<AASBullet>(Other))
+		if (bHitByBullet)
 		{
 			if (ASDamageComp != nullptr)
 			{
 				ASDamageComp->TakeBulletDamage(Bullet, Hit);
 			}
-
+		}
+	}
+	else
+	{
+		if (bHitByBullet)
+		{
 			UGameplayStatics::SpawnEmitterAttached(BloodParticle, MyComp, NAME_None, HitLocation, HitNormal.ToOrientationRotator(),
 				EAttachLocation::KeepWorldPosition);
+
+			if (ASAnimInstance != nullptr)
+			{
+				ASAnimInstance->PlayHitReactMontage();
+			}
 		}
 	}
 }
@@ -320,8 +333,8 @@ void AASCharacter::MulticastPlayShootMontage_Implementation()
 			FVector2D RecoilYaw;
 			Weapon->GetRecoil(RecoilPitch, RecoilYaw);
 
-			AddControllerPitchInput(-FMath::RandRange(RecoilPitch.X, RecoilPitch.Y));
-			AddControllerYawInput(FMath::RandRange(RecoilYaw.X, RecoilYaw.Y));
+			//AddControllerPitchInput(-FMath::RandRange(RecoilPitch.X, RecoilPitch.Y));
+			//AddControllerYawInput(FMath::RandRange(RecoilYaw.X, RecoilYaw.Y));
 		}
 
 		TWeakObjectPtr<AASWeaponActor> WeaponActor = ASInventory->GetSelectedWeaponActor();

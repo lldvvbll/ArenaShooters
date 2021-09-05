@@ -47,7 +47,6 @@ bool UASArmorSlotUserWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 			auto ASChar = Cast<AASCharacter>(GetOwningPlayerPawn());
 			if (ASChar != nullptr)
 			{
-
 				ASChar->PickUpArmor(ArmorSlotType, Cast<UASArmor>(ArmorItem));
 				return true;
 			}

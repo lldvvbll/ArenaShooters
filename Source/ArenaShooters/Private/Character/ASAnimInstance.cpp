@@ -129,6 +129,11 @@ void UASAnimInstance::PlayUseHealingKitMontage()
 	Montage_Play(UseHealingKitMontage);
 }
 
+void UASAnimInstance::PlayHitReactMontage()
+{
+	Montage_Play(HitReactMontage);
+}
+
 void UASAnimInstance::OnMontageEnd(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (Montage == nullptr)
@@ -156,4 +161,16 @@ void UASAnimInstance::AnimNotify_ReloadComplete()
 void UASAnimInstance::AnimNotify_UseHealingKitComplete()
 {
 	OnUseHealingKitComplete.Broadcast();
+}
+
+void UASAnimInstance::AnimNotify_HitReact()
+{
+	ASChar = Cast<AASCharacter>(TryGetPawnOwner());
+	if (!::IsValid(ASChar))
+		return;
+	
+	if (ASChar->IsLocallyControlled())
+	{
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), BodyHitSound, ASChar->GetActorLocation());
+	}	
 }

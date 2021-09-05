@@ -349,6 +349,7 @@ private:
 	float BulletSpreadAmountPerShot;
 	float BulletSpreadRecoverySpeed;
 
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;
 

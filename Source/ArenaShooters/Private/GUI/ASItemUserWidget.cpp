@@ -7,6 +7,7 @@
 #include "GUI/ASItemDragDropOperation.h"
 #include "GUI/ASItemScrollBoxWrapperUserWidget.h"
 #include "Item/ASItem.h"
+#include "Item/ASArmor.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/PanelWidget.h"
@@ -44,10 +45,18 @@ void UASItemUserWidget::SetItem(const TWeakObjectPtr<UASItem>& NewItem)
 	{
 		switch (Item->GetItemType())
 		{
-		case EItemType::Weapon:	// fallthough
-		case EItemType::Armor:
+		case EItemType::Weapon:
 			{
 				CountTextBlock->SetVisibility(ESlateVisibility::Hidden);
+			}
+			break;
+		case EItemType::Armor:
+			{
+				const TWeakObjectPtr<UASArmor>& Armor = Cast<UASArmor>(Item);
+				if (Armor.IsValid())
+				{
+					CountTextBlock->SetText(FText::FromString(FString::FromInt(Armor->GetCurrentDurability())));
+				}
 			}
 			break;
 		case EItemType::Ammo:	// fallthough

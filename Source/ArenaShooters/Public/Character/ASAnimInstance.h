@@ -28,6 +28,7 @@ public:
 	void PlayEquipMontage();
 	void PlayPickUpItemMontage();
 	void PlayUseHealingKitMontage();
+	void PlayHitReactMontage();
 
 protected:
 	UFUNCTION()
@@ -38,6 +39,9 @@ protected:
 
 	UFUNCTION()
 	void AnimNotify_UseHealingKitComplete();
+
+	UFUNCTION()
+	void AnimNotify_HitReact();
 
 public:
 	DECLARE_EVENT(UASInventoryComponent, FOnReloadCompleteEvent);
@@ -83,6 +87,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* UseHealingKitMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = Montage, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* HitReactMontage;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	bool bInAir;
 
@@ -121,4 +128,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Meta = (AllowPrivateAccess = true))
 	bool bLocallyControlled;
+
+	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
+	USoundWave* BodyHitSound;
 };
