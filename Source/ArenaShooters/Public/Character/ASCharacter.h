@@ -224,18 +224,23 @@ protected:
 	void MulticastCancelUseHealingKit();
 	void MulticastCancelUseHealingKit_Implementation();
 
+	void OnChangeSelectedWeapon(const TWeakObjectPtr<UASWeapon>& InOldWeapon, const TWeakObjectPtr<UASWeapon>& InNewWeapon);
+
 public:
 	DECLARE_EVENT_OneParam(AASCharacter, FOnScopeEvent, const TWeakObjectPtr<UASWeapon>&)
-	FOnScopeEvent OnScopeEvent;
+	FOnScopeEvent OnScope;
 
 	DECLARE_EVENT(AASCharacter, FOnUnscopeEvent)
-	FOnUnscopeEvent OnUnscopeEvent;
+	FOnUnscopeEvent OnUnscope;
 
 	DECLARE_EVENT_OneParam(AASCharacter, FOnGroundItemAddEvent, const TArray<TWeakObjectPtr<UASItem>>&)
-	FOnGroundItemAddEvent OnGroundItemAddEvent;
+	FOnGroundItemAddEvent OnGroundItemAdd;
 
 	DECLARE_EVENT_OneParam(AASCharacter, FOnGroundItemRemoveEvent, const TArray<TWeakObjectPtr<UASItem>>&)
-	FOnGroundItemRemoveEvent OnGroundItemRemoveEvent;
+	FOnGroundItemRemoveEvent OnGroundItemRemove;
+
+	DECLARE_EVENT(AASCharacter, FOnPlayShootMontageEvent)
+	FOnPlayShootMontageEvent OnPlayShootMontage;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, Meta = (AllowPrivateAccess = true))
@@ -338,6 +343,11 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	UParticleSystem* BloodParticle;
 	
+	float CurrentBulletSpread;
+	float MinBulletSpread;
+	float MaxBulletSpread;
+	float BulletSpreadAmountPerShot;
+	float BulletSpreadRecoverySpeed;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Test, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId TestARAssetId;

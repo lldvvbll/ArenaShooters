@@ -43,7 +43,7 @@ const TWeakObjectPtr<AASWeaponActor>& UASWeapon::GetActor() const
 	return ASWeaponActor;
 }
 
-AASBullet* UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation)
+AASBullet* UASWeapon::Fire(EShootingStanceType InShootingStance, const FVector& InMuzzleLocation, const FRotator& InMuzzleRotation)
 {
 	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
 	check(WeaponDA);
@@ -57,7 +57,7 @@ AASBullet* UASWeapon::Fire(EShootingStanceType ShootingStance, const FVector& Mu
 	Param.Owner = GetOwner().Get();
 	Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
-	auto Bullet = GetWorld()->SpawnActor<AASBullet>(WeaponDA->ASBulletClass, MuzzleLocation, MuzzleRotation, Param);
+	auto Bullet = GetWorld()->SpawnActor<AASBullet>(WeaponDA->ASBulletClass, InMuzzleLocation, InMuzzleRotation, Param);
 	if (Bullet != nullptr)
 	{
 		Bullet->SetDamage(WeaponDA->Damage);
@@ -224,4 +224,36 @@ void UASWeapon::GetRecoil(FVector2D& OutPitch, FVector2D& OutYaw) const
 		OutPitch = WeaponDA->RecoilPitch;
 		OutYaw = WeaponDA->RecoilYaw;
 	}
+}
+
+float UASWeapon::GetMinBulletSpread() const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
+
+	return (WeaponDA != nullptr ? WeaponDA->MinBulletSpread : TNumericLimits<float>::Max());
+}
+
+float UASWeapon::GetMaxBulletSpread() const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
+
+	return (WeaponDA != nullptr ? WeaponDA->MaxBulletSpread : TNumericLimits<float>::Max());
+}
+
+float UASWeapon::GetBulletSpreadAmountPerShot() const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
+
+	return (WeaponDA != nullptr ? WeaponDA->BulletSpreadAmountPerShot : TNumericLimits<float>::Max());
+}
+
+float UASWeapon::GetBulletSpreadRecoverySpeed() const
+{
+	auto WeaponDA = Cast<UASWeaponDataAsset>(GetDataAsset());
+	check(WeaponDA);
+
+	return (WeaponDA != nullptr ? WeaponDA->BulletSpreadRecoverySpeed : 0.0f);
 }

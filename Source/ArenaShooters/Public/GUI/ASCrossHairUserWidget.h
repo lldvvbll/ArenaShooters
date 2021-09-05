@@ -7,14 +7,20 @@
 #include "ASCrossHairUserWidget.generated.h"
 
 class UImage;
+class UASWeapon;
 
 UCLASS()
 class ARENASHOOTERS_API UASCrossHairUserWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+	void OnChangeSelectedWeapon(const TWeakObjectPtr<UASWeapon>& OldWeapon, const TWeakObjectPtr<UASWeapon>& NewWeapon);
+	void SpreadBar();
+
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime);
 
 protected:
 	UPROPERTY()
@@ -28,4 +34,10 @@ protected:
 
 	UPROPERTY()
 	UImage* RightBar;
+
+	float CurrentBarOffset;
+	float MinBarOffset;
+	float MaxBarOffset;
+	float OffsetPerShot;
+	float RecoverySpeed;
 };

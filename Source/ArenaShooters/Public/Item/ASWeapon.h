@@ -28,7 +28,7 @@ public:
 	TWeakObjectPtr<AASWeaponActor>& GetActor();
 	const TWeakObjectPtr<AASWeaponActor>& GetActor() const;
 
-	AASBullet* Fire(EShootingStanceType ShootingStance, const FVector& MuzzleLocation, const FRotator& MuzzleRotation);
+	AASBullet* Fire(EShootingStanceType InShootingStance, const FVector& InMuzzleLocation, const FRotator& InMuzzleRotation);
 
 	EFireMode GetFireMode() const;
 	void ChangeToNextFireMode();
@@ -53,6 +53,11 @@ public:
 	FTimespan GetReloadTime() const;
 
 	void GetRecoil(FVector2D& OutPitch, FVector2D& OutYaw) const;
+
+	float GetMinBulletSpread() const;
+	float GetMaxBulletSpread() const;
+	float GetBulletSpreadAmountPerShot() const;
+	float GetBulletSpreadRecoverySpeed() const;
 
 public:
 	DECLARE_EVENT_OneParam(UASWeapon, FOnFireModeChangedEvent, EFireMode);

@@ -114,6 +114,9 @@ public:
 	DECLARE_EVENT_OneParam(UASInventoryComponent, FOnRemoveInventoryItemEvent, const TWeakObjectPtr<UASItem>&);
 	FOnRemoveInventoryItemEvent OnRemoveInventoryItem;
 
+	DECLARE_EVENT_TwoParams(UASInventoryComponent, FOnChangedSelectedWeaponEvent, const TWeakObjectPtr<UASWeapon>&, const TWeakObjectPtr<UASWeapon>&);
+	FOnChangedSelectedWeaponEvent OnChangedSelectedWeapon;
+
 private:
 	UPROPERTY(EditDefaultsOnly, Meta = (AllowPrivateAccess = true))
 	FPrimaryAssetId InventoryAssetId;

@@ -20,8 +20,8 @@ void AASPlayerController::SetPawn(APawn* InPawn)
 
 	if (auto ASChar = Cast<AASCharacter>(InPawn))
 	{
-		ASChar->OnScopeEvent.AddUObject(this, &AASPlayerController::OnScope);
-		ASChar->OnUnscopeEvent.AddUObject(this, &AASPlayerController::OnUnscope);
+		ASChar->OnScope.AddUObject(this, &AASPlayerController::OnScope);
+		ASChar->OnUnscope.AddUObject(this, &AASPlayerController::OnUnscope);
 	}
 }
 
@@ -111,11 +111,15 @@ void AASPlayerController::ShowInventoryWidget()
 			InventoryWidget->AddToViewport(1);
 			ChangeInputMode(false);
 		}
+
+		ShowCrossHair(false);
 	}
 	else
 	{
 		InventoryWidget->RemoveFromParent();
 		InventoryWidget = nullptr;
 		ChangeInputMode(true);
+
+		ShowCrossHair(true);
 	}
 }

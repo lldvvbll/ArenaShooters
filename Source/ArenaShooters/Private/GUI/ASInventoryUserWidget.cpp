@@ -29,8 +29,8 @@ void UASInventoryUserWidget::Bind()
 		return;
 	}
 
-	ASChar->OnGroundItemAddEvent.AddUObject(this, &UASInventoryUserWidget::AddItemsToGroundScrollBox);
-	ASChar->OnGroundItemRemoveEvent.AddUObject(this, &UASInventoryUserWidget::RemoveItemsFromGroundScrollBox);
+	ASChar->OnGroundItemAdd.AddUObject(this, &UASInventoryUserWidget::AddItemsToGroundScrollBox);
+	ASChar->OnGroundItemRemove.AddUObject(this, &UASInventoryUserWidget::RemoveItemsFromGroundScrollBox);
 
 	ASInventoryComp->OnAddInventoryItem.AddUObject(this, &UASInventoryUserWidget::OnAddInventoryItem);
 	ASInventoryComp->OnRemoveInventoryItem.AddUObject(this, &UASInventoryUserWidget::OnRemoveInventoryItem);

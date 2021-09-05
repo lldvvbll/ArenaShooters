@@ -271,6 +271,8 @@ bool UASInventoryComponent::SelectWeapon(EWeaponSlotType SlotType)
 	SelectedWeaponSlotType = SlotType;
 	OnSelectedWeaponChanged(OldWeapon, NewWeapon);
 
+	OnChangedSelectedWeapon.Broadcast(OldWeapon, NewWeapon);
+
 	return true;
 }
 
@@ -708,8 +710,11 @@ void UASInventoryComponent::OnWeaponInserted(EWeaponSlotType SlotType, UASWeapon
 	else
 	{
 		SpawnWeaponActor(*InsertedWeapon, GetProperWeaponSocketName(InsertedWeapon->GetWeaponType(), true));
+
 		SelectedWeapon = InsertedWeapon;
 		SelectedWeaponSlotType = SlotType;
+
+		OnChangedSelectedWeapon.Broadcast(nullptr, SelectedWeapon);
 	}
 }
 
@@ -879,6 +884,7 @@ void UASInventoryComponent::OnRep_ArmorSlots(TArray<UASItem*>& OldArmorSlots)
 
 void UASInventoryComponent::OnRep_SelectedWeapon(UASWeapon* OldWeapon)
 {
+	OnChangedSelectedWeapon.Broadcast(OldWeapon, SelectedWeapon);
 }
 
 UASItem* UASInventoryComponent::FindItemFromInventory(UClass* InClass) const

@@ -55,4 +55,16 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	FVector2D RecoilYaw;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MinBulletSpread;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MaxBulletSpread;
+
+	UPROPERTY(EditDefaultsOnly)
+	float BulletSpreadAmountPerShot;
+
+	UPROPERTY(EditDefaultsOnly)
+	float BulletSpreadRecoverySpeed;
 };

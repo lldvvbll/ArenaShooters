@@ -47,6 +47,11 @@ AASCharacter::AASCharacter()
 	ShootingStance = EShootingStanceType::None;
 	bPressedShootButton = false;
 	bShownInventoryWidget = false;
+	CurrentBulletSpread = TNumericLimits<float>::Max();
+	MinBulletSpread = TNumericLimits<float>::Max();
+	MaxBulletSpread = TNumericLimits<float>::Max();
+	BulletSpreadAmountPerShot = TNumericLimits<float>::Max();
+	BulletSpreadRecoverySpeed = 0.0f;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -103,6 +108,11 @@ void AASCharacter::PostInitializeComponents()
 			ASAnimInstance->OnUseHealingKitEnd.AddUObject(this, &AASCharacter::EndHealingKit);
 		}
 	}
+
+	if (ASInventory != nullptr)
+	{
+		ASInventory->OnChangedSelectedWeapon.AddUObject(this, &AASCharacter::OnChangeSelectedWeapon);
+	}
 }
 
 void AASCharacter::Tick(float DeltaSeconds)
@@ -130,6 +140,11 @@ void AASCharacter::Tick(float DeltaSeconds)
 	if (bPressedShootButton && IsLocallyControlled())
 	{
 		Shoot();
+	}
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		CurrentBulletSpread = FMath::FInterpConstantTo(CurrentBulletSpread, MinBulletSpread, DeltaSeconds, BulletSpreadRecoverySpeed);
 	}
 }
 
@@ -228,7 +243,7 @@ void AASCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 			FDelegateHandle Handle = DroppedItemActor->OnRemoveItemEvent.AddUObject(this, &AASCharacter::OnRemoveGroundItem);
 			GroundItemActorSet.Emplace(TPair<TWeakObjectPtr<AASDroppedItemActor>, FDelegateHandle>(MakeWeakObjectPtr(DroppedItemActor), Handle));
 
-			OnGroundItemAddEvent.Broadcast(DroppedItemActor->GetItems());
+			OnGroundItemAdd.Broadcast(DroppedItemActor->GetItems());
 		}
 	}	
 }
@@ -251,7 +266,7 @@ void AASCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 					DroppedItemActor->OnRemoveItemEvent.Remove(Itr->Value);
 					Itr.RemoveCurrent();
 
-					OnGroundItemRemoveEvent.Broadcast(DroppedItemActor->GetItems());
+					OnGroundItemRemove.Broadcast(DroppedItemActor->GetItems());
 					break;
 				}
 			}
@@ -292,6 +307,8 @@ void AASCharacter::MulticastPlayShootMontage_Implementation()
 	if (ASAnimInstance != nullptr)
 	{
 		ASAnimInstance->PlayShootMontage();
+
+		OnPlayShootMontage.Broadcast();
 	}
 
 	if (ASInventory != nullptr)
@@ -802,7 +819,6 @@ void AASCharacter::ReleasedAimButton()
 	case EShootingStanceType::None:
 		if (bPressedAimButton)
 		{
-			//if (!bReloading && !bChangeWeapon && !bShownInventoryWidget && !bUseHealingKit)
 			if (CanAimOrScope())
 			{
 				ServerChangeShootingStance(EShootingStanceType::Scoping);
@@ -1283,7 +1299,7 @@ void AASCharacter::StartScoping()
 	SetMaxWalkSpeedRate(AimingSpeedRate);
 	if (ASInventory != nullptr)
 	{
-		OnScopeEvent.Broadcast(ASInventory->GetSelectedWeapon());
+		OnScope.Broadcast(ASInventory->GetSelectedWeapon());
 	}	
 }
 
@@ -1295,7 +1311,7 @@ void AASCharacter::EndScoping()
 	}
 
 	SetMaxWalkSpeedRate(1.0f);
-	OnUnscopeEvent.Broadcast();
+	OnUnscope.Broadcast();
 }
 
 bool AASCharacter::ServerShoot_Validate(const FVector& MuzzleLocation, const FRotator& ShootRotation)
@@ -1345,9 +1361,22 @@ void AASCharacter::ServerShoot_Implementation(const FVector& MuzzleLocation, con
 	if (!SelectedWeapon.IsValid())
 		return;
 
-	AASBullet* SpawnedBullet = SelectedWeapon->Fire(ShootingStance, MuzzleLocation, ShootRotation);
+	FRotator MuzzleRot = ShootRotation;
+	if (ShootingStance == EShootingStanceType::Aiming)
+	{
+		float RandPitch = FMath::RandRange(-CurrentBulletSpread, CurrentBulletSpread);
+		float MaxYaw = FMath::Sqrt(CurrentBulletSpread * CurrentBulletSpread - RandPitch * RandPitch);
+		float RandYaw = FMath::RandRange(-MaxYaw, MaxYaw);
+
+		MuzzleRot.Pitch += RandPitch;
+		MuzzleRot.Yaw += RandYaw;
+	}
+
+	AASBullet* SpawnedBullet = SelectedWeapon->Fire(ShootingStance, MuzzleLocation, MuzzleRot);
 	if (SpawnedBullet != nullptr)
 	{
+		CurrentBulletSpread = FMath::Clamp(CurrentBulletSpread + BulletSpreadAmountPerShot, MinBulletSpread, MaxBulletSpread);
+
 		MulticastPlayShootMontage();
 	}
 }
@@ -1380,7 +1409,7 @@ void AASCharacter::SpawnDroppedItemActor(UASItem* DroppingItem)
 
 void AASCharacter::OnRemoveGroundItem(const TWeakObjectPtr<UASItem>& Item)
 {
-	OnGroundItemRemoveEvent.Broadcast(TArray<TWeakObjectPtr<UASItem>>{ Item });
+	OnGroundItemRemove.Broadcast(TArray<TWeakObjectPtr<UASItem>>{ Item });
 }
 
 void AASCharacter::ServerBeginReload_Implementation()
@@ -1734,5 +1763,27 @@ void AASCharacter::MulticastCancelUseHealingKit_Implementation()
 		{
 			ASAnimInstance->Montage_Stop(0.1f);
 		}
+	}
+}
+
+void AASCharacter::OnChangeSelectedWeapon(const TWeakObjectPtr<UASWeapon>& InOldWeapon, const TWeakObjectPtr<UASWeapon>& InNewWeapon)
+{
+	if (InNewWeapon.IsValid())
+	{
+		MinBulletSpread = InNewWeapon->GetMinBulletSpread();
+		MaxBulletSpread = InNewWeapon->GetMaxBulletSpread();
+		BulletSpreadAmountPerShot = InNewWeapon->GetBulletSpreadAmountPerShot();
+		BulletSpreadRecoverySpeed = InNewWeapon->GetBulletSpreadRecoverySpeed();
+
+		CurrentBulletSpread = MinBulletSpread;
+	}
+	else
+	{
+		MinBulletSpread = TNumericLimits<float>::Max();
+		MaxBulletSpread = TNumericLimits<float>::Max();
+		BulletSpreadAmountPerShot = TNumericLimits<float>::Max();
+		BulletSpreadRecoverySpeed = 0.0f;
+
+		CurrentBulletSpread = MinBulletSpread;
 	}
 }
