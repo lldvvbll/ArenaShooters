@@ -333,8 +333,8 @@ void AASCharacter::MulticastPlayShootMontage_Implementation()
 			FVector2D RecoilYaw;
 			Weapon->GetRecoil(RecoilPitch, RecoilYaw);
 
-			//AddControllerPitchInput(-FMath::RandRange(RecoilPitch.X, RecoilPitch.Y));
-			//AddControllerYawInput(FMath::RandRange(RecoilYaw.X, RecoilYaw.Y));
+			AddControllerPitchInput(-FMath::RandRange(RecoilPitch.X, RecoilPitch.Y));
+			AddControllerYawInput(FMath::RandRange(RecoilYaw.X, RecoilYaw.Y));
 		}
 
 		TWeakObjectPtr<AASWeaponActor> WeaponActor = ASInventory->GetSelectedWeaponActor();

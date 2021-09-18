@@ -8,6 +8,12 @@ public class ArenaShooters : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "SlateCore" });
+		PublicDependencyModuleNames.AddRange(new string[] 
+		{ 
+			"Core", "CoreUObject", "Engine", "InputCore", "UMG", "SlateCore",
+			"OnlineSubsystem", "OnlineSubsystemUtils", "OnlineSubsystemSteam",
+		});
+
+		//DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
 	}
 }

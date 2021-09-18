@@ -10,5 +10,7 @@ public class ArenaShootersEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.Add("ArenaShooters");
+
+		bUsesSteam = true;
 	}
 }
