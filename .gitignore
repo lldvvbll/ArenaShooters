@@ -74,4 +74,5 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 
 # Whitelist Packaged
-!Packaged/**
+!Packaged/**/*.exe
+!Packaged/**/*.dll
