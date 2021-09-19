@@ -34,10 +34,27 @@ void UASGameInstance::SearchServer()
 		SessionSearch = MakeShareable(new FOnlineSessionSearch());
 		SessionSearch->MaxSearchResults = 200000;
 		SessionSearch->TimeoutInSeconds = 60.0f;
-		SessionSearch->bIsLanQuery = (FString(FCommandLine::Get()).Find(TEXT("-searchlan")) != INDEX_NONE);
-		//SessionSearch->QuerySettings.Set(SEARCH_DEDICATED_ONLY, true, EOnlineComparisonOp::Equals);
+
+		if (FString(FCommandLine::Get()).Find(TEXT("-searchlan")) != INDEX_NONE)
+		{
+			SessionSearch->bIsLanQuery = true;
+			SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+		}
 
 		SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+	}
+}
+
+void UASGameInstance::JoinServer(const FOnlineSessionSearchResult& SearchResult)
+{
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (SessionInterface.IsValid() && SearchResult.IsValid())
+	{
+		SessionInterface->JoinSession(0, FName(TEXT("Game")), SearchResult);
+	}
+	else
+	{
+		AS_LOG_S(Error);
 	}
 }
 
@@ -50,12 +67,20 @@ void UASGameInstance::OnStart()
 	{
 		FOnlineSessionSettings SessionSettings;
 		SessionSettings.bAllowJoinInProgress = true;
-		SessionSettings.bIsDedicated = true;
 		SessionSettings.bShouldAdvertise = true;
 		SessionSettings.NumPublicConnections = 16;
-		SessionSettings.bIsLANMatch = (FString(FCommandLine::Get()).Find(TEXT("-lan")) != INDEX_NONE);
 		SessionSettings.Set(FName(TEXT("SERVER_NAME")), FString(TEXT("Test Server Name")), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 		SessionSettings.Set(SETTING_MAPNAME, FString(TEXT("Test Server Map")), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+
+		if (FString(FCommandLine::Get()).Find(TEXT("-lan")) != INDEX_NONE)
+		{
+			SessionSettings.bUsesPresence = true;
+			SessionSettings.bIsLANMatch = true;
+		}
+		else
+		{
+			SessionSettings.bIsDedicated = true;
+		}
 
 		if (!SessionInterface->CreateSession(0, FName(TEXT("My Session")), SessionSettings))
 		{
@@ -101,5 +126,5 @@ void UASGameInstance::OnFindSessionComplete(bool bWasSuccessful)
 
 void UASGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-
+	AS_LOG(Warning, TEXT("OnJoinSessionComplete. Session: %s, Result: %d"), *SessionName.ToString(), Result);
 }
