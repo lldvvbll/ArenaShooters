@@ -6,6 +6,7 @@
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "ASLobbyPlayerController.h"
 
 void UASGameInstance::Init()
 {
@@ -35,10 +36,11 @@ void UASGameInstance::SearchServer()
 		SessionSearch->MaxSearchResults = 200000;
 		SessionSearch->TimeoutInSeconds = 60.0f;
 
-		if (FString(FCommandLine::Get()).Find(TEXT("-searchlan")) != INDEX_NONE)
+		//if (FString(FCommandLine::Get()).Find(TEXT("-searchlan")) != INDEX_NONE)
+		if (IOnlineSubsystem::Get()->GetSubsystemName() != TEXT("Steam"))
 		{
 			SessionSearch->bIsLanQuery = true;
-			SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+			//SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 		}
 
 		SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
@@ -62,35 +64,39 @@ void UASGameInstance::OnStart()
 {
 	Super::OnStart();
 
-	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (SessionInterface.IsValid())
+	if (!GIsClient)
 	{
-		FOnlineSessionSettings SessionSettings;
-		SessionSettings.bAllowJoinInProgress = true;
-		SessionSettings.bShouldAdvertise = true;
-		SessionSettings.NumPublicConnections = 16;
-		SessionSettings.Set(FName(TEXT("SERVER_NAME")), FString(TEXT("Test Server Name")), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-		SessionSettings.Set(SETTING_MAPNAME, FString(TEXT("Test Server Map")), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-
-		if (FString(FCommandLine::Get()).Find(TEXT("-lan")) != INDEX_NONE)
+		IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+		if (SessionInterface.IsValid())
 		{
-			SessionSettings.bUsesPresence = true;
-			SessionSettings.bIsLANMatch = true;
+			FOnlineSessionSettings SessionSettings;
+			SessionSettings.bAllowJoinInProgress = true;
+			SessionSettings.bShouldAdvertise = true;
+			SessionSettings.NumPublicConnections = 16;
+			SessionSettings.Set(FName(TEXT("SERVER_NAME")), FString(TEXT("Test Server Name")), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+			SessionSettings.Set(SETTING_MAPNAME, FString(TEXT("Test Server Map")), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+
+			//if (FString(FCommandLine::Get()).Find(TEXT("-lan")) != INDEX_NONE)
+			if (IOnlineSubsystem::Get()->GetSubsystemName() != TEXT("Steam"))
+			{
+				SessionSettings.bIsLANMatch = true;
+				//SessionSettings.bUsesPresence = true;
+			}
+			else
+			{
+				SessionSettings.bIsDedicated = true;
+			}
+
+			if (!SessionInterface->CreateSession(0, FName(TEXT("Game")), SessionSettings))
+			{
+				AS_LOG_S(Error);
+			}
 		}
 		else
 		{
-			SessionSettings.bIsDedicated = true;
-		}
-
-		if (!SessionInterface->CreateSession(0, FName(TEXT("My Session")), SessionSettings))
-		{
 			AS_LOG_S(Error);
 		}
-	}
-	else
-	{
-		AS_LOG_S(Error);
-	}
+	}	
 }
 
 void UASGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -126,5 +132,33 @@ void UASGameInstance::OnFindSessionComplete(bool bWasSuccessful)
 
 void UASGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-	AS_LOG(Warning, TEXT("OnJoinSessionComplete. Session: %s, Result: %d"), *SessionName.ToString(), Result);
+	if (Result != EOnJoinSessionCompleteResult::Success)
+	{
+		AS_LOG(Error, TEXT("OnJoinSessionComplete. SessionName: %s, Result: %d"), *SessionName.ToString(), Result);
+		return;
+	}
+
+	auto PlayerCtrlr = Cast<AASLobbyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	if (PlayerCtrlr == nullptr)
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (!SessionInterface.IsValid())
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	FString JoinAddress;
+	SessionInterface->GetResolvedConnectString(SessionName, JoinAddress);
+	if (JoinAddress.IsEmpty())
+	{
+		AS_LOG_S(Error);
+		return;
+	}
+
+	PlayerCtrlr->ClientTravel(JoinAddress, ETravelType::TRAVEL_Absolute);
 }
