@@ -76,6 +76,7 @@ DerivedDataCache/*
 # Whitelist Packaged
 !Packaged/**/*.exe
 !Packaged/**/*.dll
+Packaged/**/*.log
 
 # CrashReportClient
 CrashReportClient/
