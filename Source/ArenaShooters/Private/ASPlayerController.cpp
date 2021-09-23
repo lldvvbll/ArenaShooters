@@ -8,10 +8,12 @@
 #include "ItemActor/ASWeaponActor.h"
 #include "GUI/ASInventoryUserWidget.h"
 #include "GUI/ASCrossHairUserWidget.h"
+#include "GUI/ASGameMenuUserWidget.h"
 
 AASPlayerController::AASPlayerController()
 {
 	UIInputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+	CurrentFullScreenWidgetType = EFullScreenWidgetType::None;
 }
 
 void AASPlayerController::SetPawn(APawn* InPawn)
@@ -57,7 +59,8 @@ void AASPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	InputComponent->BindAction(TEXT("ShowInventory"), EInputEvent::IE_Pressed, this, &AASPlayerController::ShowInventoryWidget);
+	InputComponent->BindAction(TEXT("ShowInventory"), EInputEvent::IE_Pressed, this, &AASPlayerController::ToggleShowInventoryWidget);
+	InputComponent->BindAction(TEXT("ShowGameMenu"), EInputEvent::IE_Pressed, this, &AASPlayerController::ToggleShowGameMenuWidget);
 }
 
 void AASPlayerController::OnScope(const TWeakObjectPtr<UASWeapon>& UsingWeapon)
@@ -100,26 +103,101 @@ void AASPlayerController::ShowCrossHair(bool bShow)
 	}
 }
 
-void AASPlayerController::ShowInventoryWidget()
+void AASPlayerController::ToggleShowInventoryWidget()
 {
+	if (CurrentFullScreenWidget != nullptr)
+		return;
+
 	if (InventoryWidget == nullptr)
 	{
 		InventoryWidget = CreateWidget<UASInventoryUserWidget>(this, InventoryWidgetClass);
 		if (InventoryWidget != nullptr)
 		{
-			InventoryWidget->Bind();
-			InventoryWidget->AddToViewport(1);
-			ChangeInputMode(false);
-		}
+			InventoryWidget->OnConstructed.AddUObject(this, &AASPlayerController::OnConstructedFullScreenWidget);
+			InventoryWidget->OnDestructed.AddUObject(this, &AASPlayerController::OnDestructedFullScreenWidget);
+			
+			if (auto ASChar = Cast<AASCharacter>(GetCharacter()))
+			{
+				InventoryWidget->OnConstructed.AddUObject(ASChar, &AASCharacter::OnConstructedFullScreenWidget);
+				InventoryWidget->OnDestructed.AddUObject(ASChar, &AASCharacter::OnDestructedFullScreenWidget);
+			}
 
-		ShowCrossHair(false);
+			InventoryWidget->AddToViewport(1);
+
+			CurrentFullScreenWidget = InventoryWidget;
+		}
 	}
 	else
 	{
-		InventoryWidget->RemoveFromParent();
-		InventoryWidget = nullptr;
-		ChangeInputMode(true);
-
-		ShowCrossHair(true);
+		checkNoEntry();
 	}
+}
+
+void AASPlayerController::ToggleShowGameMenuWidget()
+{
+	if (CurrentFullScreenWidget != nullptr)
+		return;
+
+	if (GameMenuWidget == nullptr)
+	{
+		GameMenuWidget = CreateWidget<UASGameMenuUserWidget>(this, GameMenuWidgetClass);
+		if (GameMenuWidget != nullptr)
+		{
+			GameMenuWidget->OnConstructed.AddUObject(this, &AASPlayerController::OnConstructedFullScreenWidget);
+			GameMenuWidget->OnDestructed.AddUObject(this, &AASPlayerController::OnDestructedFullScreenWidget);
+			
+			if (auto ASChar = Cast<AASCharacter>(GetCharacter()))
+			{
+				GameMenuWidget->OnConstructed.AddUObject(ASChar, &AASCharacter::OnConstructedFullScreenWidget);
+				GameMenuWidget->OnDestructed.AddUObject(ASChar, &AASCharacter::OnDestructedFullScreenWidget);
+			}
+
+			GameMenuWidget->AddToViewport(1);
+
+			CurrentFullScreenWidget = GameMenuWidget;
+		}
+	}
+	else
+	{
+		checkNoEntry();
+	}
+}
+
+void AASPlayerController::OnConstructedFullScreenWidget(UUserWidget* ConstructedWidget)
+{
+	if (CurrentFullScreenWidget == nullptr)
+	{
+		CurrentFullScreenWidget = ConstructedWidget;
+	}
+	else
+	{
+		AS_LOG_S(Error);
+	}
+
+	ChangeInputMode(false);
+	ShowCrossHair(false);
+}
+
+void AASPlayerController::OnDestructedFullScreenWidget(UUserWidget* DestructedWidget)
+{
+	if (CurrentFullScreenWidget == DestructedWidget)
+	{
+		CurrentFullScreenWidget = nullptr;
+
+		if (InventoryWidget == DestructedWidget)
+		{
+			InventoryWidget = nullptr;
+		}
+		else if (GameMenuWidget == DestructedWidget)
+		{
+			GameMenuWidget = nullptr;
+		}
+	}
+	else
+	{
+		AS_LOG_S(Error);
+	}
+
+	ChangeInputMode(true);
+	ShowCrossHair(true);
 }

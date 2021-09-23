@@ -9,6 +9,14 @@
 class UASCrossHairUserWidget;
 class UASWeapon;
 class UASInventoryUserWidget;
+class UASGameMenuUserWidget;
+
+enum class EFullScreenWidgetType
+{
+	None,
+	Inventory,
+	GameMenu,
+};
 
 UCLASS()
 class ARENASHOOTERS_API AASPlayerController : public APlayerController
@@ -30,21 +38,36 @@ protected:
 	void OnUnscope();
 
 	void ShowCrossHair(bool bShow);
-	void ShowInventoryWidget();
+	void ToggleShowInventoryWidget();
+	void ToggleShowGameMenuWidget();
 
-private:
-	UPROPERTY(EditDefaultsOnly, Category = UI, Meta = (AllowPrivateAccess = true))
+	void OnConstructedFullScreenWidget(UUserWidget* ConstructedWidget);
+	void OnDestructedFullScreenWidget(UUserWidget* DestructedWidget);
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = UI)
 	TSubclassOf<UASCrossHairUserWidget> CrossHairClass;
 
 	UPROPERTY()
 	UASCrossHairUserWidget* CrossHair;
 
-	UPROPERTY(EditDefaultsOnly, Category = UI, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = UI)
 	TSubclassOf<UASInventoryUserWidget> InventoryWidgetClass;
 
 	UPROPERTY()
 	UASInventoryUserWidget* InventoryWidget;
 
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<UASGameMenuUserWidget> GameMenuWidgetClass;
+
+	UPROPERTY()
+	UASGameMenuUserWidget* GameMenuWidget;
+
+	UPROPERTY()
+	UUserWidget* CurrentFullScreenWidget;
+
 	FInputModeGameOnly GameInputMode;
 	FInputModeGameAndUI UIInputMode;
+
+	EFullScreenWidgetType CurrentFullScreenWidgetType;
 };

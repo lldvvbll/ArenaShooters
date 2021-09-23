@@ -16,7 +16,6 @@ class ARENASHOOTERS_API AASLobbyPlayerController : public APlayerController
 
 public:
 	void ShowMainMenu();
-	void ShowServerBrowser();
 
 protected:
 	virtual void BeginPlay() override;
@@ -27,10 +26,4 @@ protected:
 
 	UPROPERTY()
 	UASMainMenuUserWidget* MainMenuWidget;
-
-	UPROPERTY(EditDefaultsOnly, Category = UI)
-	TSubclassOf<UASServerBrowserUserWidget> ServerBrowserWidgetClass;
-
-	UPROPERTY()
-	UASServerBrowserUserWidget* ServerBrowserWidget;
 };

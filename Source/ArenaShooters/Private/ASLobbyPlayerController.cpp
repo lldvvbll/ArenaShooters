@@ -21,15 +21,6 @@ void AASLobbyPlayerController::ShowMainMenu()
 	}	
 }
 
-void AASLobbyPlayerController::ShowServerBrowser()
-{
-	ServerBrowserWidget = CreateWidget<UASServerBrowserUserWidget>(this, ServerBrowserWidgetClass);
-	if (ServerBrowserWidget != nullptr)
-	{
-		ServerBrowserWidget->AddToViewport();
-	}
-}
-
 void AASLobbyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
