@@ -11,6 +11,4 @@ class AASGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
-public:
-	AASGameMode();
 };
