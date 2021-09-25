@@ -3,23 +3,17 @@
 #pragma once
 
 #include "ArenaShooters.h"
-#include "GameFramework/Actor.h"
-#include "ASItemFactory.generated.h"
+#include "Components/ActorComponent.h"
+#include "ASItemFactoryComponent.generated.h"
 
 class UASItem;
-class UASWeapon;
-class UASArmor;
-class UASAmmo;
 class UASItemDataAsset;
-class UASWeaponDataAsset;
-class UASArmorDataAsset;
-class UASAmmoDataAsset;
 
 UCLASS()
-class ARENASHOOTERS_API AASItemFactory : public AActor
+class ARENASHOOTERS_API UASItemFactoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
-	
+
 public:
 	static UASItem* NewASItem(UWorld* World, AActor* NewOwner, UASItemDataAsset* DataAsset, int32 Count = 0);
 
@@ -28,14 +22,14 @@ public:
 	{
 		static_assert(TIsDerivedFrom<ItemDataAssetT, UASItemDataAsset>::IsDerived, "Invalid ItemDataAssetT!");
 		static_assert(TIsDerivedFrom<ItemT, ItemDataAssetT::ItemClassBaseT>::IsDerived, "Invalid ItemT!");
-		
+
 		return Cast<ItemT>(NewASItem(World, NewOwner, DataAsset, Count));
 	}
 
 	static bool DeleteItem(UWorld* World, UASItem* InItem);
 
 public:	
-	AASItemFactory();
+	UASItemFactoryComponent();
 
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

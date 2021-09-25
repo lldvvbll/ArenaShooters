@@ -1,36 +1,37 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ASItemFactory.h"
+#include "GameMode/ASItemFactoryComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/ActorChannel.h"
-#include "ASGameState.h"
 #include "Item/ASItem.h"
 #include "DataAssets/ItemDataAssets/ASItemDataAsset.h"
 #include "Character/ASCharacter.h"
+#include "GameFramework/GameStateBase.h"
 
-UASItem* AASItemFactory::NewASItem(UWorld* World, AActor* NewOwner, UASItemDataAsset* DataAsset, int32 Count/* = 0*/)
+UASItem* UASItemFactoryComponent::NewASItem(UWorld* World, AActor* NewOwner, UASItemDataAsset* DataAsset, int32 Count/* = 0*/)
 {
 	if (DataAsset == nullptr)
 	{
 		AS_LOG_S(Error);
 		return nullptr;
 	}
+
 	if (World == nullptr)
 	{
 		AS_LOG_S(Error);
 		return nullptr;
 	}
 
-	auto GameState = World->GetGameState<AASGameState>();
+	AGameStateBase* GameState = World->GetGameState();
 	if (GameState == nullptr)
 	{
 		AS_LOG_S(Error);
 		return nullptr;
 	}
 
-	AASItemFactory* ItemFactory = GameState->GetASItemFactory();
-	if (ItemFactory == nullptr)
+	auto ItemFactoryComp = Cast<UASItemFactoryComponent>(GameState->FindComponentByClass(UASItemFactoryComponent::StaticClass()));
+	if (ItemFactoryComp == nullptr)
 	{
 		AS_LOG_S(Error);
 		return nullptr;
@@ -47,12 +48,12 @@ UASItem* AASItemFactory::NewASItem(UWorld* World, AActor* NewOwner, UASItemDataA
 	NewItem->SetOwner(NewOwner);
 	NewItem->SetCount(Count);
 
-	ItemFactory->ASItems.Emplace(NewItem);
+	ItemFactoryComp->ASItems.Emplace(NewItem);
 
 	return NewItem;
 }
 
-bool AASItemFactory::DeleteItem(UWorld* World, UASItem* InItem)
+bool UASItemFactoryComponent::DeleteItem(UWorld* World, UASItem* InItem)
 {
 	if (!IsValid(InItem))
 	{
@@ -66,21 +67,21 @@ bool AASItemFactory::DeleteItem(UWorld* World, UASItem* InItem)
 		return false;
 	}
 
-	auto GameState = World->GetGameState<AASGameState>();
+	AGameStateBase* GameState = World->GetGameState();
 	if (GameState == nullptr)
 	{
 		AS_LOG_S(Error);
-		return false;
+		return nullptr;
 	}
 
-	AASItemFactory* ItemFactory = GameState->GetASItemFactory();
-	if (ItemFactory == nullptr)
+	auto ItemFactoryComp = Cast<UASItemFactoryComponent>(GameState->FindComponentByClass(UASItemFactoryComponent::StaticClass()));
+	if (ItemFactoryComp == nullptr)
 	{
 		AS_LOG_S(Error);
-		return false;
+		return nullptr;
 	}
 
-	int32 Idx = ItemFactory->ASItems.Find(InItem);
+	int32 Idx = ItemFactoryComp->ASItems.Find(InItem);
 	if (Idx == INDEX_NONE)
 		return false;
 
@@ -91,8 +92,8 @@ bool AASItemFactory::DeleteItem(UWorld* World, UASItem* InItem)
 			return false;
 	}
 
-	ItemFactory->ASItems[Idx] = nullptr;
-	ItemFactory->ASItems.RemoveAtSwap(Idx);
+	ItemFactoryComp->ASItems[Idx] = nullptr;
+	ItemFactoryComp->ASItems.RemoveAtSwap(Idx);
 
 	InItem->MarkPendingKill();
 
@@ -120,15 +121,13 @@ bool AASItemFactory::DeleteItem(UWorld* World, UASItem* InItem)
 	return true;
 }
 
-AASItemFactory::AASItemFactory()
+UASItemFactoryComponent::UASItemFactoryComponent()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;
-	bAlwaysRelevant = true;
-	SetReplicatingMovement(false);
+	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
 }
 
-bool AASItemFactory::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+bool UASItemFactoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
@@ -143,9 +142,9 @@ bool AASItemFactory::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunc
 	return WroteSomething;
 }
 
-void AASItemFactory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UASItemFactoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AASItemFactory, ASItems);
+	DOREPLIFETIME(UASItemFactoryComponent, ASItems);
 }

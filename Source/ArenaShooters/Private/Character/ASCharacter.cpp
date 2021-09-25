@@ -26,7 +26,7 @@
 #include "ItemActor/ASDroppedItemActor.h"
 #include "GameFramework/PlayerInput.h"
 #include "Character/ASAnimInstance.h"
-#include "ASItemFactory.h"
+#include "GameMode/ASItemFactoryComponent.h"
 
 AASCharacter::AASCharacter()
 {
@@ -1139,12 +1139,13 @@ void AASCharacter::ServerSelectWeapon_Implementation(EWeaponSlotType WeaponSlotT
 	}
 	else
 	{
+		// todo: delete
 		FPrimaryAssetId& WeaponAssetId = (WeaponSlotType == EWeaponSlotType::Main) ? TestARAssetId : TestPistolAssetId;
 
 		if (auto WeaponDataAsset = UASAssetManager::Get().GetDataAsset<UASWeaponDataAsset>(WeaponAssetId))
 		{
 			UASItem* OldWeapon = nullptr;
-			if (ASInventory->InsertWeapon(WeaponSlotType, AASItemFactory::NewASItem<UASWeapon>(GetWorld(), this, WeaponDataAsset), OldWeapon))
+			if (ASInventory->InsertWeapon(WeaponSlotType, UASItemFactoryComponent::NewASItem<UASWeapon>(GetWorld(), this, WeaponDataAsset), OldWeapon))
 			{
 				if (OldWeapon != nullptr)
 				{
