@@ -3,11 +3,11 @@
 #pragma once
 
 #include "ArenaShooters.h"
-#include "GameFramework/GameMode.h"
+#include "GameMode/ASMatchGameModeBase.h"
 #include "ASDeathmatchGameMode.generated.h"
 
 UCLASS()
-class ARENASHOOTERS_API AASDeathmatchGameMode : public AGameMode
+class ARENASHOOTERS_API AASDeathmatchGameMode : public AASMatchGameModeBase
 {
 	GENERATED_BODY()
 	

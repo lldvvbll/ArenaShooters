@@ -7,17 +7,4 @@
 
 AASDeathmatchGameState::AASDeathmatchGameState()
 {
-	ItemFactory = CreateDefaultSubobject<UASItemFactoryComponent>(TEXT("ItemFactory"));
-}
-
-void AASDeathmatchGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AASDeathmatchGameState, ItemFactory);
-}
-
-UASItemFactoryComponent* AASDeathmatchGameState::GetItemFactory()
-{
-	return ItemFactory;
 }

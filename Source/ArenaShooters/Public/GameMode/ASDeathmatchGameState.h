@@ -3,24 +3,16 @@
 #pragma once
 
 #include "ArenaShooters.h"
-#include "GameFramework/GameState.h"
+#include "GameMode/ASMatchGameStateBase.h"
 #include "ASDeathmatchGameState.generated.h"
 
 class UASItemFactoryComponent;
 
 UCLASS()
-class ARENASHOOTERS_API AASDeathmatchGameState : public AGameState
+class ARENASHOOTERS_API AASDeathmatchGameState : public AASMatchGameStateBase
 {
 	GENERATED_BODY()
 	
 public:
 	AASDeathmatchGameState();
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	UASItemFactoryComponent* GetItemFactory();
-
-protected:
-	UPROPERTY(Replicated, EditDefaultsOnly)
-	UASItemFactoryComponent* ItemFactory;
 };
