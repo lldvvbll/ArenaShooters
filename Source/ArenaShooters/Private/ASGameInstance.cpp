@@ -6,7 +6,7 @@
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
-#include "ASLobbyPlayerController.h"
+#include "Controller/ASLobbyPlayerController.h"
 
 void UASGameInstance::Init()
 {

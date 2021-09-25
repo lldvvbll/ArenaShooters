@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ASLobbyPlayerController.h"
+#include "Controller/ASLobbyPlayerController.h"
 #include "GUI/Lobby/ASMainMenuUserWidget.h"
 #include "GUI/Lobby/ASServerBrowserUserWidget.h"
 

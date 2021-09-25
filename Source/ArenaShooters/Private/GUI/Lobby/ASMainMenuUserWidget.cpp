@@ -5,7 +5,7 @@
 #include "GUI/Lobby/ASServerBrowserUserWidget.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
-#include "ASLobbyPlayerController.h"
+#include "Controller/ASLobbyPlayerController.h"
 
 void UASMainMenuUserWidget::ShowMainMenu()
 {

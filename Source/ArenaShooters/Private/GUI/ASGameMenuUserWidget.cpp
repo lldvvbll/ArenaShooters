@@ -4,7 +4,7 @@
 #include "GUI/ASGameMenuUserWidget.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
-#include "ASPlayerController.h"
+#include "Controller/ASPlayerController.h"
 #include "Character/ASCharacter.h"
 
 void UASGameMenuUserWidget::NativeConstruct()
